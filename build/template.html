@@ -69,6 +69,10 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
 .sheet-grid { display: grid; grid-template-columns: minmax(0, 200px) minmax(0, 1fr); gap: 16px; align-items: start }
 @media (max-width: 520px) { .sheet-grid { grid-template-columns: minmax(0, 1fr) } .sheet-grid img { max-width: 220px } }
 .sheet img { width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--line); display: block }
+.cardbtn { display: block; width: 100%; padding: 0; border: 0; background: none; border-radius: 8px; cursor: pointer }
+.cardbtn img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none }
+.cardcol { display: grid; gap: 6px; min-width: 0 }
+.cardcol .hint { margin: 0; text-align: center }
 .btns { display: grid; gap: 8px }
 .btns button { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; text-align: left }
 .btns small { text-align: right; font-family: var(--body); text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 13px; opacity: .75 }
@@ -127,12 +131,15 @@ textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px; border-ra
       <label><input type="radio" name="fmt" id="fmt-post" value="post">Post</label>
     </div>
     <div class="sheet-grid">
-      <img id="card" alt="">
+      <div class="cardcol">
+        <button type="button" class="cardbtn" id="b-card" aria-label="Share this image"><img id="card" alt=""></button>
+        <p class="hint" id="card-hint" hidden>Tap the image to share it</p>
+      </div>
       <div class="btns">
         <button type="button" id="b-ig">Instagram <small id="ig-note">Saves the image to post</small></button>
         <button type="button" class="ghost" id="b-fb">Facebook <small id="fb-note">Shares the page link</small></button>
-        <button type="button" class="ghost" id="b-mail">Email <small>Opens your mail app</small></button>
-        <button type="button" class="ghost" id="b-sms">Text <small>Opens Messages</small></button>
+        <button type="button" class="ghost" id="b-mail">Email <small id="mail-note">Opens your mail app</small></button>
+        <button type="button" class="ghost" id="b-sms">Text <small id="sms-note">Opens Messages</small></button>
         <button type="button" class="ghost" id="b-save">Save image <small id="save-note">PNG, 1080×1920</small></button>
       </div>
     </div>
@@ -360,7 +367,7 @@ function drawMap(ctx, X, Y, W, H, r, opt = {}) {
     ctx.fillStyle = C.label; ctx.fillText(lab, lx, ly);
   }
   // scale bar (500 ft)
-  const sb = 500 * ft2px, sx = X + 24 * C.scale, sy = Y + H - 26 * C.scale;
+  const sb = 500 * ft2px, sx = X + 24 * C.scale; let sy = Y + H - 26 * C.scale;
   ctx.strokeStyle = C.label; ctx.lineWidth = 3 * C.scale; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + sb, sy); ctx.stroke();
   ctx.font = `600 ${16 * C.scale}px ${C.font}`; ctx.textAlign = "left"; ctx.fillStyle = C.label; ctx.fillText("500 FT", sx + sb + 8 * C.scale, sy);
   // legend (bottom right)
@@ -370,6 +377,8 @@ function drawMap(ctx, X, Y, W, H, r, opt = {}) {
   const widths = items.map(([txt]) => ctx.measureText(txt).width);
   const boxW = widths.reduce((a, w) => a + gw + gap + w, 0) + sp * (items.length - 1) + 24 * C.scale;
   const bx = X + W - boxW - 10 * C.scale, bh = 40 * C.scale;
+  const scaleEnd = sx + sb + 8 * C.scale + ctx.measureText("500 FT").width + 10 * C.scale;
+  if (bx < scaleEnd) sy -= bh + 4 * C.scale;   // narrow map: key goes above the scale bar
   ctx.fillStyle = C.bg; ctx.fillRect(bx, sy - bh / 2, boxW, bh);
   let lx2 = bx + 12 * C.scale;
   items.forEach(([txt, d, col], i) => {
@@ -520,7 +529,7 @@ async function refreshSheet() {
   const cd = await getCard();
   $("card").src = cd.url;
   $("card").alt = shareText(current).replace(/ How close are you\?.*$/, "");
-  $("save-note").textContent = `PNG, ${FORMATS[cardFormat].note}`;
+  $("save-note").textContent = canFiles ? "Then tap Save Image" : `PNG, ${FORMATS[cardFormat].note}`;
   $("status").textContent = "";
   return cd;
 }
@@ -533,14 +542,21 @@ async function openSheet() {
   canFiles = !!(navigator.canShare && navigator.canShare({ files: [file] }));
   $("ig-note").textContent = canFiles ? "Then choose Story or Post" : "Saves the image to post";
   $("fb-note").textContent = canFiles ? "Then choose Facebook" : "Shares the page link";
+  $("sms-note").textContent = canFiles ? "Image and message · then choose Messages" : "Opens Messages";
+  $("mail-note").textContent = canFiles ? "Image and message · then choose Mail" : "Opens your mail app";
+  $("save-note").textContent = canFiles ? "Then tap Save Image" : `PNG, ${FORMATS[cardFormat].note}`;
+  $("card-hint").hidden = !canFiles;
   $("sheet").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
 }
-async function nativeShare() {
-  // Image only: on iPhone, adding text to an image share can drop Instagram from the share sheet
-  // or make Instagram ignore the image. The message is on the Text, Email and Copy buttons.
-  const cd = await getCard();
+// withText=false (Instagram, Facebook, Save, tapping the image): image only, because on iPhone adding text
+// to an image share can drop Instagram from the share sheet or make Instagram ignore the image.
+// withText=true (Text, Email): image plus the message, so Messages and Mail get both.
+async function nativeShare(withText) {
+  const cd = await getCard();   // already made when the panel opened, so the tap still counts as the user's
   const file = new File([cd.blob], fileName(), { type: "image/png" });
-  try { await navigator.share({ files: [file] }); }
+  const data = { files: [file] };
+  if (withText) { data.text = shareText(current); data.title = "How close do you live to the Amtrak railyard?"; }
+  try { await navigator.share(data); }
   catch (e) { if (e && e.name !== "AbortError") $("status").textContent = "Sharing isn’t available here. Save the image instead."; }
 }
 function openLink(href, what) {
@@ -548,11 +564,12 @@ function openLink(href, what) {
   $("status").textContent = `If ${what} didn’t open, copy the message below and paste it in.`;
 }
 async function saveImage() {
+  if (canFiles) return nativeShare(false);   // phones: the share sheet's "Save Image" puts it in Photos
   const cd = await getCard();
   const dl = await (window.claude?.use ? window.claude.use("downloads").catch(() => null) : null);
   if (dl) {
     try { await dl.save({ filename: fileName(), data: cd.blob }); $("status").textContent = "Image saved."; }
-    catch (e) { $("status").textContent = e && e.code === "declined" ? "" : "Couldn’t save here. Press and hold (or right-click) the image to save it."; }
+    catch (e) { $("status").textContent = e && e.code === "declined" ? "" : "Couldn’t save here. Right-click the image to save it."; }
     return;
   }
   const a = document.createElement("a"); a.href = cd.url; a.download = fileName(); document.body.appendChild(a); a.click(); a.remove();
@@ -580,19 +597,40 @@ $("showhome").addEventListener("change", e => {
   if (!$("sheet").hidden) refreshSheet();
 });
 document.querySelectorAll('input[name="fmt"]').forEach(el => el.addEventListener("change", () => { cardFormat = el.value; refreshSheet(); }));
-$("b-ig").addEventListener("click", () => (canFiles ? nativeShare() : saveImage()));
+$("b-ig").addEventListener("click", () => (canFiles ? nativeShare(false) : saveImage()));
 // Facebook: on phones, the image through the share sheet; elsewhere Facebook's link-share page
 // (Facebook builds that post from the page's own preview, not this image).
 $("b-fb").addEventListener("click", () => {
-  if (canFiles) return nativeShare();
+  if (canFiles) return nativeShare(false);
   const a = document.createElement("a"); a.href = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(CONFIG.shareUrl);
   a.target = "_blank"; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove();
   $("status").textContent = "Facebook opens in a new tab. To post the image instead, save it and add it to your post.";
 });
-$("b-sms").addEventListener("click", () => openLink("sms:?&body=" + encodeURIComponent(shareText(current)), "Messages"));
-$("b-mail").addEventListener("click", () => openLink("mailto:?subject=" + encodeURIComponent("How close do you live to the Amtrak railyard?") + "&body=" + encodeURIComponent(shareText(current)), "your mail app"));
+$("b-sms").addEventListener("click", () => canFiles ? nativeShare(true) : openLink("sms:?&body=" + encodeURIComponent(shareText(current)), "Messages"));
+$("b-mail").addEventListener("click", () => canFiles ? nativeShare(true) : openLink("mailto:?subject=" + encodeURIComponent("How close do you live to the Amtrak railyard?") + "&body=" + encodeURIComponent(shareText(current)), "your mail app"));
+$("b-card").addEventListener("click", () => canFiles ? nativeShare(false) : null);
 $("b-save").addEventListener("click", saveImage);
 $("b-copy").addEventListener("click", copyText);
+window.__makeLinkCard = async () => {
+  try { await Promise.all(["800 100px 'Barlow Condensed'", "700 40px 'Barlow Condensed'", "500 30px 'Barlow'"].map(f => document.fonts.load(f))); } catch (e) {}
+  const W = 1200, H = 630, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const c = cv.getContext("2d"), F = '"Barlow Condensed", "Arial Narrow", sans-serif', M = 56, LW = 600;
+  const fit = (s, z, w = 800, max = LW) => { do { c.font = `${w} ${z}px ${F}`; } while (c.measureText(s).width > max && (z -= 2) > 10); return z; };
+  c.fillStyle = "#0d0e0f"; c.fillRect(0, 0, W, H); c.fillStyle = "#c8102e"; c.fillRect(0, 0, W, 10);
+  try { if (!logoImg.complete) await logoImg.decode(); c.drawImage(logoImg, M + LW - 96, 44, 96, 96); } catch (e) {}
+  c.textBaseline = "alphabetic"; c.fillStyle = "#f5f5f3";
+  const nz = fit(fmt(POP500), 190, 800, LW - 120); c.fillText(fmt(POP500), M - 4, 50 + nz * .74);
+  let y = 50 + nz * .74 + 66; const lz = Math.min(...["PEOPLE LIVE WITHIN", "500 FEET OF THE", "AMTRAK RAILYARD"].map(s => fit(s, 62)));
+  c.font = `800 ${lz}px ${F}`; ["PEOPLE LIVE WITHIN", "500 FEET OF THE", "AMTRAK RAILYARD"].forEach((s, i) => c.fillText(s, M, y + i * lz));
+  y += 2 * lz + 34; c.fillStyle = "#c8102e"; c.fillRect(M, y, LW, 5);
+  const kz = fit(fmt(KIDS500) + " ARE CHILDREN", 60); c.font = `800 ${kz}px ${F}`;
+  c.fillStyle = "#ff5a70"; c.fillText(fmt(KIDS500), M, y + 16 + kz * .74); const kw = c.measureText(fmt(KIDS500) + " ").width;
+  c.fillStyle = "#f5f5f3"; c.fillText("ARE CHILDREN", M + kw, y + 16 + kz * .74);
+  const foot = "HOW CLOSE ARE YOU?  " + CONFIG.cardFooter.toUpperCase(); fit(foot, 28, 700); c.fillStyle = "#a9adb1"; c.fillText(foot, M, H - 40);
+  drawMap(c, M + LW + 34, 34, W - (M + LW + 34) - 34, H - 68, { overview: true }, { scale: 1.1 });
+  c.strokeStyle = "#3a3e42"; c.lineWidth = 2; c.strokeRect(M + LW + 34, 34, W - (M + LW + 34) - 34, H - 68);
+  return cv.toDataURL("image/png");
+};
 window.__lookup = lookup;  // handy for testing from the console
 render({ overview: true }, false);
 if (document.fonts) document.fonts.ready.then(drawPageMap);
