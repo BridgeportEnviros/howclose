@@ -1,0 +1,600 @@
+<title>How Close Is the Railyard?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: one narrow column — form, result card with map, then share sheet. Black/silver/white with a single signal red for the yard. */
+:root {
+  --bg: #f4f4f2; --surface: #ffffff; --fg: #111213; --muted: #5d6166; --line: #d5d7d9;
+  --silver: #a9adb1; --accent: #c8102e; --ink: #0d0e0f; --ink-fg: #f5f5f3;
+  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1011; --surface: #17191b; --fg: #eeeeec; --muted: #9da1a6; --line: #2c2f33;
+  --silver: #7f8489; --accent: #e8344f; --ink: #050506; --ink-fg: #f5f5f3; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f1011; --surface: #17191b; --fg: #eeeeec; --muted: #9da1a6; --line: #2c2f33;
+  --silver: #7f8489; --accent: #e8344f; --ink: #050506; --ink-fg: #f5f5f3; color-scheme: dark }
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.5 }
+.wrap { max-width: 640px; margin: 0 auto; padding: 28px 16px 64px; display: grid; gap: 22px }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(34px, 8vw, 52px); line-height: .95; text-transform: uppercase; letter-spacing: .01em; margin: 0; text-wrap: balance }
+.lede { color: var(--muted); margin: 8px 0 0; max-width: 60ch }
+.top { display: flex; gap: 16px; align-items: flex-start; justify-content: space-between }
+.top > div { min-width: 0 }
+.belogo { flex: none; line-height: 0; border-radius: 4px; outline-offset: 3px }
+.belogo img { display: block; width: 72px; height: 72px; border-radius: 4px }
+@media (max-width: 420px) { .belogo img { width: 56px; height: 56px } }
+form { display: grid; gap: 10px }
+label { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: 14px }
+.row { display: flex; gap: 8px; flex-wrap: wrap }
+input[type=text] { flex: 1 1 260px; min-width: 0; font: inherit; font-size: 17px; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--fg) }
+input[type=text]:focus-visible { outline: 2px solid var(--fg); outline-offset: 1px }
+button { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 17px; padding: 12px 18px; border-radius: 6px; border: 1.5px solid var(--fg); background: var(--fg); color: var(--bg); cursor: pointer }
+button.ghost { background: transparent; color: var(--fg) }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.hint { font-size: 14px; color: var(--muted) }
+.hint button { font: inherit; font-size: 14px; text-transform: none; letter-spacing: 0; padding: 0; border: 0; background: none; color: var(--fg); text-decoration: underline; cursor: pointer }
+.msg { padding: 12px 14px; border-radius: 6px; border: 1.5px solid var(--accent); font-size: 15px }
+.result { background: var(--ink); color: var(--ink-fg); border-radius: 10px; overflow: hidden }
+.result .txt { padding: 22px 20px 18px; display: grid; gap: 6px }
+.tag { font-family: var(--display); font-weight: 700; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--silver) }
+.big { font-family: var(--display); font-weight: 800; text-transform: uppercase; line-height: .92; font-size: clamp(30px, 7vw, 44px) }
+.big .n { display: block; font-size: clamp(72px, 20vw, 120px); line-height: .9; font-variant-numeric: tabular-nums }
+.kids { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: clamp(22px, 5vw, 28px); line-height: 1.05; color: var(--ink-fg); border-top: 2px solid var(--accent); padding-top: 10px; margin-top: 8px }
+.kids .k { color: #ff5a70 }
+.kicker { font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: clamp(24px, 6vw, 32px); line-height: 1.02; color: var(--ink-fg) }
+.matched { font-size: 13px; color: var(--silver) }
+#map { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; max-width: 100% }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 20px 20px }
+.actions { align-items: center; justify-content: space-between }
+.actions button { background: var(--ink-fg); color: var(--ink); border-color: var(--ink-fg) }
+.switch { display: inline-flex; align-items: center; gap: 10px; font-family: var(--body); font-size: 14px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--ink-fg); cursor: pointer; user-select: none }
+.switch input { position: absolute; opacity: 0; width: 1px; height: 1px }
+.switch .track { position: relative; flex: none; width: 44px; height: 26px; border-radius: 13px; background: #4a4e52; transition: background .15s }
+.switch .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #f5f5f3; transition: transform .15s }
+.switch input:checked + .track { background: #c8102e }
+.switch input:checked + .track::after { transform: translateX(18px) }
+.switch input:focus-visible + .track { outline: 2px solid var(--ink-fg); outline-offset: 2px }
+.seg { display: inline-flex; border: 1.5px solid var(--fg); border-radius: 6px; overflow: hidden; width: max-content }
+.seg label { font-size: 15px; letter-spacing: .06em; padding: 8px 16px; cursor: pointer }
+.seg input { position: absolute; opacity: 0; width: 1px; height: 1px }
+.seg label:has(input:checked) { background: var(--fg); color: var(--bg) }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -3px }
+@media (prefers-reduced-motion: reduce) { .switch .track, .switch .track::after { transition: none } }
+.sheet { background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px }
+.sheet h2 { font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: 24px; margin: 0 }
+.sheet-grid { display: grid; grid-template-columns: minmax(0, 200px) minmax(0, 1fr); gap: 16px; align-items: start }
+@media (max-width: 520px) { .sheet-grid { grid-template-columns: minmax(0, 1fr) } .sheet-grid img { max-width: 220px } }
+.sheet img { width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--line); display: block }
+.btns { display: grid; gap: 8px }
+.btns button { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; text-align: left }
+.btns small { text-align: right; font-family: var(--body); text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 13px; opacity: .75 }
+.msgbox { display: grid; gap: 6px; justify-items: end }
+.iconbtn { display: inline-grid; place-items: center; width: 38px; height: 38px; padding: 0; border-radius: 6px; border: 1.5px solid var(--line); background: transparent; color: var(--fg) }
+.iconbtn:hover { border-color: var(--fg) }
+textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px; border-radius: 6px; border: 1.5px solid var(--line); background: var(--bg); color: var(--fg); resize: vertical; min-height: 84px }
+.status { font-size: 14px; color: var(--muted); min-height: 1.5em }
+.notes { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px }
+.notes p { margin: 0 0 8px }
+@media (prefers-reduced-motion: no-preference) { .result { transition: opacity .2s } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+    <h1>How far do you live from the Amtrak railyard?</h1>
+    <p class="lede">Enter your address to see how close you live to the yard Amtrak has proposed at Canal Street Yard, then share it.</p>
+    </div>
+    <a class="belogo" href="https://www.bridgeportenviros.org/projects/amtrak-railyard" target="_blank" rel="noopener" title="Bridgeport Environmentalists"><img src="__LOGO__" alt="Bridgeport Environmentalists" width="72" height="72"></a>
+  </header>
+
+  <form id="f" autocomplete="off">
+    <label for="addr">Your street address</label>
+    <div class="row">
+      <input type="text" id="addr" placeholder="e.g. 3100 S Princeton Ave" aria-describedby="addr-hint">
+      <button type="submit" id="go">Find my distance</button>
+    </div>
+    <div class="hint" id="addr-hint">Chicago addresses within 2 miles of the site. Your address stays on your device. Try
+      <button type="button" data-ex="2900 S Wallace St">2900 S Wallace St</button>,
+      <button type="button" data-ex="2420 S Wentworth Ave">2420 S Wentworth Ave</button>,
+      <button type="button" data-ex="3500 S Halsted St">3500 S Halsted St</button>, or an address farther away like <button type="button" data-ex="5800 N Sheridan Rd">5800 N Sheridan Rd</button>.</div>
+  </form>
+
+  <div id="msg" class="msg" hidden></div>
+
+  <section class="result" id="result" aria-live="polite">
+    <div class="txt">
+      <div class="tag" id="tag">Within 500 feet of the proposed yard</div>
+      <div class="big" id="big"><span class="n">—</span> people live within 500 feet of the Amtrak railyard</div>
+      <div class="kids" id="kids" hidden></div>
+      <div class="kicker" id="kicker" hidden></div>
+      <div class="matched" id="matched"></div>
+    </div>
+    <canvas id="map" width="1200" height="900" aria-label="Map of your address and the proposed railyard"></canvas>
+    <div class="actions">
+      <button type="button" id="share">Share</button>
+      <label class="switch" id="homewrap" hidden><input type="checkbox" id="showhome" checked><span class="track" aria-hidden="true"></span>Show my location on the map</label>
+    </div>
+  </section>
+
+  <section class="sheet" id="sheet" hidden aria-labelledby="sheet-h">
+    <h2 id="sheet-h">Share your distance</h2>
+    <div class="seg" role="radiogroup" aria-label="Image shape">
+      <label><input type="radio" name="fmt" id="fmt-story" value="story" checked>Story</label>
+      <label><input type="radio" name="fmt" id="fmt-post" value="post">Post</label>
+    </div>
+    <div class="sheet-grid">
+      <img id="card" alt="">
+      <div class="btns">
+        <button type="button" id="b-ig">Instagram <small id="ig-note">Saves the image to post</small></button>
+        <button type="button" class="ghost" id="b-fb">Facebook <small id="fb-note">Shares the page link</small></button>
+        <button type="button" class="ghost" id="b-mail">Email <small>Opens your mail app</small></button>
+        <button type="button" class="ghost" id="b-sms">Text <small>Opens Messages</small></button>
+        <button type="button" class="ghost" id="b-save">Save image <small id="save-note">PNG, 1080×1920</small></button>
+      </div>
+    </div>
+    <div class="msgbox">
+      <textarea id="sharetext" aria-label="Message to share" readonly></textarea>
+      <button type="button" class="iconbtn" id="b-copy" aria-label="Copy message" title="Copy message">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      </button>
+    </div>
+    <div class="status" id="status" role="status"></div>
+  </section>
+
+  <div class="notes">
+    <p><strong>How this is measured.</strong> Straight-line distance from your address point to the nearest edge of the proposed yard (the Union Pacific Canal Street Yard outline in OpenStreetMap, the same outline the neighborhood dashboard uses). Addresses come from Cook County's Address Points file.</p>
+    <p><strong>Schools and day cares on the map.</strong> The same lists as the neighborhood dashboard: every district, charter, private and parochial school, and every licensed day-care center (City of Chicago Children's Services Facility licenses) within a mile of the proposed yard. After-school-only centers and home day cares are not shown.</p>
+    <p><strong>People and children.</strong> The same figures as the neighborhood dashboard: each census tract's residents and children under 18 (ACS 2020–2024), counted by the share of the tract's 2020 Census block population living within a given distance of the yard. Within 500 feet we show everyone that close; out to a mile we show the children who live closer than you.</p>
+    <p><strong>Your location.</strong> Turn off “Show my location on the map” to leave the dotted line and the ME marker off the map and your share images. The map then shows the whole site instead of your block.</p>
+    <p><strong>Farther away?</strong> If an address isn't within 2 miles of the site, we show who lives within 500 feet of it instead.</p>
+  </div>
+</div>
+
+<script>
+/*__DATA__*/
+</script>
+<script>
+(() => {
+const BOOK = "M3.5 5h6c1.4 0 2.5 1.1 2.5 2.5c0-1.4 1.1-2.5 2.5-2.5h6v12.5h-6c-1.4 0-2.5 1.1-2.5 2.5c0-1.4-1.1-2.5-2.5-2.5h-6z";
+const BOOK_SPINE = "M12 7.5V20";
+const BLOCKS = "M3.5 12.5h8v8h-8z M12.5 12.5h8v8h-8z M8 4.5h8v8h-8z";
+const LOGO_SRC = "__LOGO__";
+const logoImg = new Image(); logoImg.src = LOGO_SRC;
+const CONFIG = {
+  shareUrl: "https://bridgeportenviros.github.io/howclose/",   // switch to https://howclose.bridgeportenviros.org/ once the subdomain is set up
+  cardFooter: "bridgeportenviros.github.io/howclose",
+};
+const L = window.LOOKUP;
+const YARD = L.yard;
+const $ = id => document.getElementById(id);
+
+/* ---------- geometry (feet, x east / y north) ---------- */
+function nearestOnYard(x, y) {
+  let best = { d: Infinity, x: 0, y: 0 };
+  for (let i = 0; i < YARD.length; i++) {
+    const [ax, ay] = YARD[i], [bx, by] = YARD[(i + 1) % YARD.length];
+    const dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy || 1;
+    const t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / l2));
+    const px = ax + t * dx, py = ay + t * dy, d = Math.hypot(x - px, y - py);
+    if (d < best.d) best = { d, x: px, y: py };
+  }
+  if (insideYard(x, y)) best.d = 0;
+  return best;
+}
+function insideYard(x, y) {
+  let c = false;
+  for (let i = 0, j = YARD.length - 1; i < YARD.length; j = i++) {
+    const [xi, yi] = YARD[i], [xj, yj] = YARD[j];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+}
+function kidsWithin(ft) {
+  const k = L.kids, b = L.meta.bin_ft;
+  if (ft <= 0) return 0;
+  const i = ft / b - 1;                     // kids[i] = children closer than (i+1)*b
+  if (i < 0) return k[0] * (ft / b);
+  const i0 = Math.floor(i), i1 = Math.min(i0 + 1, k.length - 1);
+  if (i0 >= k.length - 1) return k[k.length - 1];
+  return k[i0] + (k[i1] - k[i0]) * (i - i0);
+}
+const roundKids = n => Math.round(n);   // unrounded, to match the dashboard
+const within = (arr, ft) => { const b = L.meta.bin_ft, i = Math.round(ft / b) - 1; return arr[Math.max(0, Math.min(i, arr.length - 1))]; };
+const POP500 = Math.round(within(L.pop, 500)), KIDS500 = Math.round(within(L.kids, 500));
+const fmt = n => n.toLocaleString("en-US");
+const roundFeet = d => d < 100 ? Math.round(d / 5) * 5 : Math.round(d / 10) * 10;
+
+/* ---------- address parsing + matching ---------- */
+const DIRS = { N: "N", NORTH: "N", S: "S", SOUTH: "S", E: "E", EAST: "E", W: "W", WEST: "W" };
+const TYPES = { ST: "ST", STREET: "ST", AVE: "AVE", AV: "AVE", AVENUE: "AVE", PL: "PL", PLACE: "PL", BLVD: "BLVD", BOULEVARD: "BLVD",
+  RD: "RD", ROAD: "RD", DR: "DR", DRIVE: "DR", CT: "CT", COURT: "CT", PKWY: "PKWY", PARKWAY: "PKWY", TER: "TER", TERRACE: "TER", PLZ: "PLZ", LN: "LN", LANE: "LN" };
+const UNIT_WORDS = new Set(["APT", "UNIT", "STE", "SUITE", "FL", "FLOOR", "RM", "BSMT", "REAR", "FRONT", "GARDEN", "#"]);
+const ALIASES = { "MLK": "DOCTOR MARTIN LUTHER KING JR", "MARTIN LUTHER KING": "DOCTOR MARTIN LUTHER KING JR", "KING": "DOCTOR MARTIN LUTHER KING JR",
+  "LASALLE": "LA SALLE", "ST LAWRENCE": "SAINT LAWRENCE", "DESPLAINES": "DES PLAINES", "MCDOWELL": "MC DOWELL" };
+function ordinal(n) { const v = n % 100; if (v >= 11 && v <= 13) return n + "TH"; return n + ({ 1: "ST", 2: "ND", 3: "RD" }[n % 10] || "TH"); }
+
+function parse(raw) {
+  let s = raw.toUpperCase().replace(/[.,]/g, " ").replace(/#/g, " # ").replace(/\s+/g, " ").trim();
+  s = s.replace(/\b(CHICAGO|IL|ILLINOIS|USA|US)\b/g, " ").replace(/\b\d{5}(-\d{4})?\s*$/, " ").replace(/\s+/g, " ").trim();
+  const m = s.match(/^(\d+)(?:-\d+)?[A-Z]?\s+(.*)$/);
+  if (!m) return null;
+  const num = +m[1];
+  let toks = m[2].split(" ");
+  const cut = toks.findIndex((t, i) => UNIT_WORDS.has(t) && i > 0);
+  if (cut > 0) toks = toks.slice(0, cut);
+  let dir = null, type = null;
+  if (toks.length > 1 && DIRS[toks[0]]) dir = DIRS[toks.shift()];
+  if (toks.length > 1 && TYPES[toks[toks.length - 1]]) type = TYPES[toks.pop()];
+  // "St" right after the name when the user wrote e.g. "31st st": handled above; numeric names → ordinals
+  toks = toks.map(t => /^\d+$/.test(t) ? ordinal(+t) : t);
+  let name = toks.join(" ");
+  if (ALIASES[name]) name = ALIASES[name];
+  return { num, dir, type, name };
+}
+const KEYS = Object.keys(L.streets).map(k => { const [dir, name, type] = k.split("|"); return { k, dir, name, type }; });
+function lev(a, b) {
+  const m = a.length, n = b.length, d = Array.from({ length: m + 1 }, (_, i) => [i]);
+  for (let j = 1; j <= n; j++) d[0][j] = j;
+  for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++)
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[m][n];
+}
+function lookup(raw) {
+  const p = parse(raw);
+  if (!p || !p.name) return { error: "Enter a house number and street, like “3100 S Princeton Ave”." };
+  const far = { far: true, input: raw.trim() };
+  let cands = KEYS.filter(s => s.name === p.name);
+  if (!cands.length) {
+    // Typo correction only for a close variant of a street in the 2-mile area: same first letter,
+    // 1 edit (2 for names of 8+ letters), and the direction and street type must agree when given.
+    // Anything else (e.g. "W Logan Blvd" vs "S Lyman St") is treated as outside the area.
+    const maxD = p.name.length >= 8 ? 2 : 1;
+    const ok = s => s.name[0] === p.name[0] && (!p.dir || s.dir === p.dir) && (!p.type || s.type === p.type);
+    const near = KEYS.filter(ok).map(s => ({ s, d: lev(s.name, p.name) })).filter(o => o.d <= maxD).sort((a, b) => a.d - b.d);
+    if (!near.length) return far;
+    cands = KEYS.filter(s => s.name === near[0].s.name && ok(s));
+  }
+  // a direction that doesn't exist on that street (e.g. "W Halsted") means a different place
+  if (p.dir) { cands = cands.filter(s => s.dir === p.dir); if (!cands.length) return far; }
+  if (p.type && cands.some(s => s.type === p.type)) cands = cands.filter(s => s.type === p.type);
+  let best = null;
+  for (const c of cands) {
+    const a = L.streets[c.k];
+    let exact = null, lo = null, hi = null, nearest = null;
+    for (let i = 0; i < a.length; i += 4) {
+      const n = a[i], pt = { n, x: a[i + 1], y: a[i + 2] };
+      if (n === p.num) { exact = pt; break; }
+      if (n % 2 === p.num % 2) {
+        if (n < p.num && (!lo || n > lo.n)) lo = pt;
+        if (n > p.num && (!hi || n < hi.n)) hi = pt;
+      }
+      if (!nearest || Math.abs(n - p.num) < Math.abs(nearest.n - p.num)) nearest = pt;
+    }
+    let r = null;
+    if (exact) r = { x: exact.x, y: exact.y, how: "exact", score: 0 };
+    else if (lo && hi && hi.n - lo.n <= 200 && Math.hypot(hi.x - lo.x, hi.y - lo.y) < 1500) {
+      const t = (p.num - lo.n) / (hi.n - lo.n);
+      r = { x: lo.x + t * (hi.x - lo.x), y: lo.y + t * (hi.y - lo.y), how: "between", score: 1 };
+    } else if (nearest && Math.abs(nearest.n - p.num) <= 30) r = { x: nearest.x, y: nearest.y, how: "near", score: 2, nn: nearest.n };
+    if (r && (!best || r.score < best.score)) best = { ...r, street: c };
+  }
+  if (!best) return { far: true, input: raw.trim() };
+  const label = `${p.num} ${best.street.dir} ${best.street.name} ${best.street.type}`.replace(/\s+/g, " ").trim();
+  const near = nearestOnYard(best.x, best.y);
+  return { ...best, label, dist: near.d, nx: near.x, ny: near.y };
+}
+
+/* ---------- map drawing (shared by page and share cards) ---------- */
+// "home" view: zoomed to the address and the nearest yard edge, with the dotted line and ME marker.
+// "site" view: the whole proposed yard (plus its 500 ft zone for the headline numbers). Used for the
+// opening view, far-away addresses, and whenever "Show my location" is off, so the map can't give the address away.
+let showHome = true;
+function mapMode(r) {
+  if (r.overview || r.far) return { site: true, zone: true, home: false };
+  if (!showHome) return { site: true, zone: false, home: false };
+  return { site: false, zone: false, home: true };
+}
+const YB = YARD.reduce((a, [x, y]) => [Math.min(a[0], x), Math.max(a[1], x), Math.min(a[2], y), Math.max(a[3], y)], [1e9, -1e9, 1e9, -1e9]);
+function drawMap(ctx, X, Y, W, H, r, opt = {}) {
+  const C = Object.assign({ bg: "#0d0e0f", minor: "#24272a", major: "#3a3e42", hwy: "#5a5f64", water: "#1d2a33", rail: "#4a4e52",
+    yard: "#c8102e", school: "#c8102e", care: "#c8102e", home: "#ffffff", line: "#ffffff", label: "#f5f5f3", font: '"Barlow Condensed", "Arial Narrow", sans-serif', scale: 1 }, opt);
+  const mm = mapMode(r), yb = YB;
+  let cx, cy, span;
+  if (mm.site) { cx = (yb[0] + yb[1]) / 2 + 900; cy = (yb[2] + yb[3]) / 2 - 300; span = Math.max(9000, (yb[3] - yb[2] + 2200) * W / H); }
+  else { cx = (r.x + r.nx) / 2; cy = (r.y + r.ny) / 2; span = Math.max(4200, Math.abs(r.x - r.nx) * 2.4, Math.abs(r.y - r.ny) * 2.4 * W / H); }
+  const ft2px = W / span;
+  const px = x => X + W / 2 + (x - cx) * ft2px, py = y => Y + H / 2 - (y - cy) * ft2px;
+  ctx.save(); ctx.beginPath(); ctx.rect(X, Y, W, H); ctx.clip();
+  ctx.fillStyle = C.bg; ctx.fillRect(X, Y, W, H);
+  const path = c => { ctx.beginPath(); ctx.moveTo(px(c[0]), py(c[1])); for (let i = 2; i < c.length; i += 2) ctx.lineTo(px(c[i]), py(c[i + 1])); };
+  ctx.lineJoin = ctx.lineCap = "round";
+  for (const w of L.base.water) { path(w.c); if (w.p) { ctx.fillStyle = C.water; ctx.fill(); } else { ctx.strokeStyle = C.water; ctx.lineWidth = 9 * C.scale; ctx.stroke(); } }
+  const rs = mm.site ? .45 : 1;   // thinner roads when zoomed out
+  for (const [k, lw, col] of [["minor", 1.2, C.minor], ["major", 2.6, C.major], ["hwy", 4.5, C.hwy]])
+    for (const rd of L.base.roads) if (rd.k === k) { path(rd.c); ctx.strokeStyle = col; ctx.lineWidth = lw * C.scale * rs; ctx.stroke(); }
+  ctx.setLineDash([6 * C.scale, 5 * C.scale]);
+  for (const c of L.base.rails) { path(c); ctx.strokeStyle = C.rail; ctx.lineWidth = 1.5 * C.scale; ctx.stroke(); }
+  ctx.setLineDash([]);
+  // yard (500 ft zone drawn as a wide round-joined stroke around the outline)
+  ctx.beginPath(); YARD.forEach(([x, y], i) => i ? ctx.lineTo(px(x), py(y)) : ctx.moveTo(px(x), py(y))); ctx.closePath();
+  if (mm.zone) { ctx.save(); ctx.lineJoin = "round"; ctx.globalAlpha = .28; ctx.strokeStyle = C.yard; ctx.lineWidth = 1000 * ft2px; ctx.stroke(); ctx.fill(); ctx.restore(); }
+  ctx.globalAlpha = .55; ctx.fillStyle = C.yard; ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = C.yard; ctx.lineWidth = 3 * C.scale; ctx.stroke();
+  // schools (book) and day cares (toy blocks), same glyphs and locations as the dashboard
+  const glyph = (d, gx, gy, col, legend) => {
+    const k = (mm.site && !legend ? .7 : 1.1) * C.scale; ctx.save(); ctx.translate(gx, gy); ctx.scale(k, k); ctx.translate(-12, -12.5);
+    ctx.lineJoin = "round"; ctx.lineCap = "round";
+    for (const p of d) { const P = new Path2D(p); ctx.strokeStyle = C.bg; ctx.lineWidth = 5.5; ctx.stroke(P); }
+    for (const p of d) { const P = new Path2D(p); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke(P); }
+    ctx.restore();
+  };
+  const S = L.sites || { schools: [], care: [] };
+  for (const c of S.care) glyph([BLOCKS], px(c[1]), py(c[2]), C.care);
+  for (const s of S.schools) glyph([BOOK, BOOK_SPINE], px(s[1]), py(s[2]), C.school);
+  ctx.font = `700 ${22 * C.scale}px ${C.font}`; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+  if (mm.site) {
+    const lx0 = px(yb[1]) + 500 * ft2px + 14 * C.scale, l1 = "PROPOSED", l2 = "AMTRAK YARD", ly0 = py((yb[2] + yb[3]) / 2);
+    const bw = Math.max(ctx.measureText(l1).width, ctx.measureText(l2).width) + 16 * C.scale;
+    ctx.fillStyle = C.bg; ctx.globalAlpha = .85; ctx.fillRect(lx0 - 8 * C.scale, ly0 - 32 * C.scale, bw, 64 * C.scale); ctx.globalAlpha = 1;
+    ctx.fillStyle = C.label; ctx.fillText(l1, lx0, ly0 - 14 * C.scale); ctx.fillText(l2, lx0, ly0 + 14 * C.scale);
+  } else {
+    // distance line + home
+    if (r.dist > 0) {
+      ctx.setLineDash([10 * C.scale, 7 * C.scale]); ctx.strokeStyle = C.line; ctx.lineWidth = 3 * C.scale;
+      ctx.beginPath(); ctx.moveTo(px(r.x), py(r.y)); ctx.lineTo(px(r.nx), py(r.ny)); ctx.stroke(); ctx.setLineDash([]);
+    }
+    ctx.beginPath(); ctx.arc(px(r.x), py(r.y), 11 * C.scale, 0, Math.PI * 2); ctx.fillStyle = C.home; ctx.fill();
+    ctx.lineWidth = 4 * C.scale; ctx.strokeStyle = C.yard; ctx.stroke();
+    const hx = px(r.x), hy = py(r.y), yardRight = r.nx >= r.x;
+    ctx.fillStyle = C.label; ctx.textAlign = yardRight ? "right" : "left";
+    ctx.fillText("ME", hx + (yardRight ? -20 : 20) * C.scale, hy);
+    const lab = "PROPOSED AMTRAK YARD", lw = ctx.measureText(lab).width, pad = 14 * C.scale;
+    let lx = px(r.nx) + (yardRight ? 22 : -22) * C.scale - (yardRight ? 0 : lw);
+    lx = Math.max(X + pad, Math.min(X + W - pad - lw, lx));
+    let ly = py(r.ny) - 46 * C.scale; if (ly < Y + 30 * C.scale) ly = py(r.ny) + 46 * C.scale;
+    ctx.textAlign = "left";
+    ctx.fillStyle = C.bg; ctx.globalAlpha = .75; ctx.fillRect(lx - 6 * C.scale, ly - 15 * C.scale, lw + 12 * C.scale, 30 * C.scale); ctx.globalAlpha = 1;
+    ctx.fillStyle = C.label; ctx.fillText(lab, lx, ly);
+  }
+  // scale bar (500 ft)
+  const sb = 500 * ft2px, sx = X + 24 * C.scale, sy = Y + H - 26 * C.scale;
+  ctx.strokeStyle = C.label; ctx.lineWidth = 3 * C.scale; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + sb, sy); ctx.stroke();
+  ctx.font = `600 ${16 * C.scale}px ${C.font}`; ctx.textAlign = "left"; ctx.fillStyle = C.label; ctx.fillText("500 FT", sx + sb + 8 * C.scale, sy);
+  // legend (bottom right)
+  const items = [["DAY CARE", [BLOCKS], C.care], ["SCHOOL", [BOOK, BOOK_SPINE], C.school]];
+  if (mm.zone) items.unshift(["WITHIN 500 FT", null, C.yard]);
+  const gw = 30 * C.scale, gap = 10 * C.scale, sp = 22 * C.scale;
+  const widths = items.map(([txt]) => ctx.measureText(txt).width);
+  const boxW = widths.reduce((a, w) => a + gw + gap + w, 0) + sp * (items.length - 1) + 24 * C.scale;
+  const bx = X + W - boxW - 10 * C.scale, bh = 40 * C.scale;
+  ctx.fillStyle = C.bg; ctx.fillRect(bx, sy - bh / 2, boxW, bh);
+  let lx2 = bx + 12 * C.scale;
+  items.forEach(([txt, d, col], i) => {
+    if (d) glyph(d, lx2 + gw / 2, sy, col, true);
+    else { ctx.globalAlpha = .45; ctx.fillStyle = col; ctx.fillRect(lx2 + 3 * C.scale, sy - 10 * C.scale, gw - 6 * C.scale, 20 * C.scale); ctx.globalAlpha = 1; }
+    lx2 += gw + gap;
+    ctx.textAlign = "left"; ctx.fillStyle = C.label; ctx.fillText(txt, lx2, sy + 1); lx2 += widths[i] + sp;
+  });
+  ctx.restore();
+}
+
+/* ---------- result + share text ---------- */
+let current = null;
+function kidsLine(d) {
+  if (d <= 500) return { n: KIDS500, text: "children live as close as me" };
+  if (d <= 5280) { const n = roundKids(kidsWithin(d)); return n > 0 ? { n, text: "children live closer than me" } : null; }
+  return null;
+}
+function drawPageMap() {
+  if (!current) return;
+  const cv = $("map"); drawMap(cv.getContext("2d"), 0, 0, cv.width, cv.height, current, { scale: 1.4 });
+}
+function render(r, isExample) {
+  current = r; card = {};
+  const k = $("kids"), kk = $("kicker");
+  const isAddr = !r.overview && !r.far;
+  $("homewrap").hidden = !isAddr;
+  if (r.overview) {
+    $("tag").textContent = "Within 500 feet of the proposed yard";
+    $("big").innerHTML = `<span class="n">${fmt(POP500)}</span> people live within 500 feet of the Amtrak railyard`;
+    k.hidden = false; k.innerHTML = `<span class="k">${fmt(KIDS500)}</span> are children`;
+    kk.hidden = true;
+    $("matched").textContent = "Enter your address above to see how far you live from it.";
+  } else if (r.far) {
+    $("tag").textContent = isExample ? "Example: outside the 2-mile area" : "Outside the 2-mile area";
+    $("big").innerHTML = `<span class="n">${fmt(POP500)}</span> people live within 500 feet of the Amtrak railyard`;
+    k.hidden = false; k.innerHTML = `Including <span class="k">${fmt(KIDS500)}</span> children`;
+    kk.hidden = false; kk.textContent = "I wouldn’t want it in my neighborhood either.";
+    $("matched").textContent = `“${r.input}” isn’t within 2 miles of the site, so here’s who lives closest. If you do live nearby, check the spelling and try again.`;
+  } else {
+    const feet = roundFeet(r.dist);
+    r.feet = feet; r.kids = kidsLine(r.dist);
+    $("tag").textContent = isExample ? "Example address" : "Your distance";
+    $("big").innerHTML = `I live <span class="n">${fmt(feet)}</span> ${feet === 1 ? "foot" : "feet"} from the Amtrak railyard`;
+    kk.hidden = true;
+    if (r.kids) { k.hidden = false; k.innerHTML = `<span class="k">${fmt(r.kids.n)}</span> ${r.kids.text}`; } else k.hidden = true;
+    $("matched").textContent = `Matched ${r.label}` + (r.how === "between" ? " (placed between neighboring addresses)" : r.how === "near" ? ` (nearest listed address: ${r.nn})` : "") +
+      (feet >= 5280 ? ` · ${(r.dist / 5280).toFixed(1)} miles` : "");
+  }
+  $("sheet-h").textContent = isAddr ? "Share your distance" : "Share these numbers";
+  drawPageMap();
+  $("sheet").hidden = true;
+}
+function shareText(r) {
+  const tail = ` How close are you? ${CONFIG.shareUrl}`;
+  const site = "the railyard Amtrak wants to build at Canal Street Yard in Bridgeport";
+  if (r.overview) return `${fmt(POP500)} people live within 500 feet of ${site}. ${fmt(KIDS500)} are children.` + tail;
+  if (r.far) return `${fmt(POP500)} people live within 500 feet of ${site}, including ${fmt(KIDS500)} children. I wouldn’t want it in my neighborhood either.` + tail;
+  let t = `I live ${fmt(r.feet)} feet from ${site}.`;
+  if (r.kids) t += ` ${fmt(r.kids.n)} ${r.kids.text}.`;
+  return t + tail;
+}
+
+/* ---------- share images: Story 1080x1920 and Post 1080x1350 ---------- */
+const FORMATS = {
+  story: { W: 1080, H: 1920, s: 1, logo: 150, note: "1080×1920" },
+  post: { W: 1080, H: 1350, s: .72, logo: 116, note: "1080×1350" },
+};
+let cardFormat = "story";
+function cardSpec(r) {
+  const WH = "#f5f5f3", RD = "#ff5a70";
+  if (r.overview || r.far) return {
+    top: [{ p: [[fmt(POP500), WH]], size: 270, big: true },
+      { p: [["PEOPLE LIVE WITHIN", WH]], size: 92, g: 1 }, { p: [["500 FEET OF THE", WH]], size: 92, g: 1 }, { p: [["AMTRAK RAILYARD", WH]], size: 92, g: 1 }],
+    bottom: r.far
+      ? [{ p: [["INCLUDING ", WH], [fmt(KIDS500), RD], [" CHILDREN", WH]], size: 88 },
+         { p: [["I WOULDN’T WANT IT IN MY", WH]], size: 70, g: 2 }, { p: [["NEIGHBORHOOD EITHER.", WH]], size: 70, g: 2 }]
+      : [{ p: [[fmt(KIDS500), RD], [" ARE CHILDREN", WH]], size: 96 }],
+  };
+  const spec = {
+    top: [{ p: [["I LIVE", WH]], size: 120 }, { p: [[fmt(r.feet), WH]], size: 330, big: true },
+      { p: [[(r.feet === 1 ? "FOOT" : "FEET") + " FROM THE", WH]], size: 112, g: 1 }, { p: [["AMTRAK RAILYARD", WH]], size: 112, g: 1 }],
+    bottom: [],
+  };
+  if (r.kids) {
+    const [a, b] = r.kids.text.toUpperCase().split(" LIVE ");   // "CHILDREN", "CLOSER THAN ME" / "AS CLOSE AS ME"
+    spec.bottom = [{ p: [[fmt(r.kids.n), RD], [" " + a + " LIVE", WH]], size: 96 }, { p: [[b, WH]], size: 72 }];
+  }
+  return spec;
+}
+async function makeCard(r, key) {
+  try { await Promise.all(["800 100px 'Barlow Condensed'", "700 40px 'Barlow Condensed'", "500 30px 'Barlow'"].map(f => document.fonts.load(f))); } catch (e) {}
+  const FM = FORMATS[key], W = FM.W, H = FM.H, s = FM.s, M = Math.round(80 * (s < 1 ? .85 : 1)), CW = W - 2 * M;
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const c = cv.getContext("2d"), F = '"Barlow Condensed", "Arial Narrow", sans-serif';
+  const txt = l => l.p.map(q => q[0]).join("");
+  const fitSize = (l, maxW) => { let z = l.size * s; do { c.font = `800 ${z}px ${F}`; } while (c.measureText(txt(l)).width > maxW && (z -= 2) > 12); return z; };
+  const groupMin = (lines, sizes) => { const g = {}; lines.forEach((l, i) => { if (l.g) g[l.g] = Math.min(g[l.g] ?? 1e9, sizes[i]); }); return sizes.map((z, i) => lines[i].g ? g[lines[i].g] : z); };
+  const drawLine = (l, z, y) => { let x = M - (l.big ? 6 * s : 0); for (const [t, col] of l.p) { c.font = `800 ${z}px ${F}`; c.fillStyle = col; c.fillText(t, x, y); x += c.measureText(t).width; } };
+  c.fillStyle = "#0d0e0f"; c.fillRect(0, 0, W, H);
+  c.fillStyle = "#c8102e"; c.fillRect(0, 0, W, 14 * s);
+  const logoTop = 74 * s, logoBottom = logoTop + FM.logo;
+  try { if (!logoImg.complete) await logoImg.decode(); c.imageSmoothingQuality = "high"; c.drawImage(logoImg, W - M - FM.logo, logoTop, FM.logo, FM.logo); } catch (e) {}
+  c.textBaseline = "alphabetic"; c.textAlign = "left";
+  const spec = cardSpec(r);
+  // top block, top-down; lines whose caps would reach the logo's rows are fitted to the narrower width
+  let sizes = spec.top.map(l => fitSize(l, CW));
+  sizes = groupMin(spec.top, sizes);
+  let y = 145 * s, base = [];
+  spec.top.forEach((l, i) => {
+    let z = sizes[i];
+    const b = i === 0 ? y + z * .72 : base[i - 1] + z * (l.big ? .88 : 1.0);
+    if (b - z * .74 < logoBottom + 10 * s) z = Math.min(z, fitSize(l, CW - FM.logo - 30 * s));
+    sizes[i] = z; base.push(i === 0 ? y + z * .72 : base[i - 1] + z * (l.big ? .88 : 1.0));
+  });
+  spec.top.forEach((l, i) => drawLine(l, sizes[i], base[i]));
+  const mapTop = base[base.length - 1] + 50 * s;
+  // footer
+  c.fillStyle = "#f5f5f3"; const foot = "HOW CLOSE ARE YOU?  " + CONFIG.cardFooter.toUpperCase();
+  let fz = 40 * s; do { c.font = `700 ${fz}px ${F}`; } while (c.measureText(foot).width > CW && (fz -= 2) > 10); c.fillText(foot, M, H - 80 * s);
+  c.fillStyle = "#a9adb1"; const sub = "Proposed Amtrak maintenance yard at Canal Street Yard, Bridgeport.";
+  let sz = 30 * s; do { c.font = `500 ${sz}px "Barlow", system-ui, sans-serif`; } while (c.measureText(sub).width > CW && (sz -= 1) > 10); c.fillText(sub, M, H - 138 * s);
+  // bottom block, bottom-up above the footer
+  let mapBottom = H - 210 * s;
+  if (spec.bottom.length) {
+    let bs = groupMin(spec.bottom, spec.bottom.map(l => fitSize(l, CW)));
+    const bb = new Array(bs.length); bb[bs.length - 1] = H - 215 * s;
+    for (let i = bs.length - 2; i >= 0; i--) bb[i] = bb[i + 1] - bs[i + 1] * 1.0;
+    const ruleY = bb[0] - bs[0] * .72 - 34 * s;
+    c.fillStyle = "#c8102e"; c.fillRect(M, ruleY, CW, 6 * s);
+    spec.bottom.forEach((l, i) => drawLine(l, bs[i], bb[i]));
+    mapBottom = ruleY - 40 * s;
+  }
+  drawMap(c, M, mapTop, CW, mapBottom - mapTop, r, { scale: 1.6 * (s < 1 ? .8 : 1) });
+  c.strokeStyle = "#3a3e42"; c.lineWidth = 2; c.strokeRect(M, mapTop, CW, mapBottom - mapTop);
+  return new Promise(res => cv.toBlob(b => res({ blob: b, url: URL.createObjectURL(b) }), "image/png"));
+}
+
+let card = {};
+let canFiles = false;   // true where the browser can hand an image to the phone's share sheet   // format -> {blob, url}, reset whenever the result or the location toggle changes
+const fileName = () => `railyard-${current.overview || current.far ? "500ft" : "distance"}-${cardFormat}.png`;
+async function getCard() {
+  if (!card[cardFormat]) card[cardFormat] = await makeCard(current, cardFormat);
+  return card[cardFormat];
+}
+async function refreshSheet() {
+  $("status").textContent = "Making your image…";
+  const cd = await getCard();
+  $("card").src = cd.url;
+  $("card").alt = shareText(current).replace(/ How close are you\?.*$/, "");
+  $("save-note").textContent = `PNG, ${FORMATS[cardFormat].note}`;
+  $("status").textContent = "";
+  return cd;
+}
+async function openSheet() {
+  if (!current) return;
+  $("sheet").hidden = false;
+  $("sharetext").value = shareText(current);
+  const cd = await refreshSheet();
+  const file = new File([cd.blob], fileName(), { type: "image/png" });
+  canFiles = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+  $("ig-note").textContent = canFiles ? "Then choose Story or Post" : "Saves the image to post";
+  $("fb-note").textContent = canFiles ? "Then choose Facebook" : "Shares the page link";
+  $("sheet").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+}
+async function nativeShare() {
+  // Image only: on iPhone, adding text to an image share can drop Instagram from the share sheet
+  // or make Instagram ignore the image. The message is on the Text, Email and Copy buttons.
+  const cd = await getCard();
+  const file = new File([cd.blob], fileName(), { type: "image/png" });
+  try { await navigator.share({ files: [file] }); }
+  catch (e) { if (e && e.name !== "AbortError") $("status").textContent = "Sharing isn’t available here. Save the image instead."; }
+}
+function openLink(href, what) {
+  const a = document.createElement("a"); a.href = href; a.target = "_top"; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove();
+  $("status").textContent = `If ${what} didn’t open, copy the message below and paste it in.`;
+}
+async function saveImage() {
+  const cd = await getCard();
+  const dl = await (window.claude?.use ? window.claude.use("downloads").catch(() => null) : null);
+  if (dl) {
+    try { await dl.save({ filename: fileName(), data: cd.blob }); $("status").textContent = "Image saved."; }
+    catch (e) { $("status").textContent = e && e.code === "declined" ? "" : "Couldn’t save here. Press and hold (or right-click) the image to save it."; }
+    return;
+  }
+  const a = document.createElement("a"); a.href = cd.url; a.download = fileName(); document.body.appendChild(a); a.click(); a.remove();
+  $("status").textContent = "If nothing downloaded, press and hold (or right-click) the image to save it.";
+}
+async function copyText() {
+  const t = $("sharetext");
+  try { await navigator.clipboard.writeText(t.value); $("status").textContent = "Message copied."; }
+  catch (e) { t.focus(); t.select(); $("status").textContent = "Select the message and copy it."; }
+}
+
+/* ---------- wiring ---------- */
+function run(addr, isExample) {
+  const r = lookup(addr);
+  const m = $("msg");
+  if (r.error) { m.textContent = r.error; m.hidden = false; return; }
+  m.hidden = true; render(r, isExample);
+}
+$("f").addEventListener("submit", e => { e.preventDefault(); run($("addr").value, false); });
+document.querySelectorAll("[data-ex]").forEach(b => b.addEventListener("click", () => { $("addr").value = b.dataset.ex; run(b.dataset.ex, true); }));
+$("share").addEventListener("click", openSheet);
+$("showhome").addEventListener("change", e => {
+  showHome = e.target.checked; card = {};
+  drawPageMap();
+  if (!$("sheet").hidden) refreshSheet();
+});
+document.querySelectorAll('input[name="fmt"]').forEach(el => el.addEventListener("change", () => { cardFormat = el.value; refreshSheet(); }));
+$("b-ig").addEventListener("click", () => (canFiles ? nativeShare() : saveImage()));
+// Facebook: on phones, the image through the share sheet; elsewhere Facebook's link-share page
+// (Facebook builds that post from the page's own preview, not this image).
+$("b-fb").addEventListener("click", () => {
+  if (canFiles) return nativeShare();
+  const a = document.createElement("a"); a.href = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(CONFIG.shareUrl);
+  a.target = "_blank"; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove();
+  $("status").textContent = "Facebook opens in a new tab. To post the image instead, save it and add it to your post.";
+});
+$("b-sms").addEventListener("click", () => openLink("sms:?&body=" + encodeURIComponent(shareText(current)), "Messages"));
+$("b-mail").addEventListener("click", () => openLink("mailto:?subject=" + encodeURIComponent("How close do you live to the Amtrak railyard?") + "&body=" + encodeURIComponent(shareText(current)), "your mail app"));
+$("b-save").addEventListener("click", saveImage);
+$("b-copy").addEventListener("click", copyText);
+window.__lookup = lookup;  // handy for testing from the console
+render({ overview: true }, false);
+if (document.fonts) document.fonts.ready.then(drawPageMap);
+})();
+</script>
