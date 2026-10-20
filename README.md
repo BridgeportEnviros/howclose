@@ -2,7 +2,7 @@
 
 **Live page:** https://bridgeportenviros.github.io/howclose/
 
-A one-page tool for Bridgeport Environmentalists' "I live ___ feet from the Amtrak railyard" sign campaign. Enter an address to see how far it is from the railyard Amtrak has proposed at Canal Street Yard, how many children live closer, and share the result as an image for Instagram, Facebook, email or text.
+A one-page tool for Bridgeport Environmentalists. Enter an address to see how far it is from the railyard Amtrak has proposed at Canal Street Yard, and share the result as an image for Instagram, Facebook, email or text.
 
 Addresses are matched inside the browser against a built-in address list, so nothing a visitor types is sent anywhere. There are no API keys or outside services.
 
