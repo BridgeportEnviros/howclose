@@ -22,11 +22,12 @@ body { background: var(--bg); color: var(--fg); font-family: var(--body); font-s
 .wrap { max-width: 640px; margin: 0 auto; padding: 28px 16px 64px; display: grid; gap: 22px }
 h1 { font-family: var(--display); font-weight: 800; font-size: clamp(34px, 8vw, 52px); line-height: .95; text-transform: uppercase; letter-spacing: .01em; margin: 0; text-wrap: balance }
 .lede { color: var(--muted); margin: 8px 0 0; max-width: 60ch }
-.top { display: flex; gap: 16px; align-items: flex-start; justify-content: space-between }
-.top > div { min-width: 0 }
-.belogo { flex: none; line-height: 0; border-radius: 4px; outline-offset: 3px }
-.belogo img { display: block; width: 72px; height: 72px; border-radius: 4px }
-@media (max-width: 420px) { .belogo img { width: 56px; height: 56px } }
+.top { display: grid; gap: 14px }
+.brand { display: inline-flex; align-items: center; gap: 12px; width: max-content; max-width: 100%; color: var(--fg); text-decoration: none; border-radius: 4px; outline-offset: 3px }
+.brand img { flex: none; display: block; width: 52px; height: 52px; border-radius: 4px }
+.brand span { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 17px; line-height: 1.1 }
+.brand:hover span { text-decoration: underline }
+.learn { font-weight: 600; color: var(--fg) }
 form { display: grid; gap: 10px }
 label { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: 14px }
 .row { display: flex; gap: 8px; flex-wrap: wrap }
@@ -88,11 +89,11 @@ textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px; border-ra
 
 <div class="wrap">
   <header class="top">
+    <a class="brand" href="https://www.bridgeportenviros.org/projects/amtrak-railyard" target="_blank" rel="noopener"><img src="__LOGO__" alt="" width="52" height="52"><span>Bridgeport Environmentalists</span></a>
     <div>
     <h1>How far do you live from the Amtrak railyard?</h1>
-    <p class="lede">Enter your address to see how close you live to the yard Amtrak has proposed at Canal Street Yard, then share it.</p>
+    <p class="lede">Enter your address to see how close you live to the yard Amtrak has proposed at Canal Street Yard, then share it. <a class="learn" href="https://www.bridgeportenviros.org/projects/amtrak-railyard" target="_blank" rel="noopener">Learn more about the proposed facility</a></p>
     </div>
-    <a class="belogo" href="https://www.bridgeportenviros.org/projects/amtrak-railyard" target="_blank" rel="noopener" title="Bridgeport Environmentalists"><img src="__LOGO__" alt="Bridgeport Environmentalists" width="72" height="72"></a>
   </header>
 
   <form id="f" autocomplete="off">
@@ -174,6 +175,8 @@ const logoImg = new Image(); logoImg.src = LOGO_SRC;
 const CONFIG = {
   shareUrl: "https://bridgeportenviros.github.io/howclose/",   // switch to https://howclose.bridgeportenviros.org/ once the subdomain is set up
   cardFooter: "bridgeportenviros.github.io/howclose",
+  learnMoreUrl: "https://www.bridgeportenviros.org/projects/amtrak-railyard",   // the call to action on images and in messages
+  learnMoreLabel: "www.bridgeportenviros.org/projects/amtrak-railyard",
 };
 const L = window.LOOKUP;
 const YARD = L.yard;
@@ -300,6 +303,14 @@ function lookup(raw) {
 // "site" view: the whole proposed yard (plus its 500 ft zone for the headline numbers). Used for the
 // opening view, far-away addresses, and whenever "Show my location" is off, so the map can't give the address away.
 let showHome = true;
+const ME_R = 250, ME_SHIFT = 125;   // feet: radius of the ME circle, and the most its center is moved off the address
+function placeMe(r) {
+  // stable for a given address: the same address always draws the same circle
+  let h = 2166136261; for (const ch of r.label) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+  const a = ((h >>> 0) % 3600) / 3600 * 2 * Math.PI, d = ME_SHIFT * (0.4 + (((h >>> 12) % 1000) / 1000) * 0.6);
+  r.jx = r.x + Math.cos(a) * d; r.jy = r.y + Math.sin(a) * d;
+  const n = nearestOnYard(r.jx, r.jy); r.jnx = n.x; r.jny = n.y;
+}
 function mapMode(r) {
   if (r.overview || r.far) return { site: true, zone: true, home: false };
   if (!showHome) return { site: true, zone: false, home: false };
@@ -312,7 +323,7 @@ function drawMap(ctx, X, Y, W, H, r, opt = {}) {
   const mm = mapMode(r), yb = YB;
   let cx, cy, span;
   if (mm.site) { cx = (yb[0] + yb[1]) / 2 + 900; cy = (yb[2] + yb[3]) / 2 - 300; span = Math.max(9000, (yb[3] - yb[2] + 2200) * W / H); }
-  else { cx = (r.x + r.nx) / 2; cy = (r.y + r.ny) / 2; span = Math.max(4200, Math.abs(r.x - r.nx) * 2.4, Math.abs(r.y - r.ny) * 2.4 * W / H); }
+  else { cx = (r.jx + r.jnx) / 2; cy = (r.jy + r.jny) / 2; span = Math.max(4200, (Math.abs(r.jx - r.jnx) + 2 * ME_R) * 2.0, (Math.abs(r.jy - r.jny) + 2 * ME_R) * 2.0 * W / H); }
   const ft2px = W / span;
   const px = x => X + W / 2 + (x - cx) * ft2px, py = y => Y + H / 2 - (y - cy) * ft2px;
   ctx.save(); ctx.beginPath(); ctx.rect(X, Y, W, H); ctx.clip();
@@ -326,6 +337,13 @@ function drawMap(ctx, X, Y, W, H, r, opt = {}) {
   ctx.setLineDash([6 * C.scale, 5 * C.scale]);
   for (const c of L.base.rails) { path(c); ctx.strokeStyle = C.rail; ctx.lineWidth = 1.5 * C.scale; ctx.stroke(); }
   ctx.setLineDash([]);
+  // landmarks for orientation, kept muted so the yard stays the focus
+  for (const lm of (L.landmarks || [])) {
+    path(lm.c); ctx.closePath();
+    const park = lm.k === "park";
+    ctx.fillStyle = park ? "rgba(112,160,122,.16)" : "rgba(245,245,243,.07)"; ctx.fill();
+    ctx.strokeStyle = park ? "rgba(112,160,122,.7)" : "rgba(245,245,243,.6)"; ctx.lineWidth = 2 * C.scale; ctx.stroke();
+  }
   // yard (500 ft zone drawn as a wide round-joined stroke around the outline)
   ctx.beginPath(); YARD.forEach(([x, y], i) => i ? ctx.lineTo(px(x), py(y)) : ctx.moveTo(px(x), py(y))); ctx.closePath();
   if (mm.zone) { ctx.save(); ctx.lineJoin = "round"; ctx.globalAlpha = .28; ctx.strokeStyle = C.yard; ctx.lineWidth = 1000 * ft2px; ctx.stroke(); ctx.fill(); ctx.restore(); }
@@ -341,27 +359,46 @@ function drawMap(ctx, X, Y, W, H, r, opt = {}) {
   const S = L.sites || { schools: [], care: [] };
   for (const c of S.care) glyph([BLOCKS], px(c[1]), py(c[2]), C.care);
   for (const s of S.schools) glyph([BOOK, BOOK_SPINE], px(s[1]), py(s[2]), C.school);
+  // landmark names, drawn after the glyphs so they stay readable
+  ctx.textBaseline = "middle"; ctx.textAlign = "center";
+  for (const lm of (L.landmarks || [])) {
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (let i = 0; i < lm.c.length; i += 2) { x0 = Math.min(x0, lm.c[i]); x1 = Math.max(x1, lm.c[i]); y0 = Math.min(y0, lm.c[i + 1]); y1 = Math.max(y1, lm.c[i + 1]); }
+    const lx = px((x0 + x1) / 2), ly = py((y0 + y1) / 2), fz = (mm.site ? 13 : 16) * C.scale;
+    if (lx < X || lx > X + W || ly < Y || ly > Y + H) continue;
+    ctx.font = `700 ${fz}px ${C.font}`;
+    const words = lm.n.split(" "), lines = mm.site && words.length > 1 ? [words.slice(0, -1).join(" "), words[words.length - 1]] : [lm.n];
+    lines.forEach((s, i) => {
+      const yy = ly + (i - (lines.length - 1) / 2) * fz * 1.05;
+      ctx.lineWidth = 4 * C.scale; ctx.strokeStyle = "rgba(13,14,15,.85)"; ctx.strokeText(s, lx, yy);
+      ctx.fillStyle = lm.k === "park" ? "#9cc6a6" : "#d9dbdd"; ctx.fillText(s, lx, yy);
+    });
+  }
   ctx.font = `700 ${22 * C.scale}px ${C.font}`; ctx.textBaseline = "middle"; ctx.textAlign = "left";
   if (mm.site) {
-    const lx0 = px(yb[1]) + 500 * ft2px + 14 * C.scale, l1 = "PROPOSED", l2 = "AMTRAK YARD", ly0 = py((yb[2] + yb[3]) / 2);
+    const lx0 = px(yb[1]) + 500 * ft2px + 14 * C.scale, l1 = "PROPOSED", l2 = "AMTRAK YARD", ly0 = py(yb[2] + (yb[3] - yb[2]) * 0.7);   // north half: clear of Armour Square Park and Rate Field labels
     const bw = Math.max(ctx.measureText(l1).width, ctx.measureText(l2).width) + 16 * C.scale;
     ctx.fillStyle = C.bg; ctx.globalAlpha = .85; ctx.fillRect(lx0 - 8 * C.scale, ly0 - 32 * C.scale, bw, 64 * C.scale); ctx.globalAlpha = 1;
     ctx.fillStyle = C.label; ctx.fillText(l1, lx0, ly0 - 14 * C.scale); ctx.fillText(l2, lx0, ly0 + 14 * C.scale);
   } else {
-    // distance line + home
-    if (r.dist > 0) {
+    // "ME" is a 250 ft circle whose center is shifted up to 125 ft from the address, so the map shows
+    // the area, not the house. The dotted line runs from the circle's edge to the yard edge nearest the circle.
+    const hx = px(r.jx), hy = py(r.jy), rp = Math.max(ME_R * ft2px, 16 * C.scale);
+    const dj = Math.hypot(r.jnx - r.jx, r.jny - r.jy);
+    if (dj > ME_R) {
+      const ux = (r.jnx - r.jx) / dj, uy = (r.jny - r.jy) / dj;
       ctx.setLineDash([10 * C.scale, 7 * C.scale]); ctx.strokeStyle = C.line; ctx.lineWidth = 3 * C.scale;
-      ctx.beginPath(); ctx.moveTo(px(r.x), py(r.y)); ctx.lineTo(px(r.nx), py(r.ny)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(hx + ux * rp, hy - uy * rp); ctx.lineTo(px(r.jnx), py(r.jny)); ctx.stroke(); ctx.setLineDash([]);
     }
-    ctx.beginPath(); ctx.arc(px(r.x), py(r.y), 11 * C.scale, 0, Math.PI * 2); ctx.fillStyle = C.home; ctx.fill();
-    ctx.lineWidth = 4 * C.scale; ctx.strokeStyle = C.yard; ctx.stroke();
-    const hx = px(r.x), hy = py(r.y), yardRight = r.nx >= r.x;
+    ctx.beginPath(); ctx.arc(hx, hy, rp, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,255,255,.2)"; ctx.fill(); ctx.lineWidth = 3 * C.scale; ctx.strokeStyle = C.home; ctx.stroke();
+    const yardRight = r.jnx >= r.jx;
     ctx.fillStyle = C.label; ctx.textAlign = yardRight ? "right" : "left";
-    ctx.fillText("ME", hx + (yardRight ? -20 : 20) * C.scale, hy);
+    ctx.fillText("ME", hx + (yardRight ? -1 : 1) * (rp + 10 * C.scale), hy);
     const lab = "PROPOSED AMTRAK YARD", lw = ctx.measureText(lab).width, pad = 14 * C.scale;
-    let lx = px(r.nx) + (yardRight ? 22 : -22) * C.scale - (yardRight ? 0 : lw);
+    let lx = px(r.jnx) + (yardRight ? 22 : -22) * C.scale - (yardRight ? 0 : lw);
     lx = Math.max(X + pad, Math.min(X + W - pad - lw, lx));
-    let ly = py(r.ny) - 46 * C.scale; if (ly < Y + 30 * C.scale) ly = py(r.ny) + 46 * C.scale;
+    let ly = py(r.jny) - 46 * C.scale; if (ly < Y + 30 * C.scale) ly = py(r.jny) + 46 * C.scale;
     ctx.textAlign = "left";
     ctx.fillStyle = C.bg; ctx.globalAlpha = .75; ctx.fillRect(lx - 6 * C.scale, ly - 15 * C.scale, lw + 12 * C.scale, 30 * C.scale); ctx.globalAlpha = 1;
     ctx.fillStyle = C.label; ctx.fillText(lab, lx, ly);
@@ -420,7 +457,7 @@ function render(r, isExample) {
     $("matched").textContent = `“${r.input}” isn’t within 2 miles of the site, so here’s who lives closest. If you do live nearby, check the spelling and try again.`;
   } else {
     const feet = roundFeet(r.dist);
-    r.feet = feet; r.kids = kidsLine(r.dist);
+    r.feet = feet; r.kids = kidsLine(r.dist); placeMe(r);
     $("tag").textContent = isExample ? "Example address" : "Your distance";
     $("big").innerHTML = `I live <span class="n">${fmt(feet)}</span> ${feet === 1 ? "foot" : "feet"} from the Amtrak railyard`;
     kk.hidden = true;
@@ -433,7 +470,7 @@ function render(r, isExample) {
   $("sheet").hidden = true;
 }
 function shareText(r) {
-  const tail = ` How close are you? ${CONFIG.shareUrl}`;
+  const tail = ` Learn more: ${CONFIG.learnMoreUrl}`;
   const site = "the railyard Amtrak wants to build at Canal Street Yard in Bridgeport";
   if (r.overview) return `${fmt(POP500)} people live within 500 feet of ${site}. ${fmt(KIDS500)} are children.` + tail;
   if (r.far) return `${fmt(POP500)} people live within 500 feet of ${site}, including ${fmt(KIDS500)} children. I wouldn’t want it in my neighborhood either.` + tail;
@@ -480,24 +517,26 @@ async function makeCard(r, key) {
   const drawLine = (l, z, y) => { let x = M - (l.big ? 6 * s : 0); for (const [t, col] of l.p) { c.font = `800 ${z}px ${F}`; c.fillStyle = col; c.fillText(t, x, y); x += c.measureText(t).width; } };
   c.fillStyle = "#0d0e0f"; c.fillRect(0, 0, W, H);
   c.fillStyle = "#c8102e"; c.fillRect(0, 0, W, 14 * s);
-  const logoTop = 74 * s, logoBottom = logoTop + FM.logo;
-  try { if (!logoImg.complete) await logoImg.decode(); c.imageSmoothingQuality = "high"; c.drawImage(logoImg, W - M - FM.logo, logoTop, FM.logo, FM.logo); } catch (e) {}
+  // header: logo with the group's name beside it
+  const LG = 92 * s, LT = 50 * s;
+  try { if (!logoImg.complete) await logoImg.decode(); c.imageSmoothingQuality = "high"; c.drawImage(logoImg, M, LT, LG, LG); } catch (e) {}
+  c.fillStyle = "#f5f5f3"; c.textBaseline = "middle"; c.font = `700 ${40 * s}px ${F}`;
+  c.fillText("BRIDGEPORT ENVIRONMENTALISTS", M + LG + 22 * s, LT + LG / 2 + 2 * s); c.textBaseline = "alphabetic";
   c.textBaseline = "alphabetic"; c.textAlign = "left";
   const spec = cardSpec(r);
   // top block, top-down; lines whose caps would reach the logo's rows are fitted to the narrower width
   let sizes = spec.top.map(l => fitSize(l, CW));
   sizes = groupMin(spec.top, sizes);
-  let y = 145 * s, base = [];
+  let y = LT + LG + 56 * s, base = [];
   spec.top.forEach((l, i) => {
     let z = sizes[i];
     const b = i === 0 ? y + z * .72 : base[i - 1] + z * (l.big ? .88 : 1.0);
-    if (b - z * .74 < logoBottom + 10 * s) z = Math.min(z, fitSize(l, CW - FM.logo - 30 * s));
     sizes[i] = z; base.push(i === 0 ? y + z * .72 : base[i - 1] + z * (l.big ? .88 : 1.0));
   });
   spec.top.forEach((l, i) => drawLine(l, sizes[i], base[i]));
   const mapTop = base[base.length - 1] + 50 * s;
   // footer
-  c.fillStyle = "#f5f5f3"; const foot = "HOW CLOSE ARE YOU?  " + CONFIG.cardFooter.toUpperCase();
+  c.fillStyle = "#f5f5f3"; const foot = "LEARN MORE  " + CONFIG.learnMoreLabel.toUpperCase();
   let fz = 40 * s; do { c.font = `700 ${fz}px ${F}`; } while (c.measureText(foot).width > CW && (fz -= 2) > 10); c.fillText(foot, M, H - 80 * s);
   c.fillStyle = "#a9adb1"; const sub = "Proposed Amtrak maintenance yard at Canal Street Yard, Bridgeport.";
   let sz = 30 * s; do { c.font = `500 ${sz}px "Barlow", system-ui, sans-serif`; } while (c.measureText(sub).width > CW && (sz -= 1) > 10); c.fillText(sub, M, H - 138 * s);
@@ -528,7 +567,7 @@ async function refreshSheet() {
   $("status").textContent = "Making your image…";
   const cd = await getCard();
   $("card").src = cd.url;
-  $("card").alt = shareText(current).replace(/ How close are you\?.*$/, "");
+  $("card").alt = shareText(current).replace(/ Learn more:.*$/, "");
   $("save-note").textContent = canFiles ? "Then tap Save Image" : `PNG, ${FORMATS[cardFormat].note}`;
   $("status").textContent = "";
   return cd;
@@ -617,16 +656,16 @@ window.__makeLinkCard = async () => {
   const c = cv.getContext("2d"), F = '"Barlow Condensed", "Arial Narrow", sans-serif', M = 56, LW = 600;
   const fit = (s, z, w = 800, max = LW) => { do { c.font = `${w} ${z}px ${F}`; } while (c.measureText(s).width > max && (z -= 2) > 10); return z; };
   c.fillStyle = "#0d0e0f"; c.fillRect(0, 0, W, H); c.fillStyle = "#c8102e"; c.fillRect(0, 0, W, 10);
-  try { if (!logoImg.complete) await logoImg.decode(); c.drawImage(logoImg, M + LW - 96, 44, 96, 96); } catch (e) {}
-  c.textBaseline = "alphabetic"; c.fillStyle = "#f5f5f3";
-  const nz = fit(fmt(POP500), 190, 800, LW - 120); c.fillText(fmt(POP500), M - 4, 50 + nz * .74);
-  let y = 50 + nz * .74 + 66; const lz = Math.min(...["PEOPLE LIVE WITHIN", "500 FEET OF THE", "AMTRAK RAILYARD"].map(s => fit(s, 62)));
+  try { if (!logoImg.complete) await logoImg.decode(); c.drawImage(logoImg, M, 34, 64, 64); } catch (e) {}
+  c.fillStyle = "#f5f5f3"; c.textBaseline = "middle"; c.font = `700 30px ${F}`; c.fillText("BRIDGEPORT ENVIRONMENTALISTS", M + 80, 68); c.textBaseline = "alphabetic";
+  const nz = fit(fmt(POP500), 150, 800, LW); c.fillText(fmt(POP500), M - 4, 124 + nz * .74);
+  let y = 124 + nz * .74 + 58; const lz = Math.min(...["PEOPLE LIVE WITHIN", "500 FEET OF THE", "AMTRAK RAILYARD"].map(s => fit(s, 54)));
   c.font = `800 ${lz}px ${F}`; ["PEOPLE LIVE WITHIN", "500 FEET OF THE", "AMTRAK RAILYARD"].forEach((s, i) => c.fillText(s, M, y + i * lz));
-  y += 2 * lz + 34; c.fillStyle = "#c8102e"; c.fillRect(M, y, LW, 5);
-  const kz = fit(fmt(KIDS500) + " ARE CHILDREN", 60); c.font = `800 ${kz}px ${F}`;
+  y += 2 * lz + 28; c.fillStyle = "#c8102e"; c.fillRect(M, y, LW, 5);
+  const kz = fit(fmt(KIDS500) + " ARE CHILDREN", 52); c.font = `800 ${kz}px ${F}`;
   c.fillStyle = "#ff5a70"; c.fillText(fmt(KIDS500), M, y + 16 + kz * .74); const kw = c.measureText(fmt(KIDS500) + " ").width;
   c.fillStyle = "#f5f5f3"; c.fillText("ARE CHILDREN", M + kw, y + 16 + kz * .74);
-  const foot = "HOW CLOSE ARE YOU?  " + CONFIG.cardFooter.toUpperCase(); fit(foot, 28, 700); c.fillStyle = "#a9adb1"; c.fillText(foot, M, H - 40);
+  const foot = "LEARN MORE  " + CONFIG.learnMoreLabel.toUpperCase(); fit(foot, 26, 700); c.fillStyle = "#a9adb1"; c.fillText(foot, M, H - 40);
   drawMap(c, M + LW + 34, 34, W - (M + LW + 34) - 34, H - 68, { overview: true }, { scale: 1.1 });
   c.strokeStyle = "#3a3e42"; c.lineWidth = 2; c.strokeRect(M + LW + 34, 34, W - (M + LW + 34) - 34, H - 68);
   return cv.toDataURL("image/png");

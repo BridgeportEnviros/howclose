@@ -18,15 +18,17 @@ Companion to the neighborhood dashboard: https://bridgeportenviros.github.io/can
   - `build_lookup.py` — rebuilds `lookup_data.js`: `python build_lookup.py "<path to the dashboard folder>"`, the folder holding the dashboard's `site/data.js` and `data/blocks_2020_area.geojson`. Needs Python with numpy.
   - `addrpoints.tsv` — Cook County Address Points for a box about 2 miles around the yard, retrieved 2026-10-13.
   - `sites.json` — schools and licensed day-care centers within a mile of the yard (copied from the dashboard).
+  - `landmarks.json` — outlines of Rate Field, Palmisano Park and Armour Square Park, from the dashboard's OpenStreetMap basemap, drawn as muted reference points.
   - `logo_datauri.txt` — the Bridgeport Environmentalists logo.
 
-To change the page address (for example to howclose.bridgeportenviros.org): edit `CONFIG` near the top of the script in `build/template.html` and `SITE_URL` in `build/assemble.py`, run `assemble.py`, and remake `share.png`.
+The share images and messages end with "Learn more" and the group's project page (`CONFIG.learnMoreUrl`). To change the page address (for example to howclose.bridgeportenviros.org): edit `CONFIG` near the top of the script in `build/template.html` and `SITE_URL` in `build/assemble.py`, run `assemble.py`, and remake `share.png`.
 
 ## What the page shows
 - **Opening view:** 6,741 people live within 500 feet of the proposed yard; 1,101 are children. Map of the whole site and its 500 ft zone.
 - **Within 500 ft:** "I live N feet from the Amtrak railyard" and "1,101 children live as close as me."
 - **500 ft to 2 miles:** "I live N feet…" and, out to a mile, "N children live closer than me."
 - **Outside 2 miles, or an address it can't place:** the 500 ft numbers and "I wouldn't want it in my neighborhood either."
+- **Your location on the map:** a 250 ft circle whose center is shifted up to 125 ft from the address (the same shift every time for a given address), so the map shows the area rather than the house. The dotted line runs from the circle to the nearest part of the yard; the distance figure is still measured from the address itself.
 - **Show my location on the map** (on by default): turned off, the map and share images leave out the dotted line and the ME marker and show the whole site instead of the visitor's block.
 - **Sharing:** Story (1080×1920) or Post (1080×1350) images. Instagram, Facebook, Email, Text, Save image, plus a copy icon for the message. On phones, every option opens the share sheet with the image: Instagram, Facebook and Save send the image alone (adding text can drop Instagram from the iPhone share sheet); Text and Email send the image plus the message. Tapping the preview image also shares it; the iPhone long-press menu is turned off on it because its "Share" sends a temporary blob: link that only works in that browser tab. On desktops, Instagram saves the image, Facebook opens Facebook's link-share page, and Text/Email open with the message only.
 
