@@ -17,6 +17,11 @@ The page works in two modes:
 - **Test mode (no key):** OpenStreetMap address search and a flat street map. Free, for trying it out; OpenStreetMap's servers aren't meant for a busy public page.
 - **Google mode (with a key):** Google address search and Google's photo-real 3D city. This is the version to share.
 
+In Google mode the page opens on a free flat street map (OpenStreetMap) and loads Google's 3D city only when someone places the building (a search or an example link), so visitors who look and leave start no billed 3D session. Searches after that reuse the same session. Fallbacks, so the page keeps working if a daily quota cap is reached or the key has a problem:
+
+- 3D city refused or unreachable: the building is placed on the flat street map, with a note in the results; the next search tries the 3D city again.
+- Google address search refused (anything but "address not found"): the page uses OpenStreetMap's address search instead.
+
 ## 1. Get a Google Maps Platform key (about 15 minutes)
 
 1. Go to console.cloud.google.com, sign in, and create a project (e.g. "Railyard across the street").
