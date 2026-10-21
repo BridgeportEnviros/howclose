@@ -105,7 +105,7 @@ details a{color:var(--ink-2)}
         <div class="fact"><b id="fDist">—</b><span>from your address to the wall</span></div>
       </div>
       <div class="views" role="group" aria-label="Views">
-        <button type="button" id="vPorch" aria-pressed="true">From your sidewalk</button>
+        <button type="button" id="vHome" aria-pressed="true">From your home</button>
         <button type="button" id="vAir" aria-pressed="false">From above</button>
         <button type="button" id="vOrbit" aria-pressed="false">Circle around</button>
       </div>
@@ -146,7 +146,18 @@ const CONFIG = {
   roadwayFt: 34,                  // curb face to curb face, two-way street with parking both sides (CDOT 2007, Table 1)
   curbToSidewalkInsideFt: 15,     // 16-ft parkway incl. sidewalk, sidewalk 1 ft from the property line (CDOT 2007)
   plinthFt: 13 + 7 / 12,          // raised yard above the street at the Bridgeport site (USGS LiDAR 2017)
-  eyeHeightM: 1.65,
+};
+// Camera presets. Headings are relative to the direction from the home straight across the street to the building.
+const VIEWS = {
+  home:  { backFromStreetFt: 150,   // from the street's center line, on the home's side
+           heightFt: 50,            // above street level
+           pitchDeg: -30,           // tilt; negative looks down
+           panSecondsEachWay: 25,   // slow sweep left to right and back
+           panMarginDeg: 4 },       // extra sweep past each end of the building
+  above: { offsetDeg: 31.5,         // from the home's side, turned this far off straight-across
+           pitchDeg: -28, rangeFt: 2493 },
+  orbit: { startOffsetDeg: 31.5, pitchDeg: -22, rangeFt: 1890,   // 20% closer than the first version (2,362 ft)
+           degPerSecond: 5.5 },
 };
 const B = __BUILDING__;
 const FT = 0.3048;
@@ -327,45 +338,82 @@ async function drawBuilding(p){
   p.centerLL = p.toLonLat(p.local(B.len / 2, B.width / 2));
 }
 
-function heading(n){ return Math.atan2(n[0], n[1]); }    // n = [east, north]
-function viewPorch(p){
-  stopOrbit();
-  const [lo, la] = p.toLonLat(p.porch);
-  const eye = p.porchGround + CONFIG.eyeHeightM;
-  const dist = (p.off * 2);
-  const wallTop = p.rail + B.H.shop * FT;
-  const pitch = Math.min(Math.atan((wallTop - eye) / dist) * 0.62, Cesium.Math.toRadians(32));
-  viewer.camera.flyTo({ destination: Cesium.Cartesian3.fromDegrees(lo, la, eye),
-    orientation: { heading: heading(p.n), pitch, roll: 0 }, duration: 2.2 });
+function heading(n){ return Math.atan2(n[0], n[1]); }    // n = [east, north] -> compass heading, radians
+const rad = Cesium.Math.toRadians;
+let anim = null;                                          // running pan/orbit: { remove() }
+function stopAnim(){
+  if (anim) { anim.remove(); anim = null; }
+  if (viewer) { viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY); viewer.clock.shouldAnimate = false; }
 }
+function stopOrbit(){ stopAnim(); }
+function runEachFrame(fn){
+  const t0 = performance.now();
+  const off = viewer.scene.preRender.addEventListener(() => fn((performance.now() - t0) / 1000));
+  viewer.scene.requestRenderMode = false;
+  return { remove: off };
+}
+function horizontalFov(){
+  const f = viewer.camera.frustum, a = f.aspectRatio || (viewer.canvas.clientWidth / viewer.canvas.clientHeight);
+  return a >= 1 ? f.fov : 2 * Math.atan(Math.tan(f.fov / 2) * a);
+}
+
+/* From your home: up high behind the home, across from the building's midpoint, sweeping left to right and back. */
+function viewHome(p){
+  stopAnim();
+  const V = VIEWS.home;
+  const back = V.backFromStreetFt * FT;
+  const spot = [p.st.c[0] - p.n[0]*back, p.st.c[1] - p.n[1]*back];
+  const [lo, la] = p.toLonLat(spot);
+  const camH = p.porchGround + V.heightFt * FT;
+  const center = heading(p.n);
+  const toWall = back + p.off;                               // camera to the wall, metres
+  const endAngle = Math.atan((B.len * FT / 2) / toWall);       // angle from straight-across to each end of the building
+  const amp = Math.max(0, endAngle - horizontalFov() / 2 + rad(V.panMarginDeg));
+  const pitch = rad(V.pitchDeg);
+  const dest = Cesium.Cartesian3.fromDegrees(lo, la, camH);
+  const headingAt = t => center - amp * Math.cos(Math.PI * t / V.panSecondsEachWay);   // starts at the left end
+  viewer.camera.flyTo({ destination: dest, orientation: { heading: headingAt(0), pitch, roll: 0 }, duration: 2.2,
+    complete: () => {
+      if (amp === 0 || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      anim = runEachFrame(t => viewer.camera.setView({ destination: dest, orientation: { heading: headingAt(t), pitch, roll: 0 } }));
+    } });
+}
+
+/* From above: from the home's side of the street, turned a little off straight-across, looking at the building. */
 function viewAir(p){
-  stopOrbit();
+  stopAnim();
+  const V = VIEWS.above;
   const [lo, la] = p.centerLL;
   const target = Cesium.Cartesian3.fromDegrees(lo, la, p.rail + 10);
   viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(target, 260), {
-    offset: new Cesium.HeadingPitchRange(heading(p.n) + Math.PI + 0.55, Cesium.Math.toRadians(-28), 760), duration: 2.2 });
+    offset: new Cesium.HeadingPitchRange(heading(p.n) + rad(V.offsetDeg), rad(V.pitchDeg), V.rangeFt * FT), duration: 2.2 });
 }
+
+/* Circle around: starts on the home's side and keeps turning. */
 function startOrbit(p){
-  stopOrbit();
+  stopAnim();
+  const V = VIEWS.orbit;
   const [lo, la] = p.centerLL;
   const target = Cesium.Cartesian3.fromDegrees(lo, la, p.rail + 10);
-  let h = heading(p.n) + Math.PI + 0.55;
+  const h0 = heading(p.n) + rad(V.startOffsetDeg);
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  viewer.camera.lookAt(target, new Cesium.HeadingPitchRange(h, Cesium.Math.toRadians(-22), 720));
-  orbitHandler = viewer.clock.onTick.addEventListener(() => {
-    h += reduce ? 0 : 0.0016;
-    viewer.camera.lookAt(target, new Cesium.HeadingPitchRange(h, Cesium.Math.toRadians(-22), 720));
-  });
-  viewer.clock.shouldAnimate = true;
+  const at = h => viewer.camera.lookAt(target, new Cesium.HeadingPitchRange(h, rad(V.pitchDeg), V.rangeFt * FT));
+  at(h0);
+  if (!reduce) anim = runEachFrame(t => at(h0 + rad(V.degPerSecond) * t));
 }
-function stopOrbit(){
-  if (orbitHandler) { orbitHandler(); orbitHandler = null; }
-  if (viewer) { viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY); viewer.clock.shouldAnimate = false; }
-}
+
+const VIEW_IDS = ["vHome", "vAir", "vOrbit"];
+let currentView = "vHome";
 function setView(id){
-  for (const b of ["vPorch", "vAir", "vOrbit"]) $(b).setAttribute("aria-pressed", b === id);
+  currentView = id;
+  for (const b of VIEW_IDS) $(b).setAttribute("aria-pressed", b === id);
   if (!placement) return;
-  if (id === "vPorch") viewPorch(placement); else if (id === "vAir") viewAir(placement); else startOrbit(placement);
+  if (id === "vHome") viewHome(placement); else if (id === "vAir") viewAir(placement); else startOrbit(placement);
+}
+// Grabbing the view stops any sweep or circling so people can explore on their own.
+function stopOnUserInput(){
+  const c = viewer.canvas;
+  for (const ev of ["pointerdown", "wheel", "touchstart"]) c.addEventListener(ev, () => { if (anim) stopAnim(); }, { passive: true });
 }
 
 /* ============================== Google Earth download (KML) ============================== */
@@ -386,7 +434,7 @@ function buildKml(p, label){
   return `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Amtrak M&amp;I building across from ${esc(label)}</name>
 <description><![CDATA[Illustrative massing of Amtrak's proposed Canal Street maintenance and inspection building (not an Amtrak rendering), placed across the street from ${esc(label)}. From Amtrak/WSP schematic drawings dated Feb 27, 2026, on a 13 ft 7 in raised-yard wall.]]></description>
-<LookAt><longitude>${clo.toFixed(7)}</longitude><latitude>${cla.toFixed(7)}</latitude><altitude>0</altitude><heading>${((heading(p.n) * 180 / Math.PI) + 215) % 360}</heading><tilt>66</tilt><range>1500</range><altitudeMode>relativeToGround</altitudeMode></LookAt>
+<LookAt><longitude>${clo.toFixed(7)}</longitude><latitude>${cla.toFixed(7)}</latitude><altitude>0</altitude><heading>${(((heading(p.n) * 180 / Math.PI) + 35) % 360 + 360) % 360}</heading><tilt>66</tilt><range>1500</range><altitudeMode>relativeToGround</altitudeMode></LookAt>
 ${style("plinth", COLORS.plinth, "#2b2926")}${style("wall", COLORS.wall, COLORS.edge)}${style("window", COLORS.window)}${style("cover", COLORS.wall)}${style("door", COLORS.door)}
 ${pm("Raised yard wall (13 ft 7 in)", "plinth", g.plinth)}${pm("Shop (63 ft 3 in above street)", "wall", g.shop)}${pm("Office block (76 ft 3 in above street)", "wall", g.office)}${pm("Penthouses (86 ft 11 in above street)", "wall", g.pent)}
 ${pm("Windows", "window", op.window)}${pm("Wall strips below windows", "cover", op.cover)}${pm("Track doors", "door", op.door)}
@@ -429,7 +477,7 @@ async function place(query){
     $("result").hidden = false;
     if (matchMedia("(max-width:860px)").matches) document.querySelector(".stage").scrollIntoView({ behavior: "smooth", block: "start" });
     $("overlay").textContent = `The proposed building across from ${home.label.split(",")[0]}. Drag to look around.`;
-    setView("vPorch");
+    setView("vHome");
   } catch (e) {
     console.error(e);
     show("err", e instanceof UserError ? e.message : "Something went wrong placing the building. Try again in a moment.");
@@ -439,7 +487,7 @@ async function place(query){
 }
 
 $("form").addEventListener("submit", e => { e.preventDefault(); const q = $("addr").value.trim(); if (q) place(q); });
-$("vPorch").addEventListener("click", () => setView("vPorch"));
+$("vHome").addEventListener("click", () => setView("vHome"));
 $("vAir").addEventListener("click", () => setView("vAir"));
 $("vOrbit").addEventListener("click", () => setView("vOrbit"));
 $("kml").addEventListener("click", downloadKml);
@@ -447,10 +495,11 @@ $("flip").addEventListener("click", async () => {
   if (!placement) return;
   const p = makePlacement(placement.st, [-placement.n[0], -placement.n[1]]);
   p.label = placement.label; placement = p;
-  await drawBuilding(placement); setView("vPorch");
+  await drawBuilding(placement); setView(currentView);
 });
 viewer = null;
 initViewer().then(() => {
+  stopOnUserInput();
   const q = new URLSearchParams(location.search).get("address");
   if (q) { $("addr").value = q; place(q); }
 });
