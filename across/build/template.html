@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>The Railyard Across the Street</title>
+<meta name="description" content="Enter an Illinois address to see Amtrak's proposed 1,209-foot maintenance building placed directly across the street.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="__CESIUM_BASE__Widgets/widgets.css">
+<script>window.CESIUM_BASE_URL = "__CESIUM_BASE__";</script>
+<script src="__CESIUM_BASE__Cesium.js"></script>
+<style>
+/* Layout: one-screen app. Control panel left (stacked under the 3D view on phones), 3D view fills the rest. */
+:root{
+  --bg:#eef0ee; --panel:#fbfbf9; --ink:#1d2321; --ink-2:#4b5551; --ink-3:#77817d; --rule:#d5dad7;
+  --accent:#b4561f; --accent-ink:#ffffff; --accent-soft:#f3e2d6; --focus:#1f6fb4; --bad:#a3361f; --bad-soft:#f6e1db;
+  --stage:#cfd6d6;
+  --f-display:"Archivo",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Public Sans",ui-sans-serif,system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141817; --panel:#1b201e; --ink:#e7ebe8; --ink-2:#b4bcb8; --ink-3:#88928d; --rule:#2f3633;
+  --accent:#e58a4e; --accent-ink:#1b1410; --accent-soft:#3a271b; --focus:#6fb0ea; --bad:#ef8a72; --bad-soft:#3a201a;
+  --stage:#20262a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141817; --panel:#1b201e; --ink:#e7ebe8; --ink-2:#b4bcb8; --ink-3:#88928d; --rule:#2f3633;
+  --accent:#e58a4e; --accent-ink:#1b1410; --accent-soft:#3a271b; --focus:#6fb0ea; --bad:#ef8a72; --bad-soft:#3a201a;
+  --stage:#20262a; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--f-body)}
+[hidden]{display:none!important}
+.app{display:grid;grid-template-columns:380px minmax(0,1fr);height:100%}
+@media (max-width:860px){.app{grid-template-columns:1fr;grid-template-rows:auto auto;height:auto}}
+.panel{background:var(--panel);border-right:1px solid var(--rule);overflow-y:auto;min-width:0;display:grid;gap:18px;align-content:start;
+  padding-block:22px 28px;padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:18px}
+@media (max-width:860px){.panel{order:1;border-right:0;border-bottom:1px solid var(--rule);padding-right:max(18px,env(safe-area-inset-right,0px))}}
+.stage{position:relative;min-width:0;background:var(--stage)}
+@media (max-width:860px){.stage{order:2;height:72vh;min-height:380px}}
+#cesium{position:absolute;inset:0}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0}
+h1{font-family:var(--f-display);font-stretch:78%;font-weight:800;font-size:31px;line-height:1.02;margin:6px 0 8px;text-wrap:balance}
+.lede{margin:0;color:var(--ink-2);max-width:60ch}
+form{display:grid;gap:8px}
+label.lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.row{display:flex;gap:8px}
+input[type=text]{flex:1;min-width:0;font:15px var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--rule);border-radius:6px;padding:10px 12px}
+button{font:600 14px var(--f-body);border-radius:6px;border:1px solid var(--rule);background:var(--panel);color:var(--ink);padding:9px 12px;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button:disabled{opacity:.55;cursor:default}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.hint{font-size:12.5px;color:var(--ink-3);margin:0}
+.msg{font-size:13.5px;border-radius:6px;padding:10px 12px;margin:0}
+.msg.err{background:var(--bad-soft);color:var(--bad)}
+.msg.busy{background:var(--accent-soft);color:var(--ink)}
+.result{display:grid;gap:12px;border-top:1px solid var(--rule);padding-top:16px}
+.addr{font-family:var(--f-display);font-stretch:85%;font-weight:700;font-size:18px;line-height:1.2;margin:0}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fact{background:var(--bg);border-radius:6px;padding:8px 10px}
+.fact b{display:block;font-family:var(--f-mono);font-weight:500;font-size:17px;font-variant-numeric:tabular-nums}
+.fact span{font-size:11.5px;color:var(--ink-3);line-height:1.3;display:block}
+.views{display:flex;flex-wrap:wrap;gap:8px}
+.views button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.note{font-size:13px;color:var(--ink-2);margin:0}
+.note.warn{color:var(--bad)}
+details{border-top:1px solid var(--rule);padding-top:12px}
+summary{cursor:pointer;font-weight:600;color:var(--ink-2)}
+details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--ink-2);font-size:13px}
+details a{color:var(--ink-2)}
+.stage .overlay{position:absolute;left:12px;top:12px;max-width:min(360px,calc(100% - 24px));background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--rule);border-radius:6px;padding:10px 12px;font-size:13px;color:var(--ink-2);pointer-events:none}
+.mode{position:absolute;right:12px;bottom:12px;font:500 11px var(--f-mono);background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--rule);border-radius:4px;padding:3px 7px;color:var(--ink-3)}
+.cesium-viewer-bottom{left:8px!important;right:auto!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <header>
+      <p class="eyebrow">Amtrak's proposed Canal Street maintenance building</p>
+      <h1>What if it were across the street from you?</h1>
+      <p class="lede">Enter your address. We'll put the 1,209-foot building on the other side of your street, its long wall facing your home, the way it would face the homes along the tracks in Bridgeport.</p>
+    </header>
+
+    <form id="form" autocomplete="on">
+      <label class="lbl" for="addr">Your address</label>
+      <div class="row">
+        <input type="text" id="addr" name="street-address" autocomplete="street-address" placeholder="e.g. 3300 S Normal Ave, Chicago" required>
+        <button class="primary" id="go" type="submit">Place it</button>
+      </div>
+      <p class="hint">Any street address in Illinois.</p>
+    </form>
+
+    <p class="msg busy" id="busy" hidden></p>
+    <p class="msg err" id="err" hidden></p>
+
+    <section class="result" id="result" hidden aria-live="polite">
+      <p class="addr" id="rAddr"></p>
+      <div class="facts">
+        <div class="fact"><b id="fWall">63 ft</b><span>wall height facing your home</span></div>
+        <div class="fact"><b>1,209 ft</b><span id="fLots">long, about 48 city lots</span></div>
+        <div class="fact"><b id="fDist">—</b><span>from your address to the wall</span></div>
+      </div>
+      <div class="views" role="group" aria-label="Views">
+        <button type="button" id="vPorch" aria-pressed="true">From your sidewalk</button>
+        <button type="button" id="vAir" aria-pressed="false">From above</button>
+        <button type="button" id="vOrbit" aria-pressed="false">Circle around</button>
+      </div>
+      <p class="note" id="rStreet"></p>
+      <div class="row" style="flex-wrap:wrap">
+        <button type="button" id="flip">Wrong side? Switch sides</button>
+        <button type="button" id="kml">Download for Google Earth</button>
+      </div>
+    </section>
+
+    <details>
+      <summary>How this works</summary>
+      <ul>
+        <li><b>Your address</b> is located with <span id="geoName">a geocoding service</span>. Nothing is stored by this page.</li>
+        <li><b>Your street's direction</b> comes from U.S. Census TIGER street centerlines. The building is placed on the opposite side, parallel to your street.</li>
+        <li><b>Setback:</b> a typical Chicago residential street is 34 ft curb to curb, with 15 ft from the curb to the inside edge of the sidewalk (66-ft right-of-way; <a href="https://www.chicago.gov/dam/city/depts/cdot/StreetandSitePlanDesignStandards407.pdf" target="_blank" rel="noopener">CDOT Street and Site Plan Design Standards, 2007</a>). The wall starts at that line, 32 ft from the street's center. Your actual street may be wider or narrower.</li>
+        <li><b>The building</b> is drawn from Amtrak/WSP schematic drawings dated Feb 27, 2026: 1,209 ft long, up to 203 ft deep, shop roof 49 ft 8 in and penthouses 73 ft 4 in above the rails. It sits on a 13 ft 7 in wall, the height of the existing rail yard above the street in Bridgeport (USGS LiDAR, 2017).</li>
+        <li><b>Illustrative only.</b> This is not an Amtrak rendering. Windows and doors are approximate. Wall color matches Amtrak's published renderings.</li>
+      </ul>
+    </details>
+  </aside>
+
+  <main class="stage">
+    <div id="cesium" aria-label="3D view"></div>
+    <div class="overlay" id="overlay">Enter an address to place the building.</div>
+    <div class="mode" id="mode"></div>
+  </main>
+</div>
+
+<script>
+"use strict";
+/* ============================== settings ============================== */
+const CONFIG = {
+  // Google Maps Platform API key with Map Tiles API, Maps JavaScript API and Geocoding API enabled.
+  // Restrict it to your site's address (HTTP referrer). Leave empty for the free test mode
+  // (OpenStreetMap search and flat map; no photo-real 3D city).
+  googleApiKey: "__GOOGLE_KEY__",
+  roadwayFt: 34,                  // curb face to curb face, two-way street with parking both sides (CDOT 2007, Table 1)
+  curbToSidewalkInsideFt: 15,     // 16-ft parkway incl. sidewalk, sidewalk 1 ft from the property line (CDOT 2007)
+  plinthFt: 13 + 7 / 12,          // raised yard above the street at the Bridgeport site (USGS LiDAR 2017)
+  eyeHeightM: 1.65,
+};
+const B = __BUILDING__;
+const FT = 0.3048;
+const COLORS = { wall: "#d4cdc2", edge: "#7d776d", plinth: "#5d5850", window: "#909193", door: "#2b3236" };
+const USE_GOOGLE = !!CONFIG.googleApiKey && !CONFIG.googleApiKey.startsWith("__");
+
+/* ============================== small helpers ============================== */
+const $ = id => document.getElementById(id);
+const fmtInt = n => Math.round(n).toLocaleString("en-US");
+function show(id, text){ const el = $(id); if (text == null){ el.hidden = true; return; } el.textContent = text; el.hidden = false; }
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ============================== geocoding ============================== */
+if (USE_GOOGLE) {
+  // Google's dynamic library loader (Maps JavaScript API). Only the geocoding library is used; no map is drawn,
+  // so only the Geocoding SKU is billed.
+  (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({key: CONFIG.googleApiKey, v: "weekly"});
+}
+class UserError extends Error {}
+
+async function geocode(q){
+  if (USE_GOOGLE) {
+    const { Geocoder } = await google.maps.importLibrary("geocoding");
+    let res;
+    try { res = await new Geocoder().geocode({ address: q, componentRestrictions: { country: "US", administrativeArea: "IL" } }); }
+    catch (e) { throw new UserError("We couldn't find that address. Check the spelling and include the city."); }
+    const r = res.results && res.results[0];
+    if (!r) throw new UserError("We couldn't find that address. Check the spelling and include the city.");
+    const comp = t => r.address_components.find(c => c.types.includes(t));
+    if (comp("administrative_area_level_1")?.short_name !== "IL") throw new UserError("This tool covers addresses in Illinois only.");
+    const route = comp("route");
+    if (!route || !comp("street_number")) throw new UserError("Enter a full street address, with the house number and street.");
+    return { lat: r.geometry.location.lat(), lon: r.geometry.location.lng(), label: r.formatted_address.replace(/, USA$/, ""),
+             street: route.short_name, streetLong: route.long_name, exact: r.geometry.location_type === "ROOFTOP" };
+  }
+  const url = "https://nominatim.openstreetmap.org/search?" + new URLSearchParams({ q, format: "jsonv2", addressdetails: "1", countrycodes: "us", limit: "1", "accept-language": "en" });
+  const r = (await (await fetch(url)).json())[0];
+  if (!r) throw new UserError("We couldn't find that address. Check the spelling and include the city.");
+  const a = r.address || {};
+  if (a.state !== "Illinois") throw new UserError("This tool covers addresses in Illinois only.");
+  if (!a.road || !a.house_number) throw new UserError("Enter a full street address, with the house number and street.");
+  const label = `${a.house_number} ${a.road}, ${a.city || a.town || a.village || a.suburb || ""}, IL`.replace(/, ,/, ",");
+  return { lat: +r.lat, lon: +r.lon, label, street: a.road, streetLong: a.road, exact: false };
+}
+
+/* ============================== street centerlines (U.S. Census TIGERweb) ============================== */
+const TIGER = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Transportation/MapServer/";
+async function fetchRoads(lat, lon){
+  const params = new URLSearchParams({ geometry: `${lon},${lat}`, geometryType: "esriGeometryPoint", inSR: "4326",
+    spatialRel: "esriSpatialRelIntersects", distance: "100", units: "esriSRUnit_Meter", outFields: "NAME,MTFCC",
+    returnGeometry: "true", outSR: "4326", f: "json" });
+  const layers = [8, 6, 2];          // local roads, secondary roads (full detail), primary roads
+  const out = await Promise.allSettled(layers.map(l => fetch(`${TIGER}${l}/query?${params}`).then(r => r.json())));
+  const feats = [];
+  for (const o of out) if (o.status === "fulfilled" && o.value.features) feats.push(...o.value.features);
+  return feats;
+}
+const ABBR = { north:"n", south:"s", east:"e", west:"w", street:"st", avenue:"ave", av:"ave", boulevard:"blvd", road:"rd",
+  drive:"dr", place:"pl", court:"ct", parkway:"pkwy", lane:"ln", terrace:"ter", highway:"hwy", square:"sq", circle:"cir",
+  trail:"trl", expressway:"expy", plaza:"plz", point:"pt", crossing:"xing" };
+const norm = s => (s || "").toLowerCase().replace(/[.,']/g, "").split(/\s+/).filter(Boolean).map(w => ABBR[w] || w).join(" ");
+const stripDir = s => s.replace(/^(n|s|e|w|ne|nw|se|sw) /, "").replace(/ (n|s|e|w)$/, "");
+
+/** Find the address's street, its direction at the address, and which side the home is on. Local metres, home at origin. */
+function analyzeStreet(home, feats, streetName){
+  const R = 6371008.8, kx = Math.cos(home.lat * Math.PI / 180) * R * Math.PI / 180, ky = R * Math.PI / 180;
+  const toXY = (lon, lat) => [(lon - home.lon) * kx, (lat - home.lat) * ky];
+  const want = norm(streetName), wantBase = stripDir(want);
+  let best = null;
+  for (const f of feats) {
+    const nm = norm(f.attributes && f.attributes.NAME);
+    const tier = nm && nm === want ? 0 : nm && stripDir(nm) === wantBase ? 1 : 2;
+    for (const path of (f.geometry && f.geometry.paths) || []) {
+      const pts = path.map(([x, y]) => toXY(x, y));
+      const cum = [0];
+      for (let i = 1; i < pts.length; i++) cum.push(cum[i-1] + Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]));
+      for (let i = 0; i < pts.length - 1; i++) {
+        const [ax, ay] = pts[i], [bx, by] = pts[i+1], dx = bx-ax, dy = by-ay, L2 = dx*dx + dy*dy;
+        if (L2 === 0) continue;
+        const t = Math.max(0, Math.min(1, -(ax*dx + ay*dy) / L2));
+        const cx = ax + t*dx, cy = ay + t*dy, d = Math.hypot(cx, cy);
+        const score = tier * 1000 + d;
+        if (!best || score < best.score) best = { score, tier, d, c: [cx, cy], pts, cum, along: cum[i] + t*Math.sqrt(L2), name: f.attributes.NAME };
+      }
+    }
+  }
+  if (!best || best.d > 100) return null;
+  // direction from points 25 m either side along the centerline (smooths short kinks)
+  const at = s => { const { pts, cum } = best; s = Math.max(0, Math.min(cum[cum.length-1], s));
+    let i = 1; while (i < cum.length - 1 && cum[i] < s) i++;
+    const seg = cum[i] - cum[i-1] || 1, t = (s - cum[i-1]) / seg;
+    return [pts[i-1][0] + t*(pts[i][0]-pts[i-1][0]), pts[i-1][1] + t*(pts[i][1]-pts[i-1][1])]; };
+  const p1 = at(best.along - 25), p2 = at(best.along + 25);
+  let dir = [p2[0]-p1[0], p2[1]-p1[1]]; const dl = Math.hypot(...dir) || 1; dir = [dir[0]/dl, dir[1]/dl];
+  const h = [-best.c[0], -best.c[1]];                      // centerline -> home
+  const cross = dir[0]*h[1] - dir[1]*h[0];                 // > 0: home on the left of dir
+  const away = cross > 0 ? [dir[1], -dir[0]] : [-dir[1], dir[0]];   // unit normal pointing to the far side
+  return { c: best.c, dir, away, name: best.name, matched: best.tier < 2, homeDist: best.d, ambiguous: best.d < 4, kx, ky, home };
+}
+
+/* ============================== placement ============================== */
+let placement = null;   // { st, n, m (east-face midpoint, local m), u (length axis), toLonLat }
+function makePlacement(st, n){
+  const off = (CONFIG.roadwayFt / 2 + CONFIG.curbToSidewalkInsideFt) * FT;
+  const m = [st.c[0] + n[0]*off, st.c[1] + n[1]*off];
+  const u = [n[1], -n[0]];                                  // length axis; n = u rotated 90° counter-clockwise (as at the real site)
+  const L = B.len;
+  const local = (s, w) => [m[0] + u[0]*(s - L/2)*FT + n[0]*w*FT, m[1] + u[1]*(s - L/2)*FT + n[1]*w*FT];
+  const toLonLat = ([x, y]) => [st.home.lon + x / st.kx, st.home.lat + y / st.ky];
+  const porch = [st.c[0] - n[0]*off, st.c[1] - n[1]*off];   // inside edge of the sidewalk on the home's side
+  return { st, n, m, u, local, toLonLat, porch, off };
+}
+
+/* ============================== 3D view (CesiumJS) ============================== */
+let viewer, tileset = null, building = null, orbitHandler = null;
+async function initViewer(){
+  const opts = { animation: false, timeline: false, geocoder: false, homeButton: false, sceneModePicker: false,
+    navigationHelpButton: false, baseLayerPicker: false, fullscreenButton: false, infoBox: false, selectionIndicator: false };
+  if (USE_GOOGLE) {
+    Cesium.GoogleMaps.defaultApiKey = CONFIG.googleApiKey;
+    viewer = new Cesium.Viewer("cesium", { ...opts, globe: false });
+    viewer.scene.skyAtmosphere.show = true;
+    try {
+      tileset = await Cesium.createGooglePhotorealistic3DTileset(undefined, { showCreditsOnScreen: true });
+      viewer.scene.primitives.add(tileset);
+    } catch (e) { show("err", "Google's 3D city view didn't load. Check the API key and that the Map Tiles API is enabled."); }
+    $("mode").textContent = "Google 3D city";
+    $("geoName").textContent = "Google's geocoding service";
+  } else {
+    viewer = new Cesium.Viewer("cesium", { ...opts,
+      baseLayer: new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({ url: "https://tile.openstreetmap.org/" })) });
+    $("mode").textContent = "Test mode: flat map";
+    $("geoName").textContent = "OpenStreetMap's Nominatim search";
+  }
+  viewer.scene.screenSpaceCameraController.enableCollisionDetection = true;
+  viewer.clock.currentTime = Cesium.JulianDate.fromIso8601("2026-06-21T20:30:00Z");   // 3:30 pm Chicago, summer light
+  viewer.clock.shouldAnimate = false;
+  viewer.camera.setView({ destination: Cesium.Cartesian3.fromDegrees(-87.6367, 41.8150, 2600),
+    orientation: { heading: 0, pitch: Cesium.Math.toRadians(-38), roll: 0 } });
+}
+
+async function groundHeights(lonlats){
+  if (!USE_GOOGLE || !tileset) return lonlats.map(() => 0);
+  const carts = lonlats.map(([lo, la]) => Cesium.Cartographic.fromDegrees(lo, la));
+  const exclude = building ? building.entities.values : [];
+  try {
+    const out = await viewer.scene.sampleHeightMostDetailed(carts, exclude, 0.5);
+    return out.map(c => (c && Number.isFinite(c.height)) ? c.height : null);
+  } catch (e) { return lonlats.map(() => null); }
+}
+const quantile = (a, q) => { const s = a.filter(v => v != null).sort((x, y) => x - y); return s.length ? s[Math.floor((s.length-1)*q)] : 0; };
+
+async function drawBuilding(p){
+  if (building) { viewer.dataSources.remove(building, true); building = null; }
+  stopOrbit();
+  // ground along the far sidewalk (where the wall stands) and at the home's sidewalk
+  const face = []; for (let s = 0; s <= B.len; s += B.len / 10) face.push(p.toLonLat(p.local(s, -3)));
+  const porchLL = p.toLonLat(p.porch);
+  const hs = await groundHeights([...face, porchLL]);
+  const faceH = hs.slice(0, face.length), porchH = hs[hs.length - 1];
+  const ground = quantile(faceH, 0.25);                 // low quarter: skips cars and tree tops
+  const lowest = Math.min(...faceH.filter(v => v != null), ground);
+  const rail = ground + CONFIG.plinthFt * FT;
+  building = new Cesium.CustomDataSource("building");
+  const col = k => Cesium.Color.fromCssColorString(k);
+  const mat = { plinth: col(COLORS.plinth), shop: col(COLORS.wall), office: col(COLORS.wall), pent: col(COLORS.wall), window: col(COLORS.window), door: col(COLORS.door) };
+  for (const part of B.parts) {
+    const ll = part.ring.map(([s, w]) => p.toLonLat(p.local(s, w)));
+    const lo = part.k === "plinth" ? lowest - 3 : rail + part.lo * FT;
+    const hi = rail + part.hi * FT;
+    const big = part.k === "shop" || part.k === "office" || part.k === "pent" || part.k === "plinth";
+    building.entities.add({ polygon: {
+      hierarchy: Cesium.Cartesian3.fromDegreesArray(ll.flat()), height: lo, extrudedHeight: hi, perPositionHeight: false,
+      material: mat[part.k], outline: big, outlineColor: col(COLORS.edge), closeTop: true, closeBottom: false } });
+  }
+  await viewer.dataSources.add(building);
+  p.ground = ground; p.rail = rail; p.porchGround = porchH != null ? porchH : ground;
+  p.centerLL = p.toLonLat(p.local(B.len / 2, B.width / 2));
+}
+
+function heading(n){ return Math.atan2(n[0], n[1]); }    // n = [east, north]
+function viewPorch(p){
+  stopOrbit();
+  const [lo, la] = p.toLonLat(p.porch);
+  const eye = p.porchGround + CONFIG.eyeHeightM;
+  const dist = (p.off * 2);
+  const wallTop = p.rail + B.H.shop * FT;
+  const pitch = Math.min(Math.atan((wallTop - eye) / dist) * 0.62, Cesium.Math.toRadians(32));
+  viewer.camera.flyTo({ destination: Cesium.Cartesian3.fromDegrees(lo, la, eye),
+    orientation: { heading: heading(p.n), pitch, roll: 0 }, duration: 2.2 });
+}
+function viewAir(p){
+  stopOrbit();
+  const [lo, la] = p.centerLL;
+  const target = Cesium.Cartesian3.fromDegrees(lo, la, p.rail + 10);
+  viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(target, 260), {
+    offset: new Cesium.HeadingPitchRange(heading(p.n) + Math.PI + 0.55, Cesium.Math.toRadians(-28), 760), duration: 2.2 });
+}
+function startOrbit(p){
+  stopOrbit();
+  const [lo, la] = p.centerLL;
+  const target = Cesium.Cartesian3.fromDegrees(lo, la, p.rail + 10);
+  let h = heading(p.n) + Math.PI + 0.55;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  viewer.camera.lookAt(target, new Cesium.HeadingPitchRange(h, Cesium.Math.toRadians(-22), 720));
+  orbitHandler = viewer.clock.onTick.addEventListener(() => {
+    h += reduce ? 0 : 0.0016;
+    viewer.camera.lookAt(target, new Cesium.HeadingPitchRange(h, Cesium.Math.toRadians(-22), 720));
+  });
+  viewer.clock.shouldAnimate = true;
+}
+function stopOrbit(){
+  if (orbitHandler) { orbitHandler(); orbitHandler = null; }
+  if (viewer) { viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY); viewer.clock.shouldAnimate = false; }
+}
+function setView(id){
+  for (const b of ["vPorch", "vAir", "vOrbit"]) $(b).setAttribute("aria-pressed", b === id);
+  if (!placement) return;
+  if (id === "vPorch") viewPorch(placement); else if (id === "vAir") viewAir(placement); else startOrbit(placement);
+}
+
+/* ============================== Google Earth download (KML) ============================== */
+function kmlColor(hex, a = "ff"){ return (a + hex.slice(5, 7) + hex.slice(3, 5) + hex.slice(1, 3)).toLowerCase(); }
+function buildKml(p, label){
+  const plinth = CONFIG.plinthFt;
+  const ring = (r, topFt) => { const pts = r.map(([s, w]) => p.toLonLat(p.local(s, w))); pts.push(pts[0]);
+    return `<Polygon><extrude>1</extrude><altitudeMode>relativeToGround</altitudeMode><outerBoundaryIs><LinearRing><coordinates>${
+      pts.map(([lo, la]) => `${lo.toFixed(7)},${la.toFixed(7)},${(topFt * FT).toFixed(2)}`).join(" ")}</coordinates></LinearRing></outerBoundaryIs></Polygon>`; };
+  const style = (id, fill, line) => `<Style id="${id}"><LineStyle><color>${line ? kmlColor(line) : "00ffffff"}</color><width>${line ? 1 : 0}</width></LineStyle><PolyStyle><color>${kmlColor(fill)}</color><fill>1</fill><outline>${line ? 1 : 0}</outline></PolyStyle></Style>`;
+  const pm = (name, styleId, geoms) => `<Placemark><name>${name}</name><styleUrl>#${styleId}</styleUrl><MultiGeometry>${geoms.join("")}</MultiGeometry></Placemark>`;
+  const g = { plinth: [], shop: [], office: [], pent: [] };
+  for (const part of B.parts) if (g[part.k]) g[part.k].push(ring(part.ring, part.k === "plinth" ? plinth : plinth + part.hi));
+  const op = { window: [], cover: [], door: [] };
+  for (const o of B.kmlOpenings) op[o.k].push(ring(o.ring, plinth + o.top));
+  const [clo, cla] = p.centerLL;
+  const esc = s => s.replace(/[<&>]/g, c => ({ "<": "&lt;", "&": "&amp;", ">": "&gt;" }[c]));
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Amtrak M&amp;I building across from ${esc(label)}</name>
+<description><![CDATA[Illustrative massing of Amtrak's proposed Canal Street maintenance and inspection building (not an Amtrak rendering), placed across the street from ${esc(label)}. From Amtrak/WSP schematic drawings dated Feb 27, 2026, on a 13 ft 7 in raised-yard wall.]]></description>
+<LookAt><longitude>${clo.toFixed(7)}</longitude><latitude>${cla.toFixed(7)}</latitude><altitude>0</altitude><heading>${((heading(p.n) * 180 / Math.PI) + 215) % 360}</heading><tilt>66</tilt><range>1500</range><altitudeMode>relativeToGround</altitudeMode></LookAt>
+${style("plinth", COLORS.plinth, "#2b2926")}${style("wall", COLORS.wall, COLORS.edge)}${style("window", COLORS.window)}${style("cover", COLORS.wall)}${style("door", COLORS.door)}
+${pm("Raised yard wall (13 ft 7 in)", "plinth", g.plinth)}${pm("Shop (63 ft 3 in above street)", "wall", g.shop)}${pm("Office block (76 ft 3 in above street)", "wall", g.office)}${pm("Penthouses (86 ft 11 in above street)", "wall", g.pent)}
+${pm("Windows", "window", op.window)}${pm("Wall strips below windows", "cover", op.cover)}${pm("Track doors", "door", op.door)}
+</Document></kml>`;
+}
+function downloadKml(){
+  if (!placement) return;
+  const blob = new Blob([buildKml(placement, placement.label)], { type: "application/vnd.google-earth.kml+xml" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "amtrak-building-across-from-" + placement.label.split(",")[0].toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".kml";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+/* ============================== the flow ============================== */
+async function place(query){
+  show("err", null); show("busy", "Finding your address…"); $("go").disabled = true;
+  try {
+    const home = await geocode(query);
+    show("busy", "Reading your street's direction…");
+    const feats = await fetchRoads(home.lat, home.lon);
+    const st = analyzeStreet(home, feats, home.street);
+    if (!st) throw new UserError("We found the address but couldn't find its street in the Census street map. Try a nearby address.");
+    show("busy", USE_GOOGLE ? "Loading the 3D city and placing the building…" : "Placing the building…");
+    placement = makePlacement(st, st.away);
+    placement.label = home.label;
+    await drawBuilding(placement);
+    // result panel
+    $("rAddr").textContent = home.label;
+    const wallAbove = CONFIG.plinthFt + B.H.shop;
+    $("fWall").textContent = `${Math.round(wallAbove)} ft`;
+    const homeToWall = (st.homeDist + placement.off) / FT;
+    $("fDist").textContent = `${fmtInt(homeToWall)} ft`;
+    $("fLots").textContent = "long, about 48 city lots";
+    let note = `Placed along ${st.name || home.street}, on the side across from your address.`;
+    if (!st.matched) note += ` We couldn't match "${home.street}" exactly in the Census street map, so we used the nearest street.`;
+    if (st.ambiguous || !home.exact) note += " Address locations can be approximate. If the building lands on your side of the street, use Switch sides.";
+    $("rStreet").textContent = note;
+    $("result").hidden = false;
+    if (matchMedia("(max-width:860px)").matches) document.querySelector(".stage").scrollIntoView({ behavior: "smooth", block: "start" });
+    $("overlay").textContent = `The proposed building across from ${home.label.split(",")[0]}. Drag to look around.`;
+    setView("vPorch");
+  } catch (e) {
+    console.error(e);
+    show("err", e instanceof UserError ? e.message : "Something went wrong placing the building. Try again in a moment.");
+  } finally {
+    show("busy", null); $("go").disabled = false;
+  }
+}
+
+$("form").addEventListener("submit", e => { e.preventDefault(); const q = $("addr").value.trim(); if (q) place(q); });
+$("vPorch").addEventListener("click", () => setView("vPorch"));
+$("vAir").addEventListener("click", () => setView("vAir"));
+$("vOrbit").addEventListener("click", () => setView("vOrbit"));
+$("kml").addEventListener("click", downloadKml);
+$("flip").addEventListener("click", async () => {
+  if (!placement) return;
+  const p = makePlacement(placement.st, [-placement.n[0], -placement.n[1]]);
+  p.label = placement.label; placement = p;
+  await drawBuilding(placement); setView("vPorch");
+});
+viewer = null;
+initViewer().then(() => {
+  const q = new URLSearchParams(location.search).get("address");
+  if (q) { $("addr").value = q; place(q); }
+});
+</script>
+</body>
+</html>

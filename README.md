@@ -8,6 +8,8 @@ Addresses are matched inside the browser against a built-in address list, so not
 
 Companion to the neighborhood dashboard: https://bridgeportenviros.github.io/canal-street-yard/
 
+Also in this repo: **The Railyard Across the Street** (`across/`), which places the proposed maintenance building across the street from any Illinois address in 3D: https://bridgeportenviros.github.io/howclose/across/ — see `across/README.md`.
+
 ## What's in the repo
 - `index.html` — the published page. Everything (data, logo, map) is built in.
 - `share.png` — the 1200×630 link-preview image (the 500 ft numbers and the site map) that Messages, Facebook and others show when someone shares the page link. Remake it by running `window.__makeLinkCard()` in the browser console on the page, if the numbers or address change.
