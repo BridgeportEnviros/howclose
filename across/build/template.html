@@ -95,7 +95,7 @@ details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--in
         <input type="text" id="addr" name="street-address" autocomplete="street-address" placeholder="e.g. 3300 S Normal Ave, Chicago" required>
         <button class="primary" id="go" type="submit">Place it</button>
       </div>
-      <p class="hint">Any street address in Illinois. Or try the <a id="mansion" href="?at=42.09664,-87.71454&amp;street=Sheridan%20Rd&amp;label=A%20billionaire%E2%80%99s%20mansion%2C%20Winnetka">View from a Billionaire's mansion</a>.</p>
+      <p class="hint">Any street address in Illinois. Or try the <a id="mansion" href="?at=42.09664,-87.71454&amp;street=Sheridan%20Rd&amp;label=A%20billionaire%E2%80%99s%20mansion%2C%20Winnetka&amp;view=above">View from a Billionaire's mansion</a>.</p>
     </form>
 
     <p class="msg busy" id="busy" hidden></p>
@@ -457,10 +457,12 @@ function downloadKml(){
 /* ============================== the flow ============================== */
 /** Place from a typed address (geocoded), or from a point given as coordinates (no address lookup). */
 function place(query){ return placeFrom(() => geocode(query)); }
-function placeAt(lat, lon, street, label){
-  return placeFrom(async () => ({ lat, lon, street: street || "", label: label || "This spot", exact: true, fromCoords: true }));
+function placeAt(lat, lon, street, label, startView){
+  return placeFrom(async () => ({ lat, lon, street: street || "", label: label || "This spot", exact: true, fromCoords: true }), startView);
 }
-async function placeFrom(findHome){
+// view names a link can start on with &view=
+const START_VIEWS = { home: "vHome", above: "vAir", circle: "vOrbit" };
+async function placeFrom(findHome, startView){
   show("err", null); show("busy", "Finding the spot…"); $("go").disabled = true;
   try {
     const home = await findHome();
@@ -488,7 +490,7 @@ async function placeFrom(findHome){
     if (matchMedia("(max-width:860px)").matches) document.querySelector(".stage").scrollIntoView({ behavior: "smooth", block: "start" });
     const who = home.label.split(",")[0];
     $("overlay").textContent = `The proposed building across from ${home.fromCoords ? who.charAt(0).toLowerCase() + who.slice(1) : who}. Drag to look around.`;
-    setView("vHome");
+    setView(START_VIEWS[startView] || "vHome");
   } catch (e) {
     console.error(e);
     show("err", e instanceof UserError ? e.message : "Something went wrong placing the building. Try again in a moment.");
@@ -513,7 +515,7 @@ initViewer().then(() => {
   stopOnUserInput();
   const qs = new URLSearchParams(location.search);
   const at = parseAt(qs.get("at"));
-  if (at) placeAt(at[0], at[1], qs.get("street"), qs.get("label"));
+  if (at) placeAt(at[0], at[1], qs.get("street"), qs.get("label"), qs.get("view"));
   else if (qs.get("address")) { $("addr").value = qs.get("address"); place(qs.get("address")); }
 });
 /** "lat,lon" -> [lat, lon], only for points in or near Illinois. */
@@ -530,7 +532,7 @@ document.querySelectorAll("a[href^='?at=']").forEach(a => a.addEventListener("cl
   e.preventDefault();
   history.replaceState(null, "", a.getAttribute("href"));
   $("addr").value = "";
-  placeAt(at[0], at[1], qs.get("street"), qs.get("label"));
+  placeAt(at[0], at[1], qs.get("street"), qs.get("label"), qs.get("view"));
 }));
 </script>
 </body>

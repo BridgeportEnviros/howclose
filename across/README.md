@@ -2,7 +2,7 @@
 
 **Live page:** https://bridgeportenviros.github.io/howclose/across/
 
-Enter any Illinois address to see Amtrak's proposed 1,209-foot maintenance building placed directly across the street, its long wall facing the home, in a 3D view, with a Google Earth download of the same placement. A direct link can carry an address: `https://bridgeportenviros.github.io/howclose/across/?address=3300 S Normal Ave, Chicago`. A link can also carry coordinates instead of an address, so no address is shown: `?at=LAT,LON&street=STREET NAME&label=WHAT TO CALL IT` (the street name picks the right street for the building; the label is shown in place of an address). The "View from a Billionaire's mansion" link under the search box works this way.
+Enter any Illinois address to see Amtrak's proposed 1,209-foot maintenance building placed directly across the street, its long wall facing the home, in a 3D view, with a Google Earth download of the same placement. A direct link can carry an address: `https://bridgeportenviros.github.io/howclose/across/?address=3300 S Normal Ave, Chicago`. A link can also carry coordinates instead of an address, so no address is shown: `?at=LAT,LON&street=STREET NAME&label=WHAT TO CALL IT` (the street name picks the right street for the building; the label is shown in place of an address). The "View from a Billionaire's mansion" link under the search box works this way. Add `&view=above` or `&view=circle` to start on that view (the mansion link starts From above).
 
 ## What's in this folder
 - `index.html` — the published page. The 3D viewer (CesiumJS), the map, street data and address search all load from the internet; the building's shape is built in.
