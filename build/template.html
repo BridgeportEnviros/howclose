@@ -92,7 +92,7 @@ textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px; border-ra
     <a class="brand" href="https://www.bridgeportenviros.org/projects/amtrak-railyard" target="_blank" rel="noopener"><img src="__LOGO__" alt="" width="52" height="52"><span>Bridgeport Environmentalists</span></a>
     <div>
     <h1>How far do you live from the Amtrak railyard?</h1>
-    <p class="lede">Enter your address to see how close you live to the yard Amtrak has proposed at Canal Street Yard, then share it. <a class="learn" href="https://www.bridgeportenviros.org/projects/amtrak-railyard" target="_blank" rel="noopener">Learn more about the proposed facility</a></p>
+    <p class="lede">Enter your address to see how close you live to the 24/7 facility Amtrak has proposed in a residential area, then share it. <a class="learn" href="https://www.bridgeportenviros.org/projects/amtrak-railyard" target="_blank" rel="noopener">Learn more about the proposed facility</a></p>
     </div>
   </header>
 
@@ -102,10 +102,7 @@ textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px; border-ra
       <input type="text" id="addr" placeholder="e.g. 3100 S Princeton Ave" aria-describedby="addr-hint">
       <button type="submit" id="go">Find my distance</button>
     </div>
-    <div class="hint" id="addr-hint">Chicago addresses within 2 miles of the site. Your address stays on your device. Try
-      <button type="button" data-ex="2900 S Wallace St">2900 S Wallace St</button>,
-      <button type="button" data-ex="2420 S Wentworth Ave">2420 S Wentworth Ave</button>,
-      <button type="button" data-ex="3500 S Halsted St">3500 S Halsted St</button>, or an address farther away like <button type="button" data-ex="5800 N Sheridan Rd">5800 N Sheridan Rd</button>.</div>
+    <div class="hint" id="addr-hint">Chicago addresses within 2 miles of the site. Try <button type="button" data-ex="3500 S Halsted St">3500 S Halsted St</button></div>
   </form>
 
   <div id="msg" class="msg" hidden></div>
@@ -367,7 +364,9 @@ function drawMap(ctx, X, Y, W, H, r, opt = {}) {
     const lx = px((x0 + x1) / 2), ly = py((y0 + y1) / 2), fz = (mm.site ? 13 : 16) * C.scale;
     if (lx < X || lx > X + W || ly < Y || ly > Y + H) continue;
     ctx.font = `700 ${fz}px ${C.font}`;
-    const words = lm.n.split(" "), lines = mm.site && words.length > 1 ? [words.slice(0, -1).join(" "), words[words.length - 1]] : [lm.n];
+    const words = lm.n.replace("\n", " ").split(" ");
+    const lines = lm.n.includes("\n") ? (mm.site ? lm.n.split("\n") : [lm.n.replace("\n", " ")])
+      : mm.site && words.length > 1 ? [words.slice(0, -1).join(" "), words[words.length - 1]] : [lm.n];
     lines.forEach((s, i) => {
       const yy = ly + (i - (lines.length - 1) / 2) * fz * 1.05;
       ctx.lineWidth = 4 * C.scale; ctx.strokeStyle = "rgba(13,14,15,.85)"; ctx.strokeText(s, lx, yy);
@@ -470,7 +469,7 @@ function render(r, isExample) {
   $("sheet").hidden = true;
 }
 function shareText(r) {
-  const tail = ` Learn more: ${CONFIG.learnMoreUrl}`;
+  const tail = ` How close do you live? ${CONFIG.shareUrl}`;   // the tool's own page, which links to Learn more
   const site = "the railyard Amtrak wants to build at Canal Street Yard in Bridgeport";
   if (r.overview) return `${fmt(POP500)} people live within 500 feet of ${site}. ${fmt(KIDS500)} are children.` + tail;
   if (r.far) return `${fmt(POP500)} people live within 500 feet of ${site}, including ${fmt(KIDS500)} children. I wouldn’t want it in my neighborhood either.` + tail;

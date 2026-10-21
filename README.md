@@ -18,10 +18,10 @@ Companion to the neighborhood dashboard: https://bridgeportenviros.github.io/can
   - `build_lookup.py` — rebuilds `lookup_data.js`: `python build_lookup.py "<path to the dashboard folder>"`, the folder holding the dashboard's `site/data.js` and `data/blocks_2020_area.geojson`. Needs Python with numpy.
   - `addrpoints.tsv` — Cook County Address Points for a box about 2 miles around the yard, retrieved 2026-10-13.
   - `sites.json` — schools and licensed day-care centers within a mile of the yard (copied from the dashboard).
-  - `landmarks.json` — outlines of Rate Field, Palmisano Park and Armour Square Park, from the dashboard's OpenStreetMap basemap, drawn as muted reference points.
+  - `landmarks.json` — outlines of Rate Field, Armour Square Park, and Palmisano and McGuane parks merged into one outline (they are separated only by a street), from the dashboard's OpenStreetMap basemap, drawn as muted reference points.
   - `logo_datauri.txt` — the Bridgeport Environmentalists logo.
 
-The share images and messages end with "Learn more" and the group's project page (`CONFIG.learnMoreUrl`). To change the page address (for example to howclose.bridgeportenviros.org): edit `CONFIG` near the top of the script in `build/template.html` and `SITE_URL` in `build/assemble.py`, run `assemble.py`, and remake `share.png`.
+The share images end with "Learn more" and the group's project page (`CONFIG.learnMoreUrl`); share messages end with "How close do you live?" and this tool's address (`CONFIG.shareUrl`), which links to Learn more. To change the page address (for example to howclose.bridgeportenviros.org): edit `CONFIG` near the top of the script in `build/template.html` and `SITE_URL` in `build/assemble.py`, run `assemble.py`, and remake `share.png`.
 
 ## What the page shows
 - **Opening view:** 6,741 people live within 500 feet of the proposed yard; 1,101 are children. Map of the whole site and its 500 ft zone.
