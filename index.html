@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="1,101 children live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport. How close are you?"><meta property="og:title" content="How close do you live to the 24/7 Amtrak facility?"><meta property="og:description" content="1,101 children live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport, out of 6,741 people. Enter your address to see how close you are."><meta property="og:type" content="website"><meta property="og:url" content="https://bridgeportenviros.github.io/howclose/"><meta property="og:image" content="https://bridgeportenviros.github.io/howclose/share.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="1,101 children live within 500 feet of the proposed 24/7 Amtrak facility, out of 6,741 people. Map of Canal Street Yard in Bridgeport."><meta name="twitter:card" content="summary_large_image"><title>How Close Is the Railyard?</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="1,101 children live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport. How close are you?"><meta property="og:title" content="How close do you live to the 24/7 Amtrak facility?"><meta property="og:description" content="1,101 children live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport. None live by its current site at 14th Street. Enter your address to see how close you are."><meta property="og:type" content="website"><meta property="og:url" content="https://bridgeportenviros.github.io/howclose/"><meta property="og:image" content="https://bridgeportenviros.github.io/howclose/share.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="1,101 children live within 500 feet of the proposed 24/7 Amtrak facility; none live by its current site. Map of Canal Street Yard in Bridgeport."><meta name="twitter:card" content="summary_large_image"><title>How Close Is the Railyard?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Barlow:wght@400;500;600&display=swap">
@@ -190,6 +190,9 @@ const CONFIG = {
   acrossUrl: "across/",   // The Railyard Across the Street, offered to addresses outside the 2-mile area
 };
 const KID_LEAD = CONFIG.lead === "children";
+// Below the map when the standard 1,101 figure leads (opening view, outside the area). Matt's wording, Oct 27, 2026;
+// the dashboard's own estimate is about 29 people (~2 children) within 500 ft of the 14th Street yard.
+const CURRENT_SITE_HTML = `<span class="k">None</span> live by its current site`;
 const L = window.LOOKUP;
 const YARD = L.yard;
 const $ = id => document.getElementById(id);
@@ -465,7 +468,7 @@ function render(r, isExample) {
     $("tag").textContent = "Within 500 feet of the proposed yard";
     if (KID_LEAD) {
       $("big").innerHTML = `${kidN(KIDS500)} children live within 500 feet of the 24/7 Amtrak facility`;
-      k.hidden = false; k.innerHTML = `Out of <span class="k">${fmt(POP500)}</span> people in all`;
+      k.hidden = false; k.innerHTML = CURRENT_SITE_HTML;
     } else {
       $("big").innerHTML = `<span class="n">${fmt(POP500)}</span> people live within 500 feet of the 24/7 Amtrak facility`;
       k.hidden = false; k.innerHTML = `<span class="k">${fmt(KIDS500)}</span> are children`;
@@ -476,7 +479,7 @@ function render(r, isExample) {
     $("tag").textContent = isExample ? "Example: outside the 2-mile area" : "Outside the 2-mile area";
     if (KID_LEAD) {
       $("big").innerHTML = `${kidN(KIDS500)} children live within 500 feet of the 24/7 Amtrak facility`;
-      k.hidden = false; k.innerHTML = `Out of <span class="k">${fmt(POP500)}</span> people in all`;
+      k.hidden = false; k.innerHTML = CURRENT_SITE_HTML;
     } else {
       $("big").innerHTML = `<span class="n">${fmt(POP500)}</span> people live within 500 feet of the 24/7 Amtrak facility`;
       k.hidden = false; k.innerHTML = `Including <span class="k">${fmt(KIDS500)}</span> children`;
@@ -493,7 +496,8 @@ function render(r, isExample) {
       // "N children live closer to the 24/7 Amtrak facility than me" / "… as close to the 24/7 Amtrak facility as me"
       const tail = r.kids.text.replace(" live closer than me", " live closer to the 24/7 Amtrak facility than me").replace(" live as close as me", " live as close to the 24/7 Amtrak facility as me");
       $("big").innerHTML = `${kidN(r.kids.n)} ${tail}`;
-      k.hidden = false; k.innerHTML = `I live <span class="k">${fmt(feet)}</span> ${feetWord} away`;
+      k.hidden = false; k.innerHTML = r.dist <= 500 ? `I live <span class="k">${fmt(feet)}</span> ${feetWord} away`
+        : `<span class="k">${fmt(KIDS500)}</span> live within 500 ft`;
     } else {
       $("big").innerHTML = `I live <span class="n">${fmt(feet)}</span> ${feetWord} from the 24/7 Amtrak facility`;
       if (KID_LEAD) { k.hidden = false; k.innerHTML = `<span class="k">${fmt(KIDS500)}</span> children live within 500 feet of it`; }   // beyond a mile: no closer-than count
@@ -510,10 +514,11 @@ function shareText(r) {
   const tail = ` How close do you live? ${CONFIG.shareUrl}`;   // the tool's own page, which links to Learn more
   const site = "the railyard Amtrak wants to build at Canal Street Yard in Bridgeport";
   if (KID_LEAD) {
-    const kids500 = `${fmt(KIDS500)} children live within 500 feet of ${site}, out of ${fmt(POP500)} people in all.`;
+    const kids500 = `${fmt(KIDS500)} children live within 500 feet of ${site}. None live by its current site at 14th Street.`;
     if (r.overview) return kids500 + tail;
     if (r.far) return kids500 + ` I wouldn’t want it in my neighborhood either.` + tail;
-    if (r.kids) return `${fmt(r.kids.n)} children live ${r.kids.text.includes("closer") ? "closer to" : "as close to"} ${site} ${r.kids.text.includes("closer") ? "than" : "as"} I do. I live ${fmt(r.feet)} feet away.` + tail;
+    if (r.kids) return `${fmt(r.kids.n)} children live ${r.kids.text.includes("closer") ? "closer to" : "as close to"} ${site} ${r.kids.text.includes("closer") ? "than" : "as"} I do. ` +
+      (r.dist <= 500 ? `I live ${fmt(r.feet)} feet away.` : `${fmt(KIDS500)} live within 500 feet.`) + tail;
     return `I live ${fmt(r.feet)} feet from ${site}. ${fmt(KIDS500)} children live within 500 feet of it.` + tail;
   }
   if (r.overview) return `${fmt(POP500)} people live within 500 feet of ${site}. ${fmt(KIDS500)} are children.` + tail;
@@ -534,7 +539,7 @@ function cardSpec(r) {
   if (KID_LEAD) {
     const kids500Top = [{ p: [[fmt(KIDS500), RD]], size: 270, big: true },
       { p: [["CHILDREN LIVE WITHIN", WH]], size: 92, g: 1 }, { p: [["500 FEET OF THE", WH]], size: 92, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 92, g: 1 }];
-    const allPeople = { p: [["OUT OF ", WH], [fmt(POP500), RD], [" PEOPLE IN ALL", WH]], size: 88 };
+    const allPeople = { p: [["NONE", RD], [" LIVE BY ITS CURRENT SITE", WH]], size: 88 };   // the current-site line (name kept)
     if (r.overview) return { top: kids500Top, bottom: [allPeople] };
     if (r.far) return { top: kids500Top, bottom: [allPeople,
       { p: [["I WOULDN’T WANT IT IN MY", WH]], size: 70, g: 2 }, { p: [["NEIGHBORHOOD EITHER.", WH]], size: 70, g: 2 }] };
@@ -544,7 +549,7 @@ function cardSpec(r) {
       return { top: [{ p: [[fmt(r.kids.n), RD]], size: 330, big: true },
         { p: [[closer ? "CHILDREN LIVE CLOSER" : "CHILDREN LIVE AS CLOSE", WH]], size: 92, g: 1 },
         { p: [["TO THE 24/7 AMTRAK", WH]], size: 92, g: 1 }, { p: [[closer ? "FACILITY THAN ME" : "FACILITY AS ME", WH]], size: 92, g: 1 }],
-        bottom: [feetLine] };
+        bottom: [r.dist <= 500 ? feetLine : { p: [[fmt(KIDS500), RD], [" LIVE WITHIN 500 FT", WH]], size: 96 }] };
     }
     return { top: [{ p: [["I LIVE", WH]], size: 120 }, { p: [[fmt(r.feet), WH]], size: 330, big: true },
       { p: [[(r.feet === 1 ? "FOOT" : "FEET") + " FROM THE", WH]], size: 112, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 112, g: 1 }],
@@ -726,7 +731,7 @@ window.__makeLinkCard = async () => {
   let y = 124 + nz * .74 + 58; const lz = Math.min(...leadLines.map(s => fit(s, 54)));
   c.font = `800 ${lz}px ${F}`; leadLines.forEach((s, i) => c.fillText(s, M, y + i * lz));
   y += 2 * lz + 28; c.fillStyle = "#c8102e"; c.fillRect(M, y, LW, 5);
-  const [pre, num, post] = KID_LEAD ? ["OUT OF ", fmt(POP500), " PEOPLE IN ALL"] : ["", fmt(KIDS500), " ARE CHILDREN"];
+  const [pre, num, post] = KID_LEAD ? ["", "NONE", " LIVE BY ITS CURRENT SITE"] : ["", fmt(KIDS500), " ARE CHILDREN"];
   const kz = fit(pre + num + post, 52); c.font = `800 ${kz}px ${F}`; const ky = y + 16 + kz * .74;
   c.fillStyle = "#f5f5f3"; c.fillText(pre, M, ky); const pw = c.measureText(pre).width;
   c.fillStyle = "#ff5a70"; c.fillText(num, M + pw, ky); const kw = c.measureText(num).width;

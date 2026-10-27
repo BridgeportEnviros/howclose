@@ -13,8 +13,8 @@ import re
 LEAD = re.search(r'lead:\s*"(\w+)"', t).group(1)   # CONFIG.lead in template.html: which number the link preview leads with
 if LEAD == "children":
     DESC = "1,101 children live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport. How close are you?"
-    OG_DESC = "1,101 children live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport, out of 6,741 people. Enter your address to see how close you are."
-    OG_ALT = "1,101 children live within 500 feet of the proposed 24/7 Amtrak facility, out of 6,741 people. Map of Canal Street Yard in Bridgeport."
+    OG_DESC = "1,101 children live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport. None live by its current site at 14th Street. Enter your address to see how close you are."
+    OG_ALT = "1,101 children live within 500 feet of the proposed 24/7 Amtrak facility; none live by its current site. Map of Canal Street Yard in Bridgeport."
 else:
     DESC = "6,741 people live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport. How close are you?"
     OG_DESC = "6,741 people live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport, 1,101 of them children. Enter your address to see how close you are."
