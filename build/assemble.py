@@ -14,15 +14,15 @@ LEAD = re.search(r'lead:\s*"(\w+)"', t).group(1)   # CONFIG.lead in template.htm
 if LEAD == "children":
     DESC = "1,101 children live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport. How close are you?"
     OG_DESC = "1,101 children live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport, out of 6,741 people. Enter your address to see how close you are."
-    OG_ALT = "1,101 children live within 500 feet of the proposed Amtrak railyard, out of 6,741 people. Map of Canal Street Yard in Bridgeport."
+    OG_ALT = "1,101 children live within 500 feet of the proposed 24/7 Amtrak facility, out of 6,741 people. Map of Canal Street Yard in Bridgeport."
 else:
     DESC = "6,741 people live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport. How close are you?"
     OG_DESC = "6,741 people live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport, 1,101 of them children. Enter your address to see how close you are."
-    OG_ALT = "6,741 people live within 500 feet of the proposed Amtrak railyard; 1,101 are children. Map of Canal Street Yard in Bridgeport."
+    OG_ALT = "6,741 people live within 500 feet of the proposed 24/7 Amtrak facility; 1,101 are children. Map of Canal Street Yard in Bridgeport."
 HEAD = ('<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
         f'<meta name="description" content="{DESC}">'
-        '<meta property="og:title" content="How close do you live to the Amtrak railyard?">'
+        '<meta property="og:title" content="How close do you live to the 24/7 Amtrak facility?">'
         f'<meta property="og:description" content="{OG_DESC}">'
         '<meta property="og:type" content="website">'
         f'<meta property="og:url" content="{SITE_URL}">'

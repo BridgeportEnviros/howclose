@@ -96,7 +96,7 @@ textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px; border-ra
   <header class="top">
     <a class="brand" href="https://www.bridgeportenviros.org/projects/amtrak-railyard" target="_blank" rel="noopener"><img src="__LOGO__" alt="" width="52" height="52"><span>Bridgeport Environmentalists</span></a>
     <div>
-    <h1>How far do you live from the Amtrak railyard?</h1>
+    <h1>How far do you live from the 24/7 Amtrak facility?</h1>
     <p class="lede">Enter your address to see how close you live to the 24/7 facility Amtrak has proposed in a residential area, then share it. <a class="learn" href="https://www.bridgeportenviros.org/projects/amtrak-railyard" target="_blank" rel="noopener">Learn more about the proposed facility</a></p>
     </div>
   </header>
@@ -115,7 +115,7 @@ textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px; border-ra
   <section class="result" id="result" aria-live="polite">
     <div class="txt">
       <div class="tag" id="tag">Within 500 feet of the proposed yard</div>
-      <div class="big" id="big"><span class="n">—</span> people live within 500 feet of the Amtrak railyard</div>
+      <div class="big" id="big"><span class="n">—</span> people live within 500 feet of the 24/7 Amtrak facility</div>
       <div class="kids" id="kids" hidden></div>
       <div class="kicker" id="kicker" hidden></div>
       <div class="matched" id="matched"></div>
@@ -460,10 +460,10 @@ function render(r, isExample) {
   if (r.overview) {
     $("tag").textContent = "Within 500 feet of the proposed yard";
     if (KID_LEAD) {
-      $("big").innerHTML = `${kidN(KIDS500)} children live within 500 feet of the Amtrak railyard`;
+      $("big").innerHTML = `${kidN(KIDS500)} children live within 500 feet of the 24/7 Amtrak facility`;
       k.hidden = false; k.innerHTML = `Out of <span class="k">${fmt(POP500)}</span> people in all`;
     } else {
-      $("big").innerHTML = `<span class="n">${fmt(POP500)}</span> people live within 500 feet of the Amtrak railyard`;
+      $("big").innerHTML = `<span class="n">${fmt(POP500)}</span> people live within 500 feet of the 24/7 Amtrak facility`;
       k.hidden = false; k.innerHTML = `<span class="k">${fmt(KIDS500)}</span> are children`;
     }
     kk.hidden = true;
@@ -471,10 +471,10 @@ function render(r, isExample) {
   } else if (r.far) {
     $("tag").textContent = isExample ? "Example: outside the 2-mile area" : "Outside the 2-mile area";
     if (KID_LEAD) {
-      $("big").innerHTML = `${kidN(KIDS500)} children live within 500 feet of the Amtrak railyard`;
+      $("big").innerHTML = `${kidN(KIDS500)} children live within 500 feet of the 24/7 Amtrak facility`;
       k.hidden = false; k.innerHTML = `Out of <span class="k">${fmt(POP500)}</span> people in all`;
     } else {
-      $("big").innerHTML = `<span class="n">${fmt(POP500)}</span> people live within 500 feet of the Amtrak railyard`;
+      $("big").innerHTML = `<span class="n">${fmt(POP500)}</span> people live within 500 feet of the 24/7 Amtrak facility`;
       k.hidden = false; k.innerHTML = `Including <span class="k">${fmt(KIDS500)}</span> children`;
     }
     kk.hidden = false; kk.textContent = "I wouldn’t want it in my neighborhood either.";
@@ -486,12 +486,12 @@ function render(r, isExample) {
     kk.hidden = true;
     const feetWord = feet === 1 ? "foot" : "feet";
     if (KID_LEAD && r.kids) {
-      // "N children live closer to the Amtrak railyard than me" / "… as close to the Amtrak railyard as me"
-      const tail = r.kids.text.replace(" live closer than me", " live closer to the Amtrak railyard than me").replace(" live as close as me", " live as close to the Amtrak railyard as me");
+      // "N children live closer to the 24/7 Amtrak facility than me" / "… as close to the 24/7 Amtrak facility as me"
+      const tail = r.kids.text.replace(" live closer than me", " live closer to the 24/7 Amtrak facility than me").replace(" live as close as me", " live as close to the 24/7 Amtrak facility as me");
       $("big").innerHTML = `${kidN(r.kids.n)} ${tail}`;
       k.hidden = false; k.innerHTML = `I live <span class="k">${fmt(feet)}</span> ${feetWord} away`;
     } else {
-      $("big").innerHTML = `I live <span class="n">${fmt(feet)}</span> ${feetWord} from the Amtrak railyard`;
+      $("big").innerHTML = `I live <span class="n">${fmt(feet)}</span> ${feetWord} from the 24/7 Amtrak facility`;
       if (KID_LEAD) { k.hidden = false; k.innerHTML = `<span class="k">${fmt(KIDS500)}</span> children live within 500 feet of it`; }   // beyond a mile: no closer-than count
       else if (r.kids) { k.hidden = false; k.innerHTML = `<span class="k">${fmt(r.kids.n)}</span> ${r.kids.text}`; } else k.hidden = true;
     }
@@ -529,7 +529,7 @@ function cardSpec(r) {
   const WH = "#f5f5f3", RD = "#ff5a70";
   if (KID_LEAD) {
     const kids500Top = [{ p: [[fmt(KIDS500), RD]], size: 270, big: true },
-      { p: [["CHILDREN LIVE WITHIN", WH]], size: 92, g: 1 }, { p: [["500 FEET OF THE", WH]], size: 92, g: 1 }, { p: [["AMTRAK RAILYARD", WH]], size: 92, g: 1 }];
+      { p: [["CHILDREN LIVE WITHIN", WH]], size: 92, g: 1 }, { p: [["500 FEET OF THE", WH]], size: 92, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 92, g: 1 }];
     const allPeople = { p: [["OUT OF ", WH], [fmt(POP500), RD], [" PEOPLE IN ALL", WH]], size: 88 };
     if (r.overview) return { top: kids500Top, bottom: [allPeople] };
     if (r.far) return { top: kids500Top, bottom: [allPeople,
@@ -539,16 +539,16 @@ function cardSpec(r) {
       const closer = r.kids.text.includes("closer");
       return { top: [{ p: [[fmt(r.kids.n), RD]], size: 330, big: true },
         { p: [[closer ? "CHILDREN LIVE CLOSER" : "CHILDREN LIVE AS CLOSE", WH]], size: 92, g: 1 },
-        { p: [["TO THE AMTRAK", WH]], size: 92, g: 1 }, { p: [[closer ? "RAILYARD THAN ME" : "RAILYARD AS ME", WH]], size: 92, g: 1 }],
+        { p: [["TO THE 24/7 AMTRAK", WH]], size: 92, g: 1 }, { p: [[closer ? "FACILITY THAN ME" : "FACILITY AS ME", WH]], size: 92, g: 1 }],
         bottom: [feetLine] };
     }
     return { top: [{ p: [["I LIVE", WH]], size: 120 }, { p: [[fmt(r.feet), WH]], size: 330, big: true },
-      { p: [[(r.feet === 1 ? "FOOT" : "FEET") + " FROM THE", WH]], size: 112, g: 1 }, { p: [["AMTRAK RAILYARD", WH]], size: 112, g: 1 }],
+      { p: [[(r.feet === 1 ? "FOOT" : "FEET") + " FROM THE", WH]], size: 112, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 112, g: 1 }],
       bottom: [{ p: [[fmt(KIDS500), RD], [" CHILDREN LIVE", WH]], size: 96 }, { p: [["WITHIN 500 FEET OF IT", WH]], size: 72 }] };
   }
   if (r.overview || r.far) return {
     top: [{ p: [[fmt(POP500), WH]], size: 270, big: true },
-      { p: [["PEOPLE LIVE WITHIN", WH]], size: 92, g: 1 }, { p: [["500 FEET OF THE", WH]], size: 92, g: 1 }, { p: [["AMTRAK RAILYARD", WH]], size: 92, g: 1 }],
+      { p: [["PEOPLE LIVE WITHIN", WH]], size: 92, g: 1 }, { p: [["500 FEET OF THE", WH]], size: 92, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 92, g: 1 }],
     bottom: r.far
       ? [{ p: [["INCLUDING ", WH], [fmt(KIDS500), RD], [" CHILDREN", WH]], size: 88 },
          { p: [["I WOULDN’T WANT IT IN MY", WH]], size: 70, g: 2 }, { p: [["NEIGHBORHOOD EITHER.", WH]], size: 70, g: 2 }]
@@ -556,7 +556,7 @@ function cardSpec(r) {
   };
   const spec = {
     top: [{ p: [["I LIVE", WH]], size: 120 }, { p: [[fmt(r.feet), WH]], size: 330, big: true },
-      { p: [[(r.feet === 1 ? "FOOT" : "FEET") + " FROM THE", WH]], size: 112, g: 1 }, { p: [["AMTRAK RAILYARD", WH]], size: 112, g: 1 }],
+      { p: [[(r.feet === 1 ? "FOOT" : "FEET") + " FROM THE", WH]], size: 112, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 112, g: 1 }],
     bottom: [],
   };
   if (r.kids) {
@@ -653,7 +653,7 @@ async function nativeShare(withText) {
   const cd = await getCard();   // already made when the panel opened, so the tap still counts as the user's
   const file = new File([cd.blob], fileName(), { type: "image/png" });
   const data = { files: [file] };
-  if (withText) { data.text = shareText(current); data.title = "How close do you live to the Amtrak railyard?"; }
+  if (withText) { data.text = shareText(current); data.title = "How close do you live to the 24/7 Amtrak facility?"; }
   try { await navigator.share(data); }
   catch (e) { if (e && e.name !== "AbortError") $("status").textContent = "Sharing isn’t available here. Save the image instead."; }
 }
@@ -705,7 +705,7 @@ $("b-fb").addEventListener("click", () => {
   $("status").textContent = "Facebook opens in a new tab. To post the image instead, save it and add it to your post.";
 });
 $("b-sms").addEventListener("click", () => canFiles ? nativeShare(true) : openLink("sms:?&body=" + encodeURIComponent(shareText(current)), "Messages"));
-$("b-mail").addEventListener("click", () => canFiles ? nativeShare(true) : openLink("mailto:?subject=" + encodeURIComponent("How close do you live to the Amtrak railyard?") + "&body=" + encodeURIComponent(shareText(current)), "your mail app"));
+$("b-mail").addEventListener("click", () => canFiles ? nativeShare(true) : openLink("mailto:?subject=" + encodeURIComponent("How close do you live to the 24/7 Amtrak facility?") + "&body=" + encodeURIComponent(shareText(current)), "your mail app"));
 $("b-card").addEventListener("click", () => canFiles ? nativeShare(false) : null);
 $("b-save").addEventListener("click", saveImage);
 $("b-copy").addEventListener("click", copyText);
@@ -717,7 +717,7 @@ window.__makeLinkCard = async () => {
   c.fillStyle = "#0d0e0f"; c.fillRect(0, 0, W, H); c.fillStyle = "#c8102e"; c.fillRect(0, 0, W, 10);
   try { if (!logoImg.complete) await logoImg.decode(); c.drawImage(logoImg, M, 34, 64, 64); } catch (e) {}
   c.fillStyle = "#f5f5f3"; c.textBaseline = "middle"; c.font = `700 30px ${F}`; c.fillText("BRIDGEPORT ENVIRONMENTALISTS", M + 80, 68); c.textBaseline = "alphabetic";
-  const lead = KID_LEAD ? fmt(KIDS500) : fmt(POP500), leadLines = [KID_LEAD ? "CHILDREN LIVE WITHIN" : "PEOPLE LIVE WITHIN", "500 FEET OF THE", "AMTRAK RAILYARD"];
+  const lead = KID_LEAD ? fmt(KIDS500) : fmt(POP500), leadLines = [KID_LEAD ? "CHILDREN LIVE WITHIN" : "PEOPLE LIVE WITHIN", "500 FEET OF THE", "24/7 AMTRAK FACILITY"];
   const nz = fit(lead, 150, 800, LW); if (KID_LEAD) c.fillStyle = "#ff5a70"; c.fillText(lead, M - 4, 124 + nz * .74); c.fillStyle = "#f5f5f3";
   let y = 124 + nz * .74 + 58; const lz = Math.min(...leadLines.map(s => fit(s, 54)));
   c.font = `800 ${lz}px ${F}`; leadLines.forEach((s, i) => c.fillText(s, M, y + i * lz));
