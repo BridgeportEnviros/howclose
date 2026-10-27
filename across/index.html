@@ -72,7 +72,10 @@ details{border-top:1px solid var(--rule);padding-top:12px}
 summary{cursor:pointer;font-family:var(--f-display);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink)}
 details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--ink-2);font-size:14px}
 .stage .overlay{position:absolute;left:12px;top:12px;max-width:min(360px,calc(100% - 24px));background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--rule);border-radius:6px;padding:10px 12px;font-size:14px;color:var(--ink-2);pointer-events:none}
-.mode{position:absolute;right:12px;bottom:12px;font:600 12px var(--f-body);background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--rule);border-radius:4px;padding:3px 7px;color:var(--ink-3)}
+.mapctl{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.maptoggle{font:700 12px var(--f-body);letter-spacing:.02em;background:var(--panel);color:var(--ink);border:1px solid var(--rule);border-radius:4px;padding:5px 9px;cursor:pointer}
+.maptoggle:hover,.maptoggle:focus-visible{border-color:var(--ink)}
+.mode{font:600 12px var(--f-body);background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--rule);border-radius:4px;padding:3px 7px;color:var(--ink-3)}
 .cesium-viewer-bottom{left:8px!important;right:auto!important}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -135,7 +138,10 @@ details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--in
   <main class="stage">
     <div id="cesium" aria-label="3D view"></div>
     <div class="overlay" id="overlay">Enter an address to place the building.</div>
-    <div class="mode" id="mode"></div>
+    <div class="mapctl">
+      <button type="button" class="maptoggle" id="mapToggle" hidden aria-pressed="false">Switch to flat map</button>
+      <div class="mode" id="mode"></div>
+    </div>
   </main>
 </div>
 
@@ -301,6 +307,7 @@ async function initViewer(){
   if (USE_GOOGLE) {
     Cesium.GoogleMaps.defaultApiKey = CONFIG.googleApiKey;
     $("mode").textContent = "Street map (3D city loads when you search)";
+    $("mapToggle").hidden = false;
     $("geoName").textContent = "Google's geocoding service";
   } else {
     $("mode").textContent = "Test mode: flat map";
@@ -315,14 +322,16 @@ async function initViewer(){
 
 /** Load Google's 3D city once, on the first placement. Resolves true if it's showing, false if we're on the flat map. */
 let cityLoading = null;
+let flatOnly = false;   // the map toggle: stay on the flat street map even when the 3D city is available
 function ensureCity(){
-  if (!USE_GOOGLE) return Promise.resolve(false);
-  if (tileset) return Promise.resolve(true);
+  if (!USE_GOOGLE || flatOnly) return Promise.resolve(false);
+  if (tileset) { tileset.show = true; viewer.scene.globe.show = false; $("mode").textContent = "Google 3D city"; return Promise.resolve(true); }
   if (!cityLoading) cityLoading = (async () => {
     try {
       const t = await Cesium.createGooglePhotorealistic3DTileset(undefined, { showCreditsOnScreen: true });
       viewer.scene.primitives.add(t);
       tileset = t;
+      if (flatOnly) { t.show = false; return false; }   // switched to the flat map while it loaded
       viewer.scene.globe.show = false;          // the 3D city replaces the flat map
       $("mode").textContent = "Google 3D city";
       return true;
@@ -337,7 +346,7 @@ function ensureCity(){
 }
 
 async function groundHeights(lonlats){
-  if (!USE_GOOGLE || !tileset) return lonlats.map(() => 0);
+  if (!USE_GOOGLE || !tileset || flatOnly) return lonlats.map(() => 0);
   const carts = lonlats.map(([lo, la]) => Cesium.Cartographic.fromDegrees(lo, la));
   const exclude = building ? building.entities.values : [];
   try {
@@ -509,6 +518,7 @@ async function placeFrom(findHome, startView){
     placement = makePlacement(st, st.away);
     placement.label = home.label;
     await drawBuilding(placement);
+    if (USE_GOOGLE) setToggleLabel();
     // result panel
     $("rAddr").textContent = home.label;
     const wallAbove = CONFIG.plinthFt + B.H.shop;
@@ -519,9 +529,9 @@ async function placeFrom(findHome, startView){
     $("fLots").textContent = "long, about 48 city lots";
     let note = `Placed along ${st.name || home.street}, on the side across from ${home.fromCoords ? "this home" : "your address"}.`;
     if (!st.matched) note += ` We couldn't match "${home.street}" exactly in the Census street map, so we used the nearest street.`;
-    if (USE_GOOGLE && !has3D) note += " The 3D city view isn't available right now, so this shows a flat street map. The building's size and placement are the same.";
-    if (st.ambiguous || !home.exact) note += " Address locations can be approximate. If the building lands on your side of the street, use Switch sides.";
-    $("rStreet").textContent = note;
+    const approx = (st.ambiguous || !home.exact) ? " Address locations can be approximate. If the building lands on your side of the street, use Switch sides." : "";
+    placement.noteFor = flat => note + (flat ? FLAT_NOTE : "") + approx;   // the map toggle rewrites the note
+    $("rStreet").textContent = placement.noteFor(USE_GOOGLE && !has3D);
     $("result").hidden = false;
     if (matchMedia("(max-width:860px)").matches) document.querySelector(".stage").scrollIntoView({ behavior: "smooth", block: "start" });
     const who = home.label.split(",")[0];
@@ -540,10 +550,43 @@ $("vHome").addEventListener("click", () => setView("vHome"));
 $("vAir").addEventListener("click", () => setView("vAir"));
 $("vOrbit").addEventListener("click", () => setView("vOrbit"));
 $("kml").addEventListener("click", downloadKml);
+const FLAT_NOTE = " The 3D city view isn't available right now, so this shows a flat street map. The building's size and placement are the same.";
+/** Map toggle (bottom right, Google mode only): flat street map <-> Google 3D city. The flat map follows the same
+    path as the quota fallback, so it can be tested while the 3D city still works. Switching to 3D starts a billed
+    session only if none has started on this visit. */
+$("mapToggle").addEventListener("click", async () => {
+  const btn = $("mapToggle"); btn.disabled = true;
+  flatOnly = !showingFlat();                // switch away from whichever map is showing (or chosen, before a search)
+  try {
+    let has3D = false;
+    if (flatOnly) {
+      if (tileset) tileset.show = false;
+      viewer.scene.globe.show = true;
+      $("mode").textContent = "Flat map";
+    } else if (placement) {
+      show("busy", "Loading the 3D city…");
+      has3D = await ensureCity();
+    } else {
+      $("mode").textContent = tileset ? "Google 3D city" : "Street map (3D city loads when you search)";
+      if (tileset) { tileset.show = true; viewer.scene.globe.show = false; }
+    }
+    if (placement) {
+      await drawBuilding(placement); setView(currentView);
+      if (placement.noteFor) $("rStreet").textContent = placement.noteFor(!has3D);
+    }
+  } finally { show("busy", null); btn.disabled = false; setToggleLabel(); }
+});
+/** The toggle names the map it switches to; on the flat map after a refused 3D city it offers to try again. */
+const showingFlat = () => (placement || tileset) ? viewer.scene.globe.show : flatOnly;
+function setToggleLabel(){
+  const btn = $("mapToggle"), onFlat = showingFlat();
+  btn.textContent = !onFlat ? "Switch to flat map" : (flatOnly || !placement ? "Switch to 3D city" : "Try the 3D city again");
+  btn.setAttribute("aria-pressed", String(onFlat));
+}
 $("flip").addEventListener("click", async () => {
   if (!placement) return;
   const p = makePlacement(placement.st, [-placement.n[0], -placement.n[1]]);
-  p.label = placement.label; placement = p;
+  p.label = placement.label; p.noteFor = placement.noteFor; placement = p;
   await drawBuilding(placement); setView(currentView);
 });
 viewer = null;

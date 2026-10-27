@@ -22,6 +22,8 @@ In Google mode the page opens on a free flat street map (OpenStreetMap) and load
 - 3D city refused or unreachable: the building is placed on the flat street map, with a note in the results; the next search tries the 3D city again.
 - Google address search refused (anything but "address not found"): the page uses OpenStreetMap's address search instead.
 
+A small button at the bottom right of the map (Google mode only) switches between the flat street map and the 3D city. The flat map takes the same path as the quota fallback (same note in the results), so the fallback can be checked while the 3D city still works. Switching to 3D starts a billed session only if none has started on that visit. After a refused 3D city it reads "Try the 3D city again."
+
 ## 1. Get a Google Maps Platform key (about 15 minutes)
 
 1. Go to console.cloud.google.com, sign in, and create a project (e.g. "Railyard across the street").
