@@ -37,6 +37,7 @@ body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body)}
 @media (max-width:860px){.panel{order:1;border-right:0;border-bottom:1px solid var(--rule);padding-right:max(18px,env(safe-area-inset-right,0px))}}
 .stage{position:relative;min-width:0;background:var(--stage)}
 @media (max-width:860px){.stage{order:2;height:72vh;min-height:380px}}
+.belowmap{order:3;background:var(--panel);display:grid;gap:14px;padding:16px max(18px,env(safe-area-inset-right,0px)) 28px max(18px,env(safe-area-inset-left,0px))}
 #cesium{position:absolute;inset:0}
 .brand{display:inline-flex;align-items:center;gap:10px;width:max-content;max-width:100%;color:var(--ink);text-decoration:none;border-radius:4px;outline-offset:3px}
 .brand img{flex:none;display:block;width:44px;height:44px;border-radius:4px}
@@ -68,6 +69,24 @@ button:focus-visible,input:focus-visible,summary:focus-visible,a:focus-visible{o
 .views{display:flex;flex-wrap:wrap;gap:8px}
 .views button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
 .note{font-size:14px;color:var(--ink-2);margin:0}
+/* Share panel (mirrors the How Close tool) */
+.sheet{border:1.5px solid var(--rule);border-radius:10px;padding:14px;display:grid;gap:12px}
+.sheet h2{font-family:var(--f-display);font-weight:800;text-transform:uppercase;font-size:22px;margin:0}
+.seg{display:inline-flex;border:1.5px solid var(--ink);border-radius:6px;overflow:hidden;width:max-content}
+.seg label{font-family:var(--f-display);font-weight:700;text-transform:uppercase;font-size:14px;letter-spacing:.06em;padding:7px 14px;cursor:pointer}
+.seg input{position:absolute;opacity:0;width:1px;height:1px}
+.seg label:has(input:checked){background:var(--ink);color:var(--panel)}
+.seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:-3px}
+.cardbtn{display:block;width:100%;max-width:220px;padding:0;border:0;background:none;border-radius:8px;cursor:pointer}
+.cardbtn img{width:100%;height:auto;display:block;border-radius:8px;border:1px solid var(--rule);-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.btns{display:grid;gap:8px}
+.btns button{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left}
+.btns small{text-align:right;font-family:var(--f-body);text-transform:none;letter-spacing:0;font-weight:500;font-size:13px;opacity:.75}
+.msgbox{display:grid;gap:6px;justify-items:end}
+.iconbtn{display:inline-grid;place-items:center;width:38px;height:38px;padding:0;border-radius:6px;border:1.5px solid var(--rule)}
+.iconbtn:hover{border-color:var(--ink)}
+textarea{width:100%;font:14px var(--f-body);padding:10px;border-radius:6px;border:1.5px solid var(--rule);background:var(--bg);color:var(--ink);resize:vertical;min-height:84px}
+.status{font-size:14px;color:var(--ink-2);min-height:1.5em;margin:0}
 .textlink{all:unset;display:inline;font:inherit;color:var(--ink);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
 .textlink:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 details{border-top:1px solid var(--rule);padding-top:12px}
@@ -91,7 +110,7 @@ details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--in
         <p class="eyebrow">Amtrak's proposed Canal Street maintenance building</p>
         <h1>What if it were across the street from you?</h1>
       </div>
-      <p class="lede">Enter your address. We'll put the 1,209-foot building on the other side of your street, its long wall facing your home, the way it would face the homes along the tracks in Bridgeport. <a href="https://www.bridgeportenviros.org/projects/amtrak-railyard" target="_blank" rel="noopener">Learn more about the proposed facility</a></p>
+      <p class="lede">Enter your address. We'll put the 1,209-foot building on the other side of your street, its long wall facing your home. <a href="https://www.bridgeportenviros.org/projects/amtrak-railyard" target="_blank" rel="noopener">Learn more about the proposed facility</a></p>
     </header>
 
     <form id="form" autocomplete="on">
@@ -114,10 +133,33 @@ details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--in
         <!-- Former fixed "From above" view, hidden Oct 27, 2026; to bring it back, uncomment this and add "vAir" to VIEW_IDS:
         <button type="button" id="vAir" aria-pressed="false">From above</button> -->
       </div>
-      <p class="note"><span id="rStreet"></span> <button type="button" class="textlink" id="flip">Wrong side? Switch sides</button></p>
+      <div class="row"><button type="button" class="primary" id="share">Share</button></div>
+      <section class="sheet" id="sheet" hidden aria-labelledby="sheet-h">
+        <h2 id="sheet-h">Share this view</h2>
+        <div class="seg" role="radiogroup" aria-label="Image shape">
+          <label><input type="radio" name="fmt" value="story" checked>Story</label>
+          <label><input type="radio" name="fmt" value="post">Post</label>
+        </div>
+        <button type="button" class="cardbtn" id="b-card" aria-label="Share this image"><img id="card" alt=""></button>
+        <div class="btns">
+          <button type="button" id="b-ig">Instagram <small id="ig-note">Saves the image to post</small></button>
+          <button type="button" id="b-fb">Facebook <small id="fb-note">Shares the page link</small></button>
+          <button type="button" id="b-mail">Email <small id="mail-note">Opens your mail app</small></button>
+          <button type="button" id="b-sms">Text <small id="sms-note">Opens Messages</small></button>
+          <button type="button" id="b-save">Save image <small id="save-note">PNG, 1080×1920</small></button>
+        </div>
+        <div class="msgbox">
+          <textarea id="sharetext" aria-label="Message to share" readonly></textarea>
+          <button type="button" class="iconbtn" id="b-copy" aria-label="Copy message" title="Copy message">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+        <p class="status" id="status" role="status"></p>
+      </section>
+      <p class="note" id="noteP" hidden><span id="rStreet"></span> <button type="button" class="textlink" id="flip">Wrong side? Switch sides</button></p>
     </section>
 
-    <details>
+    <details id="howWorks">
       <summary>How this works</summary>
       <ul>
         <li><b>Your address</b> is located with <span id="geoName">a geocoding service</span>. Nothing is stored by this page.</li>
@@ -137,6 +179,8 @@ details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--in
       <div class="mode" id="mode"></div>
     </div>
   </main>
+  <!-- Phones only: the placement note and How this works move here, below the map (see moveForPhones) -->
+  <div class="belowmap" id="belowMap" hidden></div>
 </div>
 
 <script>
@@ -320,7 +364,7 @@ async function initViewer(){
     navigationHelpButton: false, baseLayerPicker: false, fullscreenButton: false, infoBox: false, selectionIndicator: false };
   // Every page starts on a free flat street map. In Google mode the 3D city (billed per session) loads only
   // when someone places the building, so visitors who look and leave cost nothing.
-  viewer = new Cesium.Viewer("cesium", { ...opts,
+  viewer = new Cesium.Viewer("cesium", { ...opts, contextOptions: { webgl: { preserveDrawingBuffer: true } },   // lets Share copy the view
     baseLayer: new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({ url: "https://tile.openstreetmap.org/" })) });
   viewer.scene.skyAtmosphere.show = true;
   if (USE_GOOGLE) {
@@ -332,7 +376,11 @@ async function initViewer(){
     $("mode").textContent = "Test mode: flat map";
     $("geoName").textContent = "OpenStreetMap's Nominatim search";
   }
-  viewer.scene.screenSpaceCameraController.enableCollisionDetection = true;
+  const ssc = viewer.scene.screenSpaceCameraController;
+  ssc.enableCollisionDetection = true;
+  ssc.enableTranslate = false;                 // no panning; see lockOn
+  ssc.minimumZoomDistance = 15;                // metres
+  ssc.maximumZoomDistance = 3000;              // keeps the building in sight when zooming out
   viewer.clock.currentTime = Cesium.JulianDate.fromIso8601("2026-06-21T20:30:00Z");   // 3:30 pm Chicago, summer light
   viewer.clock.shouldAnimate = false;
   viewer.camera.setView({ destination: Cesium.Cartesian3.fromDegrees(-87.6367, 41.8150, 2600),
@@ -401,6 +449,8 @@ async function drawBuilding(p){
   await viewer.dataSources.add(building);
   p.ground = ground; p.rail = rail; p.porchGround = porchH != null ? porchH : ground;
   p.centerLL = p.toLonLat(p.local(B.len / 2, B.width / 2));
+  focus = Cesium.Cartesian3.fromDegrees(p.centerLL[0], p.centerLL[1], rail + 10);
+  resetShare();                                          // a new placement needs a new share image
 }
 
 function heading(n){ return Math.atan2(n[0], n[1]); }    // n = [east, north] -> compass heading, radians
@@ -485,9 +535,20 @@ function setView(id){
   if (id === "vHome") viewHome(placement); else if (id === "vAir") viewAir(placement); else startOrbit(placement);
 }
 // Grabbing the view stops any sweep or circling so people can explore on their own.
+// Touching the map also pins the camera to the building, so dragging turns the view around it instead of
+// sliding the map away (no panning); pinch or scroll zooms toward it, and tilting still works.
 function stopOnUserInput(){
   const c = viewer.canvas;
-  for (const ev of ["pointerdown", "wheel", "touchstart"]) c.addEventListener(ev, () => { if (anim) stopAnim(); }, { passive: true });
+  for (const ev of ["pointerdown", "wheel", "touchstart"]) c.addEventListener(ev, () => {
+    if (anim) stopAnim();
+    viewer.camera.cancelFlight();
+    lockOn();
+  }, { passive: true });
+}
+let focus = null;                                         // the building's center; the camera orbits around it
+function lockOn(){
+  if (!focus || anim) return;
+  viewer.camera.lookAtTransform(Cesium.Transforms.eastNorthUpToFixedFrame(focus));   // keeps the camera where it is
 }
 
 /* ============================== Google Earth download (KML) ==============================
@@ -556,7 +617,7 @@ async function placeFrom(findHome, startView){
     const approx = (st.ambiguous || !home.exact) ? " Address locations can be approximate." : "";
     placement.noteFor = flat => note + (flat ? FLAT_NOTE : "") + approx;   // the map toggle rewrites the note
     $("rStreet").textContent = placement.noteFor(USE_GOOGLE && !has3D);
-    $("result").hidden = false;
+    $("result").hidden = false; $("noteP").hidden = false;
     if (matchMedia("(max-width:860px)").matches) document.querySelector(".stage").scrollIntoView({ behavior: "smooth", block: "start" });
     const who = home.label.split(",")[0];
     $("overlay").textContent = `The proposed building across from ${home.fromCoords ? who.charAt(0).toLowerCase() + who.slice(1) : who}. Drag to look around.`;
@@ -612,6 +673,217 @@ $("flip").addEventListener("click", async () => {
   p.label = placement.label; p.noteFor = placement.noteFor; placement = p;
   await drawBuilding(placement); setView(currentView);
 });
+/* ============================== sharing (mirrors the How Close tool) ============================== */
+const SHARE = {
+  kids500: 1101,       // children within 500 ft of the proposed site: the neighborhood dashboard's figure, as on How Close
+  pageUrl: "https://bridgeportenviros.github.io/howclose/across/",
+  learnMoreLabel: "www.bridgeportenviros.org/projects/amtrak-railyard",
+  fillWidth: 0.92,     // the building spans this share of the rendering's width
+};
+const FORMATS = { story: { W: 1080, H: 1920, s: 1, note: "1080×1920" }, post: { W: 1080, H: 1350, s: .72, note: "1080×1350" } };
+let cardFormat = "story", cards = {}, shot = null, canFiles = false;
+function resetShare(){ cards = {}; shot = null; if ($("sheet")) $("sheet").hidden = true; }
+const shareText = () => `${SHARE.kids500.toLocaleString("en-US")} children live within 500 feet of the 24/7 facility Amtrak wants to build at Canal Street Yard in Bridgeport. None live by its current site at 14th Street. I wouldn’t want it in my neighborhood either. See it across the street from you: ${SHARE.pageUrl}`;
+const fileName = () => `railyard-across-the-street-${cardFormat}.png`;
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
+
+/** Renders the From above view, zoomed so the building fills almost the whole width, and copies it off the map.
+    Returns { img (canvas), cx, cy, span } in image pixels, where span is the building's width on screen. */
+async function captureRendering(){
+  const p = placement; if (!p || !focus) return null;
+  const cam = viewer.camera, scene = viewer.scene;
+  const wasCircling = !!anim;
+  stopAnim(); cam.cancelFlight();
+  const saved = { pos: Cesium.Cartesian3.clone(cam.positionWC), dir: Cesium.Cartesian3.clone(cam.directionWC), up: Cesium.Cartesian3.clone(cam.upWC) };
+  const overlayText = $("overlay").textContent;
+  $("overlay").textContent = "Making your image…";
+  const prevScale = viewer.resolutionScale, prevRec = viewer.useBrowserRecommendedResolution;
+  viewer.useBrowserRecommendedResolution = false;
+  viewer.resolutionScale = Math.min(3, Math.max(window.devicePixelRatio || 1, 1100 / Math.max(1, viewer.canvas.clientWidth)));
+  try {
+    const V = VIEWS.orbit, h = heading(p.n) + rad(V.startOffsetDeg), pitch = rad(V.pitchDeg);
+    // the building's box: footprint corners at the base and the penthouse top
+    const corners = [];
+    for (const [sx, wx] of [[0, 0], [B.len, 0], [0, B.width], [B.len, B.width]])
+      for (const z of [p.rail - CONFIG.plinthFt * FT, p.rail + B.H.pent * FT]) {
+        const [lo, la] = p.toLonLat(p.local(sx, wx)); corners.push(Cesium.Cartesian3.fromDegrees(lo, la, z));
+      }
+    const measure = () => {
+      const pts = corners.map(c => Cesium.SceneTransforms.worldToWindowCoordinates(scene, c)).filter(Boolean);
+      const xs = pts.map(q => q.x), ys = pts.map(q => q.y);
+      return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+    };
+    // Fit the whole building inside the view with a margin (perspective puts it a little off center); the card
+    // then crops around it so it fills SHARE.fillWidth of the image. Rendered at high resolution for that crop.
+    let range = V.rangeFt * FT;
+    const cw = viewer.canvas.clientWidth, chh = viewer.canvas.clientHeight;
+    for (let i = 0; i < 8; i++) {               // the on-screen width shrinks about in proportion to distance
+      cam.lookAt(focus, new Cesium.HeadingPitchRange(h, pitch, range)); scene.render();
+      const m = measure(), span = m.x1 - m.x0;
+      if (!(span > 0)) break;
+      const over = Math.max((cw * .04 - m.x0), (m.x1 - cw * .96), (chh * .04 - m.y0), (m.y1 - chh * .96)) > 0;
+      const k2 = over ? 1.15 : span / (cw * .80);
+      range *= Math.max(k2, over ? 1.15 : 0);
+      if (!over && Math.abs(span - cw * .80) < 4) break;
+    }
+    cam.lookAt(focus, new Cesium.HeadingPitchRange(h, pitch, range));
+    // let the map and 3D city finish loading at this view (up to 10 seconds)
+    const t0 = performance.now(); let ready = 0;
+    while (performance.now() - t0 < 10000 && ready < 3) {
+      await nextFrame();
+      const done = (tileset && tileset.show) ? tileset.tilesLoaded : scene.globe.tilesLoaded;
+      ready = done ? ready + 1 : 0;
+    }
+    scene.render();
+    const k = viewer.canvas.width / viewer.canvas.clientWidth, m = measure();
+    const img = document.createElement("canvas"); img.width = viewer.canvas.width; img.height = viewer.canvas.height;
+    img.getContext("2d").drawImage(viewer.canvas, 0, 0);
+    return { img, cx: (m.x0 + m.x1) / 2 * k, cy: (m.y0 + m.y1) / 2 * k, span: (m.x1 - m.x0) * k,
+             credit: (tileset && tileset.show) ? "Map data ©2026 Google" : "© OpenStreetMap contributors" };
+  } finally {
+    viewer.resolutionScale = prevScale; viewer.useBrowserRecommendedResolution = prevRec;
+    cam.lookAtTransform(Cesium.Matrix4.IDENTITY);
+    cam.setView({ destination: saved.pos, orientation: { direction: saved.dir, up: saved.up } });
+    $("overlay").textContent = overlayText;
+    if (wasCircling) startOrbit(p); else lockOn();
+  }
+}
+
+async function makeCard(key){
+  try { await Promise.all(["800 100px 'Barlow Condensed'", "700 40px 'Barlow Condensed'"].map(f => document.fonts.load(f))); } catch (e) {}
+  if (!shot) shot = await captureRendering();
+  const FM = FORMATS[key], W = FM.W, H = FM.H, s = FM.s, M = Math.round(80 * (s < 1 ? .85 : 1)), CW = W - 2 * M;
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const c = cv.getContext("2d"), F = '"Barlow Condensed", "Arial Narrow", sans-serif', WH = "#f5f5f3", RD = "#ff5a70";
+  const txt = l => l.p.map(q => q[0]).join("");
+  const fitSize = (l, maxW) => { let z = l.size * s; do { c.font = `800 ${z}px ${F}`; } while (c.measureText(txt(l)).width > maxW && (z -= 2) > 12); return z; };
+  const groupMin = (lines, sizes) => { const g = {}; lines.forEach((l, i) => { if (l.g) g[l.g] = Math.min(g[l.g] ?? 1e9, sizes[i]); }); return sizes.map((z, i) => lines[i].g ? g[lines[i].g] : z); };
+  const drawLine = (l, z, y) => { let x = M - (l.big ? 6 * s : 0); for (const [t, col] of l.p) { c.font = `800 ${z}px ${F}`; c.fillStyle = col; c.fillText(t, x, y); x += c.measureText(t).width; } };
+  c.fillStyle = "#0d0e0f"; c.fillRect(0, 0, W, H);
+  c.fillStyle = "#c8102e"; c.fillRect(0, 0, W, 14 * s);
+  // header: logo and the group's name
+  const LG = 92 * s, LT = 50 * s, logo = document.querySelector(".brand img");
+  try { if (!logo.complete) await logo.decode(); c.imageSmoothingQuality = "high"; c.drawImage(logo, M, LT, LG, LG); } catch (e) {}
+  c.fillStyle = WH; c.textBaseline = "middle"; c.font = `700 ${40 * s}px ${F}`;
+  c.fillText("BRIDGEPORT ENVIRONMENTALISTS", M + LG + 22 * s, LT + LG / 2 + 2 * s); c.textBaseline = "alphabetic"; c.textAlign = "left";
+  // top: the 500 ft children figure
+  const top = [{ p: [[SHARE.kids500.toLocaleString("en-US"), RD]], size: 270, big: true },
+    { p: [["CHILDREN LIVE WITHIN", WH]], size: 92, g: 1 }, { p: [["500 FEET OF THE", WH]], size: 92, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 92, g: 1 }];
+  const tz = groupMin(top, top.map(l => fitSize(l, CW))), base = [];
+  top.forEach((l, i) => base.push(i === 0 ? LT + LG + 56 * s + tz[0] * .72 : base[i - 1] + tz[i] * (l.big ? .88 : 1.0)));
+  top.forEach((l, i) => drawLine(l, tz[i], base[i]));
+  const boxTop = base[base.length - 1] + 50 * s;
+  // footer
+  c.fillStyle = WH; const foot = "LEARN MORE  " + SHARE.learnMoreLabel.toUpperCase();
+  let fz = 40 * s; do { c.font = `700 ${fz}px ${F}`; } while (c.measureText(foot).width > CW && (fz -= 2) > 10); c.fillText(foot, M, H - 80 * s);
+  // bottom: current site and the kicker, bottom-up above the footer
+  const bottom = [{ p: [["NONE", RD], [" LIVE BY ITS CURRENT SITE", WH]], size: 88 },
+    { p: [["I WOULDN’T WANT IT IN MY", WH]], size: 70, g: 2 }, { p: [["NEIGHBORHOOD EITHER.", WH]], size: 70, g: 2 }];
+  const bz = groupMin(bottom, bottom.map(l => fitSize(l, CW))), bb = new Array(bz.length);
+  bb[bz.length - 1] = H - 160 * s;
+  for (let i = bz.length - 2; i >= 0; i--) bb[i] = bb[i + 1] - bz[i + 1];
+  const ruleY = bb[0] - bz[0] * .72 - 34 * s;
+  c.fillStyle = "#c8102e"; c.fillRect(M, ruleY, CW, 6 * s);
+  bottom.forEach((l, i) => drawLine(l, bz[i], bb[i]));
+  // the rendering, cropped around the building so it fills almost the full width
+  const boxH = ruleY - 40 * s - boxTop;
+  c.fillStyle = "#1b1d1f"; c.fillRect(M, boxTop, CW, boxH);
+  if (shot) {
+    let sw = shot.span / SHARE.fillWidth, sh = sw * boxH / CW;
+    if (sh > shot.img.height) { sh = shot.img.height; sw = sh * CW / boxH; }
+    if (sw > shot.img.width) { sw = shot.img.width; sh = sw * boxH / CW; }
+    const sx = Math.min(Math.max(0, shot.cx - sw / 2), shot.img.width - sw), sy = Math.min(Math.max(0, shot.cy - sh / 2), shot.img.height - sh);
+    c.imageSmoothingQuality = "high";
+    c.drawImage(shot.img, sx, sy, sw, sh, M, boxTop, CW, boxH);
+    // map attribution, required with the map imagery
+    c.font = `500 ${22 * s}px "Barlow", system-ui, sans-serif`; const cwid = c.measureText(shot.credit).width;
+    c.fillStyle = "rgba(13,14,15,.65)"; c.fillRect(M + CW - cwid - 20 * s, boxTop + boxH - 34 * s, cwid + 20 * s, 34 * s);
+    c.fillStyle = WH; c.fillText(shot.credit, M + CW - cwid - 10 * s, boxTop + boxH - 10 * s);
+  }
+  c.strokeStyle = "#3a3e42"; c.lineWidth = 2; c.strokeRect(M, boxTop, CW, boxH);
+  return new Promise(res => cv.toBlob(b => res({ blob: b, url: URL.createObjectURL(b) }), "image/png"));
+}
+async function getCard(){ if (!cards[cardFormat]) cards[cardFormat] = await makeCard(cardFormat); return cards[cardFormat]; }
+async function refreshSheet(){
+  $("status").textContent = "Making your image…";
+  const cd = await getCard();
+  $("card").src = cd.url;
+  $("card").alt = shareText().replace(/ See it across.*$/, "");
+  $("save-note").textContent = canFiles ? "Then tap Save Image" : `PNG, ${FORMATS[cardFormat].note}`;
+  $("status").textContent = "";
+  return cd;
+}
+async function openSheet(){
+  if (!placement) return;
+  $("sheet").hidden = false; $("share").disabled = true;
+  $("sharetext").value = shareText();
+  try {
+    const cd = await refreshSheet();
+    const file = new File([cd.blob], fileName(), { type: "image/png" });
+    canFiles = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+    $("ig-note").textContent = canFiles ? "Then choose Story or Post" : "Saves the image to post";
+    $("fb-note").textContent = canFiles ? "Then choose Facebook" : "Shares the page link";
+    $("sms-note").textContent = canFiles ? "Image and message · then choose Messages" : "Opens Messages";
+    $("mail-note").textContent = canFiles ? "Image and message · then choose Mail" : "Opens your mail app";
+    $("save-note").textContent = canFiles ? "Then tap Save Image" : `PNG, ${FORMATS[cardFormat].note}`;
+    $("sheet").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  } finally { $("share").disabled = false; }
+}
+// Image only for Instagram, Facebook and Save (adding text can drop Instagram from the iPhone share sheet);
+// image plus the message for Text and Email.
+async function nativeShare(withText){
+  const cd = await getCard();
+  const data = { files: [new File([cd.blob], fileName(), { type: "image/png" })] };
+  if (withText) { data.text = shareText(); data.title = "What if it were across the street from you?"; }
+  try { await navigator.share(data); }
+  catch (e) { if (e && e.name !== "AbortError") $("status").textContent = "Sharing isn’t available here. Save the image instead."; }
+}
+function openLink(href, what){
+  const a = document.createElement("a"); a.href = href; a.target = "_top"; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove();
+  $("status").textContent = `If ${what} didn’t open, copy the message below and paste it in.`;
+}
+async function saveImage(){
+  if (canFiles) return nativeShare(false);
+  const cd = await getCard();
+  const a = document.createElement("a"); a.href = cd.url; a.download = fileName(); document.body.appendChild(a); a.click(); a.remove();
+  $("status").textContent = "If nothing downloaded, press and hold (or right-click) the image to save it.";
+}
+async function copyText(){
+  const t = $("sharetext");
+  try { await navigator.clipboard.writeText(t.value); $("status").textContent = "Message copied."; }
+  catch (e) { t.focus(); t.select(); $("status").textContent = "Select the message and copy it."; }
+}
+$("share").addEventListener("click", openSheet);
+document.querySelectorAll('input[name="fmt"]').forEach(el => el.addEventListener("change", () => { cardFormat = el.value; refreshSheet(); }));
+$("b-ig").addEventListener("click", () => (canFiles ? nativeShare(false) : saveImage()));
+$("b-fb").addEventListener("click", () => {
+  if (canFiles) return nativeShare(false);
+  openLink("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(SHARE.pageUrl), "Facebook");
+});
+$("b-sms").addEventListener("click", () => canFiles ? nativeShare(true) : openLink("sms:?&body=" + encodeURIComponent(shareText()), "Messages"));
+$("b-mail").addEventListener("click", () => canFiles ? nativeShare(true) : openLink("mailto:?subject=" + encodeURIComponent("What if it were across the street from you?") + "&body=" + encodeURIComponent(shareText()), "your mail app"));
+$("b-card").addEventListener("click", () => canFiles ? nativeShare(false) : null);
+$("b-save").addEventListener("click", saveImage);
+$("b-copy").addEventListener("click", copyText);
+
+/* Phones: show the placement note and How this works below the map instead of above it. */
+const PHONE = matchMedia("(max-width:860px)");
+const noteHome = { el: $("noteP"), parent: $("noteP").parentNode, next: $("noteP").nextSibling };
+const howHome = { el: $("howWorks"), parent: $("howWorks").parentNode, next: $("howWorks").nextSibling };
+function moveForPhones(){
+  const box = $("belowMap");
+  if (PHONE.matches) {
+    box.append(noteHome.el, howHome.el);
+    box.hidden = false;
+  } else {
+    noteHome.parent.insertBefore(noteHome.el, noteHome.next);
+    howHome.parent.insertBefore(howHome.el, howHome.next);
+    box.hidden = true;
+  }
+}
+moveForPhones();
+PHONE.addEventListener("change", moveForPhones);
+
 viewer = null;
 initViewer().then(() => {
   stopOnUserInput();

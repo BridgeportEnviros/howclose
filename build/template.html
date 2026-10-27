@@ -137,7 +137,6 @@ textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px; border-ra
     <div class="sheet-grid">
       <div class="cardcol">
         <button type="button" class="cardbtn" id="b-card" aria-label="Share this image"><img id="card" alt=""></button>
-        <p class="hint" id="card-hint" hidden>Tap the image to share it</p>
       </div>
       <div class="btns">
         <button type="button" id="b-ig">Instagram <small id="ig-note">Saves the image to post</small></button>
@@ -646,7 +645,6 @@ async function openSheet() {
   $("sms-note").textContent = canFiles ? "Image and message · then choose Messages" : "Opens Messages";
   $("mail-note").textContent = canFiles ? "Image and message · then choose Mail" : "Opens your mail app";
   $("save-note").textContent = canFiles ? "Then tap Save Image" : `PNG, ${FORMATS[cardFormat].note}`;
-  $("card-hint").hidden = !canFiles;
   $("sheet").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
 }
 // withText=false (Instagram, Facebook, Save, tapping the image): image only, because on iPhone adding text
