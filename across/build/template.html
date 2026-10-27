@@ -106,20 +106,15 @@ details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--in
 
     <section class="result" id="result" hidden aria-live="polite">
       <p class="addr" id="rAddr"></p>
-      <div class="facts">
-        <div class="fact"><b id="fWall">63 ft</b><span>wall height facing your home</span></div>
-        <div class="fact"><b>1,209 ft</b><span id="fLots">long, about 48 city lots</span></div>
-        <div class="fact"><b id="fDist">—</b><span id="fDistLbl">from your address to the wall</span></div>
-      </div>
       <div class="views" role="group" aria-label="Views">
-        <button type="button" id="vHome" aria-pressed="true">From your home</button>
-        <button type="button" id="vAir" aria-pressed="false">From above</button>
-        <button type="button" id="vOrbit" aria-pressed="false">Circle around</button>
+        <button type="button" id="vOrbit" aria-pressed="true">From above</button>
+        <button type="button" id="vHome" aria-pressed="false">From your home</button>
+        <!-- Former fixed "From above" view, hidden Oct 27, 2026; to bring it back, uncomment this and add "vAir" to VIEW_IDS:
+        <button type="button" id="vAir" aria-pressed="false">From above</button> -->
       </div>
       <p class="note" id="rStreet"></p>
       <div class="row" style="flex-wrap:wrap">
         <button type="button" id="flip">Wrong side? Switch sides</button>
-        <button type="button" id="kml">Download for Google Earth</button>
       </div>
     </section>
 
@@ -137,7 +132,7 @@ details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--in
 
   <main class="stage">
     <div id="cesium" aria-label="3D view"></div>
-    <div class="overlay" id="overlay">Enter an address to place the building.</div>
+    <div class="overlay" id="overlay">Amtrak's proposed maintenance building at Canal Street Yard in Bridgeport. Enter an address to see it across the street from you.</div>
     <div class="mapctl">
       <button type="button" class="maptoggle" id="mapToggle" hidden aria-pressed="false">Switch to flat map</button>
       <div class="mode" id="mode"></div>
@@ -167,7 +162,11 @@ const VIEWS = {
   above: { offsetDeg: 31.5,         // from the home's side, turned this far off straight-across
            pitchDeg: -28, rangeFt: 2493 },
   orbit: { startOffsetDeg: 31.5, pitchDeg: -22, rangeFt: 1890,   // 20% closer than the first version (2,362 ft)
-           degPerSecond: 5.5 },
+           degPerSecond: 5.5,
+           flySeconds: 2.2 },       // smooth flight to the starting point before it starts turning
+  // Opening view, before any search: the building at its proposed site in Canal Street Yard
+  intro: { headingDeg: 30,          // looking north-northeast, from the southwest (shows the south end and the west wall)
+           pitchDeg: -30, rangeFt: 2400 },
 };
 const B = __BUILDING__;
 const FT = 0.3048;
@@ -294,6 +293,27 @@ function makePlacement(st, n){
   return { st, n, m, u, local, toLonLat, porch, off };
 }
 
+/** The building at its proposed site: east face along the main line between the 33rd and 35th St viaducts
+    (corners from the WSP site plan, see the project notes). Same shape as makePlacement's result. */
+function sitePlacement(){
+  const SE = [41.831059, -87.636566], NE = [41.834373, -87.636646];   // [lat, lon] of the east face's ends
+  const lat0 = (SE[0] + NE[0]) / 2, lon0 = (SE[1] + NE[1]) / 2;
+  const R = 6371008.8, kx = Math.cos(lat0 * Math.PI / 180) * R * Math.PI / 180, ky = R * Math.PI / 180;
+  const v = [(NE[1] - SE[1]) * kx, (NE[0] - SE[0]) * ky], len = Math.hypot(v[0], v[1]);
+  const u = [v[0] / len, v[1] / len], n = [-u[1], u[0]];               // u: south to north along the east face; n: west
+  const L = B.len;
+  const local = (s, w) => [u[0]*(s - L/2)*FT + n[0]*w*FT, u[1]*(s - L/2)*FT + n[1]*w*FT];
+  const toLonLat = ([x, y]) => [lon0 + x / kx, lat0 + y / ky];
+  return { n, m: [0, 0], u, local, toLonLat, porch: [-n[0]*30, -n[1]*30], off: 0, site: true };
+}
+async function showProposedSite(){
+  const p = sitePlacement();
+  await drawBuilding(p);
+  const [lo, la] = p.centerLL, V = VIEWS.intro;
+  viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(Cesium.Cartesian3.fromDegrees(lo, la, p.rail + 10), 1),
+    { offset: new Cesium.HeadingPitchRange(rad(V.headingDeg), rad(V.pitchDeg), V.rangeFt * FT), duration: 0 });
+}
+
 /* ============================== 3D view (CesiumJS) ============================== */
 let viewer, tileset = null, building = null, orbitHandler = null;
 async function initViewer(){
@@ -387,7 +407,9 @@ async function drawBuilding(p){
 function heading(n){ return Math.atan2(n[0], n[1]); }    // n = [east, north] -> compass heading, radians
 const rad = Cesium.Math.toRadians;
 let anim = null;                                          // running pan/orbit: { remove() }
+let orbitToken = 0;                                       // bumped to cancel a circle that is still flying in
 function stopAnim(){
+  orbitToken++;                                           // cancels a circle that is still flying in
   if (anim) { anim.remove(); anim = null; }
   if (viewer) { viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY); viewer.clock.shouldAnimate = false; }
 }
@@ -443,13 +465,20 @@ function startOrbit(p){
   const target = Cesium.Cartesian3.fromDegrees(lo, la, p.rail + 10);
   const h0 = heading(p.n) + rad(V.startOffsetDeg);
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const at = h => viewer.camera.lookAt(target, new Cesium.HeadingPitchRange(h, rad(V.pitchDeg), V.rangeFt * FT));
-  at(h0);
-  if (!reduce) anim = runEachFrame(t => at(h0 + rad(V.degPerSecond) * t));
+  const hpr = h => new Cesium.HeadingPitchRange(h, rad(V.pitchDeg), V.rangeFt * FT);
+  const at = h => viewer.camera.lookAt(target, hpr(h));
+  // Fly to the starting point first (as the other views do), then start turning from exactly there.
+  const token = ++orbitToken;
+  viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(target, 1), { offset: hpr(h0), duration: V.flySeconds,
+    complete: () => {
+      if (token !== orbitToken) return;             // another view was picked during the flight
+      at(h0);
+      if (!reduce) anim = runEachFrame(t => at(h0 + rad(V.degPerSecond) * t));
+    } });
 }
 
-const VIEW_IDS = ["vHome", "vAir", "vOrbit"];
-let currentView = "vHome";
+const VIEW_IDS = ["vOrbit", "vHome"];   // "vAir" (the fixed view from above) is hidden; see the commented-out button
+let currentView = "vOrbit";
 function setView(id){
   currentView = id;
   for (const b of VIEW_IDS) $(b).setAttribute("aria-pressed", b === id);
@@ -462,7 +491,8 @@ function stopOnUserInput(){
   for (const ev of ["pointerdown", "wheel", "touchstart"]) c.addEventListener(ev, () => { if (anim) stopAnim(); }, { passive: true });
 }
 
-/* ============================== Google Earth download (KML) ============================== */
+/* ============================== Google Earth download (KML) ==============================
+   Not linked from the page since Oct 27, 2026 (button removed); kept so it can be brought back. */
 function kmlColor(hex, a = "ff"){ return (a + hex.slice(5, 7) + hex.slice(3, 5) + hex.slice(1, 3)).toLowerCase(); }
 function buildKml(p, label){
   const plinth = CONFIG.plinthFt;
@@ -503,7 +533,7 @@ function placeAt(lat, lon, street, label, startView){
   return placeFrom(async () => ({ lat, lon, street: street || "", label: label || "This spot", exact: true, fromCoords: true }), startView);
 }
 // view names a link can start on with &view=
-const START_VIEWS = { home: "vHome", above: "vAir", circle: "vOrbit" };
+const START_VIEWS = { home: "vHome", above: "vOrbit", circle: "vOrbit" };   // "above" is now the circling view (renamed Oct 27, 2026)
 async function placeFrom(findHome, startView){
   show("err", null); show("busy", "Finding the spot…"); $("go").disabled = true;
   const city = ensureCity();          // starts the 3D city (once) while the address is looked up
@@ -521,12 +551,7 @@ async function placeFrom(findHome, startView){
     if (USE_GOOGLE) setToggleLabel();
     // result panel
     $("rAddr").textContent = home.label;
-    const wallAbove = CONFIG.plinthFt + B.H.shop;
-    $("fWall").textContent = `${Math.round(wallAbove)} ft`;
     const homeToWall = (st.homeDist + placement.off) / FT;
-    $("fDist").textContent = `${fmtInt(homeToWall)} ft`;
-    $("fDistLbl").textContent = home.fromCoords ? "from this home to the wall" : "from your address to the wall";
-    $("fLots").textContent = "long, about 48 city lots";
     let note = `Placed along ${st.name || home.street}, on the side across from ${home.fromCoords ? "this home" : "your address"}.`;
     if (!st.matched) note += ` We couldn't match "${home.street}" exactly in the Census street map, so we used the nearest street.`;
     const approx = (st.ambiguous || !home.exact) ? " Address locations can be approximate. If the building lands on your side of the street, use Switch sides." : "";
@@ -536,7 +561,7 @@ async function placeFrom(findHome, startView){
     if (matchMedia("(max-width:860px)").matches) document.querySelector(".stage").scrollIntoView({ behavior: "smooth", block: "start" });
     const who = home.label.split(",")[0];
     $("overlay").textContent = `The proposed building across from ${home.fromCoords ? who.charAt(0).toLowerCase() + who.slice(1) : who}. Drag to look around.`;
-    setView(START_VIEWS[startView] || "vHome");
+    setView(START_VIEWS[startView] || "vOrbit");
   } catch (e) {
     console.error(e);
     show("err", e instanceof UserError ? e.message : "Something went wrong placing the building. Try again in a moment.");
@@ -547,9 +572,8 @@ async function placeFrom(findHome, startView){
 
 $("form").addEventListener("submit", e => { e.preventDefault(); const q = $("addr").value.trim(); if (q) place(q); });
 $("vHome").addEventListener("click", () => setView("vHome"));
-$("vAir").addEventListener("click", () => setView("vAir"));
+if ($("vAir")) $("vAir").addEventListener("click", () => setView("vAir"));
 $("vOrbit").addEventListener("click", () => setView("vOrbit"));
-$("kml").addEventListener("click", downloadKml);
 const FLAT_NOTE = " The 3D city view isn't available right now, so this shows a flat street map. The building's size and placement are the same.";
 /** Map toggle (bottom right, Google mode only): flat street map <-> Google 3D city. The flat map follows the same
     path as the quota fallback, so it can be tested while the 3D city still works. Switching to 3D starts a billed
@@ -596,6 +620,7 @@ initViewer().then(() => {
   const at = parseAt(qs.get("at"));
   if (at) placeAt(at[0], at[1], qs.get("street"), qs.get("label"), qs.get("view"));
   else if (qs.get("address")) { $("addr").value = qs.get("address"); place(qs.get("address")); }
+  else showProposedSite();   // opening view: the building where Amtrak proposes it, on the flat map (no 3D session)
 });
 /** "lat,lon" -> [lat, lon], only for points in or near Illinois. */
 function parseAt(v){
