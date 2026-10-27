@@ -68,6 +68,8 @@ button:focus-visible,input:focus-visible,summary:focus-visible,a:focus-visible{o
 .views{display:flex;flex-wrap:wrap;gap:8px}
 .views button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
 .note{font-size:14px;color:var(--ink-2);margin:0}
+.textlink{all:unset;display:inline;font:inherit;color:var(--ink);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.textlink:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 details{border-top:1px solid var(--rule);padding-top:12px}
 summary{cursor:pointer;font-family:var(--f-display);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink)}
 details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--ink-2);font-size:14px}
@@ -112,10 +114,7 @@ details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--in
         <!-- Former fixed "From above" view, hidden Oct 27, 2026; to bring it back, uncomment this and add "vAir" to VIEW_IDS:
         <button type="button" id="vAir" aria-pressed="false">From above</button> -->
       </div>
-      <p class="note" id="rStreet"></p>
-      <div class="row" style="flex-wrap:wrap">
-        <button type="button" id="flip">Wrong side? Switch sides</button>
-      </div>
+      <p class="note"><span id="rStreet"></span> <button type="button" class="textlink" id="flip">Wrong side? Switch sides</button></p>
     </section>
 
     <details>
@@ -554,7 +553,7 @@ async function placeFrom(findHome, startView){
     const homeToWall = (st.homeDist + placement.off) / FT;
     let note = `Placed along ${st.name || home.street}, on the side across from ${home.fromCoords ? "this home" : "your address"}.`;
     if (!st.matched) note += ` We couldn't match "${home.street}" exactly in the Census street map, so we used the nearest street.`;
-    const approx = (st.ambiguous || !home.exact) ? " Address locations can be approximate. If the building lands on your side of the street, use Switch sides." : "";
+    const approx = (st.ambiguous || !home.exact) ? " Address locations can be approximate." : "";
     placement.noteFor = flat => note + (flat ? FLAT_NOTE : "") + approx;   // the map toggle rewrites the note
     $("rStreet").textContent = placement.noteFor(USE_GOOGLE && !has3D);
     $("result").hidden = false;
