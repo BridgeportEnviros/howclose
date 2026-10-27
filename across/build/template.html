@@ -364,7 +364,7 @@ async function initViewer(){
     navigationHelpButton: false, baseLayerPicker: false, fullscreenButton: false, infoBox: false, selectionIndicator: false };
   // Every page starts on a free flat street map. In Google mode the 3D city (billed per session) loads only
   // when someone places the building, so visitors who look and leave cost nothing.
-  viewer = new Cesium.Viewer("cesium", { ...opts, contextOptions: { webgl: { preserveDrawingBuffer: true } },   // lets Share copy the view
+  viewer = new Cesium.Viewer("cesium", { ...opts,
     baseLayer: new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({ url: "https://tile.openstreetmap.org/" })) });
   viewer.scene.skyAtmosphere.show = true;
   if (USE_GOOGLE) {
@@ -534,16 +534,34 @@ function setView(id){
   if (!placement) return;
   if (id === "vHome") viewHome(placement); else if (id === "vAir") viewAir(placement); else startOrbit(placement);
 }
-// Grabbing the view stops any sweep or circling so people can explore on their own.
-// Touching the map also pins the camera to the building, so dragging turns the view around it instead of
-// sliding the map away (no panning); pinch or scroll zooms toward it, and tilting still works.
+// Grabbing the view stops any sweep or circling so people can explore on their own. There is no panning:
+// - From above (and the opening view): the camera is pinned to the building's center, so dragging moves the
+//   camera around it; pinch or scroll zooms toward it, and tilting still works.
+// - From your home: the camera stays where it is and dragging only turns it to look around (no zoom).
 function stopOnUserInput(){
   const c = viewer.canvas;
   for (const ev of ["pointerdown", "wheel", "touchstart"]) c.addEventListener(ev, () => {
     if (anim) stopAnim();
     viewer.camera.cancelFlight();
-    lockOn();
+    if (placement && currentView === "vHome") { viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY); setControls("look"); }
+    else { setControls("orbit"); lockOn(); }
   }, { passive: true });
+  viewer.scene.preRender.addEventListener(clampOrbitPitch);
+  c.addEventListener("webglcontextlost", () => show("err", "The 3D view ran out of memory on this device. Reload the page to try again."));
+}
+// Keep the orbiting camera above the horizon so dragging can't swing it under the ground.
+const MIN_ORBIT_PITCH = Cesium.Math.toRadians(-5);
+function clampOrbitPitch(){
+  const cam = viewer.camera;
+  if (!focus || anim || Cesium.Matrix4.equals(cam.transform, Cesium.Matrix4.IDENTITY)) return;
+  if (cam.pitch > MIN_ORBIT_PITCH) cam.lookAt(focus, new Cesium.HeadingPitchRange(cam.heading, MIN_ORBIT_PITCH, Cesium.Cartesian3.distance(cam.positionWC, focus)));
+}
+function setControls(mode){
+  const ssc = viewer.scene.screenSpaceCameraController, look = mode === "look";
+  ssc.enableRotate = !look; ssc.enableTilt = !look; ssc.enableZoom = !look;
+  ssc.enableLook = true;
+  ssc.lookEventTypes = look ? [Cesium.CameraEventType.LEFT_DRAG, Cesium.CameraEventType.RIGHT_DRAG]
+                            : { eventType: Cesium.CameraEventType.LEFT_DRAG, modifier: Cesium.KeyboardEventModifier.SHIFT };   // Cesium's default
 }
 let focus = null;                                         // the building's center; the camera orbits around it
 function lockOn(){
@@ -697,9 +715,19 @@ async function captureRendering(){
   const saved = { pos: Cesium.Cartesian3.clone(cam.positionWC), dir: Cesium.Cartesian3.clone(cam.directionWC), up: Cesium.Cartesian3.clone(cam.upWC) };
   const overlayText = $("overlay").textContent;
   $("overlay").textContent = "Making your image…";
+  // Render sharper for the image, within limits phones can handle (a bigger drawing buffer and more 3D tiles
+  // crashed the page on a phone, Oct 27). Raising the tiles' error threshold by the same factor keeps the
+  // number of tiles about the same, so only the pixels get sharper.
   const prevScale = viewer.resolutionScale, prevRec = viewer.useBrowserRecommendedResolution;
+  const cssW = Math.max(1, viewer.canvas.clientWidth), cssH = Math.max(1, viewer.canvas.clientHeight);
+  let scale = Math.min(Math.max(1, 1100 / cssW), PHONE.matches ? 1.6 : 2.5);
+  const maxPx = PHONE.matches ? 1.2e6 : 3.5e6;
+  if (cssW * cssH * scale * scale > maxPx) scale = Math.max(1, Math.sqrt(maxPx / (cssW * cssH)));
+  const prevSSE = tileset ? tileset.maximumScreenSpaceError : null, prevGlobeSSE = viewer.scene.globe.maximumScreenSpaceError;
   viewer.useBrowserRecommendedResolution = false;
-  viewer.resolutionScale = Math.min(3, Math.max(window.devicePixelRatio || 1, 1100 / Math.max(1, viewer.canvas.clientWidth)));
+  viewer.resolutionScale = scale;
+  if (tileset) tileset.maximumScreenSpaceError = prevSSE * scale;
+  viewer.scene.globe.maximumScreenSpaceError = prevGlobeSSE * scale;
   try {
     const V = VIEWS.orbit, h = heading(p.n) + rad(V.startOffsetDeg), pitch = rad(V.pitchDeg);
     // the building's box: footprint corners at the base and the penthouse top
@@ -734,18 +762,21 @@ async function captureRendering(){
       const done = (tileset && tileset.show) ? tileset.tilesLoaded : scene.globe.tilesLoaded;
       ready = done ? ready + 1 : 0;
     }
+    // Copy the frame right after drawing it, in the same step, so the browser hasn't cleared it yet.
     scene.render();
-    const k = viewer.canvas.width / viewer.canvas.clientWidth, m = measure();
     const img = document.createElement("canvas"); img.width = viewer.canvas.width; img.height = viewer.canvas.height;
     img.getContext("2d").drawImage(viewer.canvas, 0, 0);
+    const k = viewer.canvas.width / viewer.canvas.clientWidth, m = measure();
     return { img, cx: (m.x0 + m.x1) / 2 * k, cy: (m.y0 + m.y1) / 2 * k, span: (m.x1 - m.x0) * k,
              credit: (tileset && tileset.show) ? "Map data ©2026 Google" : "© OpenStreetMap contributors" };
   } finally {
     viewer.resolutionScale = prevScale; viewer.useBrowserRecommendedResolution = prevRec;
+    if (tileset && prevSSE != null) tileset.maximumScreenSpaceError = prevSSE;
+    viewer.scene.globe.maximumScreenSpaceError = prevGlobeSSE;
     cam.lookAtTransform(Cesium.Matrix4.IDENTITY);
     cam.setView({ destination: saved.pos, orientation: { direction: saved.dir, up: saved.up } });
     $("overlay").textContent = overlayText;
-    if (wasCircling) startOrbit(p); else lockOn();
+    if (wasCircling) startOrbit(p); else if (currentView !== "vHome") lockOn();
   }
 }
 
