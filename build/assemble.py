@@ -9,16 +9,26 @@ import sys
 OUT = sys.argv[1] if len(sys.argv) > 1 else '../index.html'   # writes the published page at the repo root
 
 SITE_URL = 'https://bridgeportenviros.github.io/howclose/'   # change to https://howclose.bridgeportenviros.org/ once the subdomain is set up
+import re
+LEAD = re.search(r'lead:\s*"(\w+)"', t).group(1)   # CONFIG.lead in template.html: which number the link preview leads with
+if LEAD == "children":
+    DESC = "1,101 children live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport. How close are you?"
+    OG_DESC = "1,101 children live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport, out of 6,741 people. Enter your address to see how close you are."
+    OG_ALT = "1,101 children live within 500 feet of the proposed Amtrak railyard, out of 6,741 people. Map of Canal Street Yard in Bridgeport."
+else:
+    DESC = "6,741 people live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport. How close are you?"
+    OG_DESC = "6,741 people live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport, 1,101 of them children. Enter your address to see how close you are."
+    OG_ALT = "6,741 people live within 500 feet of the proposed Amtrak railyard; 1,101 are children. Map of Canal Street Yard in Bridgeport."
 HEAD = ('<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
-        '<meta name="description" content="6,741 people live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport. How close are you?">'
+        f'<meta name="description" content="{DESC}">'
         '<meta property="og:title" content="How close do you live to the Amtrak railyard?">'
-        '<meta property="og:description" content="6,741 people live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport, 1,101 of them children. Enter your address to see how close you are.">'
+        f'<meta property="og:description" content="{OG_DESC}">'
         '<meta property="og:type" content="website">'
         f'<meta property="og:url" content="{SITE_URL}">'
         f'<meta property="og:image" content="{SITE_URL}share.png">'
         '<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">'
-        '<meta property="og:image:alt" content="6,741 people live within 500 feet of the proposed Amtrak railyard; 1,101 are children. Map of Canal Street Yard in Bridgeport.">'
+        f'<meta property="og:image:alt" content="{OG_ALT}">'
         '<meta name="twitter:card" content="summary_large_image">'
         '</head><body>\n')
 # in the standalone file, the title, font links and styles belong in <head>
