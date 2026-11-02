@@ -212,7 +212,7 @@ const VIEWS = {
            panMarginDeg: 4 },       // extra sweep past each end of the building
   above: { offsetDeg: 31.5,         // from the home's side, turned this far off straight-across
            pitchDeg: -28, rangeFt: 2493 },
-  orbit: { startOffsetDeg: 31.5, pitchDeg: -22, rangeFt: 1890,   // 20% closer than the first version (2,362 ft)
+  orbit: { startOffsetDeg: 31.5, pitchDeg: -35, rangeFt: 1890,   // 35° down (was 22°, test Nov 2026): keeps the horizon and far-off city out of view, so far fewer 3D tiles load; 20% closer than the first version (2,362 ft)
            degPerSecond: 5.5,
            flySeconds: 2.2 },       // smooth flight to the starting point before it starts turning
   // Opening view, before any search: the building at its proposed site in Canal Street Yard
@@ -407,6 +407,7 @@ function ensureCity(){
       const t = await Cesium.createGooglePhotorealistic3DTileset(undefined,
         { showCreditsOnScreen: true, preloadWhenHidden: true, maximumScreenSpaceError: LOAD.firstDetail });
       t.show = false;
+      t.loadProgress.addEventListener((pending, processing) => { cityPendingTiles = pending + processing; });
       viewer.scene.primitives.add(t);
       tileset = t;
       if (flatOnly) return false;               // switched to the flat map while it loaded
@@ -422,13 +423,20 @@ function ensureCity(){
 }
 
 /** Wait (up to ms) until the hidden 3D city has loaded what the camera is looking at. */
-async function waitForCity(ms, token){
-  const t0 = performance.now(); let ok = 0;
+let cityPendingTiles = 0;   // 3D city tiles still downloading or being processed (from the tileset's loadProgress event)
+/** Wait (up to ms) until the hidden 3D city has loaded what the camera is looking at. onProgress(percent) is
+    called as it goes: the share of the most tiles seen waiting that have since arrived, so it only moves forward. */
+async function waitForCity(ms, token, onProgress){
+  const t0 = performance.now(); let ok = 0, most = 0, shown = 0;
   while (performance.now() - t0 < ms && ok < 3) {
     await new Promise(r => requestAnimationFrame(r));
     if (token !== placeToken) return false;
+    most = Math.max(most, cityPendingTiles);
+    const pct = most ? Math.round(100 * (1 - cityPendingTiles / most)) : 0;
+    if (onProgress && pct > shown) { shown = pct; onProgress(pct); }
     ok = tileset && tileset.tilesLoaded ? ok + 1 : 0;
   }
+  if (onProgress) onProgress(100);
   return true;
 }
 function revealCity(){
@@ -701,7 +709,9 @@ async function placeFrom(findHome, startView){
     $("mode").textContent = "Street map (3D city loading)";
     sharpenSoon(); clearTimeout(sharpenTimer);   // coarse while loading
     cityPending = true; setToggleLabel();
-    const waited = await waitForCity(LOAD.maxWaitMs, token);
+    const waited = await waitForCity(LOAD.maxWaitMs, token, pct => {
+      if (token === placeToken) $("overlay").textContent = `Loading the 3D city around this address… ${pct}%`;
+    });
     if (token === placeToken) { cityPending = false; setToggleLabel(); }
     if (!waited) return;
     if (flatOnly) { $("overlay").textContent = overlay; setViewWith(currentView, { instant: true }); return; }
@@ -740,7 +750,7 @@ $("mapToggle").addEventListener("click", async () => {
     } else if (placement) {
       show("busy", "Loading the 3D city…");
       has3D = await ensureCity();
-      if (has3D) { await waitForCity(LOAD.maxWaitMs, placeToken); revealCity(); sharpenSoon(); }
+      if (has3D) { await waitForCity(LOAD.maxWaitMs, placeToken, pct => show("busy", `Loading the 3D city… ${pct}%`)); revealCity(); sharpenSoon(); }
     } else {
       $("mode").textContent = tileset ? "Google 3D city" : "Street map (3D city loads when you search)";
       if (tileset) revealCity();
