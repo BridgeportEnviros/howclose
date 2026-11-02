@@ -19,7 +19,7 @@
   --silver: #7f8489; --accent: #e8344f; --ink: #050506; --ink-fg: #f5f5f3; color-scheme: dark }
 * { box-sizing: border-box }
 [hidden] { display: none !important }
-#result, #msg { scroll-margin-top: 12px; outline: none }   /* room above the answer when the page scrolls to it */
+#result, #msg, #sheet { scroll-margin-top: 12px; outline: none }   /* room above the answer when the page scrolls to it */
 body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.5 }
 .wrap { max-width: 640px; margin: 0 auto; padding: 28px 16px 64px; display: grid; gap: 22px }
 h1 { font-family: var(--display); font-weight: 800; font-size: clamp(34px, 8vw, 52px); line-height: .95; text-transform: uppercase; letter-spacing: .01em; margin: 0; text-wrap: balance }
@@ -131,7 +131,7 @@ textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px; border-ra
     </div>
   </section>
 
-  <section class="sheet" id="sheet" hidden aria-labelledby="sheet-h">
+  <section class="sheet" id="sheet" tabindex="-1" hidden aria-labelledby="sheet-h">
     <h2 id="sheet-h">Share your distance</h2>
     <div class="seg" role="radiogroup" aria-label="Image shape">
       <label><input type="radio" name="fmt" id="fmt-story" value="story" checked>Story</label>
@@ -641,6 +641,7 @@ async function refreshSheet() {
 async function openSheet() {
   if (!current) return;
   $("sheet").hidden = false;
+  showOutput($("sheet"));   // scroll the share panel up right away; the image fills in when it's drawn
   $("sharetext").value = shareText(current);
   const cd = await refreshSheet();
   const file = new File([cd.blob], fileName(), { type: "image/png" });
@@ -650,7 +651,6 @@ async function openSheet() {
   $("sms-note").textContent = canFiles ? "Image and message · then choose Messages" : "Opens Messages";
   $("mail-note").textContent = canFiles ? "Image and message · then choose Mail" : "Opens your mail app";
   $("save-note").textContent = canFiles ? "Then tap Save Image" : `PNG, ${FORMATS[cardFormat].note}`;
-  $("sheet").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
 }
 // withText=false (Instagram, Facebook, Save, tapping the image): image only, because on iPhone adding text
 // to an image share can drop Instagram from the share sheet or make Instagram ignore the image.
