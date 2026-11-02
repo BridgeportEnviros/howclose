@@ -1,0 +1,1019 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>The Railyard Across the Street (test: faster loading)</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="Enter an Illinois address to see Amtrak's proposed 1,209-foot maintenance building placed directly across the street.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Barlow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cesium@1.121.0/Build/Cesium/Widgets/widgets.css">
+<script>window.CESIUM_BASE_URL = "https://cdn.jsdelivr.net/npm/cesium@1.121.0/Build/Cesium/";</script>
+<script src="https://cdn.jsdelivr.net/npm/cesium@1.121.0/Build/Cesium/Cesium.js"></script>
+<style>
+/* Layout: one-screen app. Panel left (above the 3D view on phones), 3D view fills the rest.
+   Palette and type match the How Close tool and the neighborhood dashboard: black, silver and white, one signal red. */
+:root{
+  --bg:#f4f4f2; --panel:#ffffff; --ink:#111213; --ink-2:#5d6166; --ink-3:#7c8085; --rule:#d5d7d9;
+  --silver:#a9adb1; --accent:#c8102e; --accent-soft:rgba(200,16,46,.08); --focus:#1c5cab; --stage:#dcdedf;
+  --f-display:"Barlow Condensed","Arial Narrow","Roboto Condensed",sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1011; --panel:#17191b; --ink:#eeeeec; --ink-2:#9da1a6; --ink-3:#7f8489; --rule:#2c2f33;
+  --silver:#7f8489; --accent:#e8344f; --accent-soft:rgba(232,52,79,.14); --focus:#7fb0ff; --stage:#1b1d1f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1011; --panel:#17191b; --ink:#eeeeec; --ink-2:#9da1a6; --ink-3:#7f8489; --rule:#2c2f33;
+  --silver:#7f8489; --accent:#e8344f; --accent-soft:rgba(232,52,79,.14); --focus:#7fb0ff; --stage:#1b1d1f; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body)}
+[hidden]{display:none!important}
+.app{display:grid;grid-template-columns:390px minmax(0,1fr);height:100%}
+@media (max-width:860px){.app{grid-template-columns:1fr;grid-template-rows:auto auto;height:auto}}
+.panel{background:var(--panel);border-right:1px solid var(--rule);overflow-y:auto;min-width:0;display:grid;gap:18px;align-content:start;
+  padding-block:22px 28px;padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:18px}
+@media (max-width:860px){.panel{order:1;border-right:0;border-bottom:1px solid var(--rule);padding-right:max(18px,env(safe-area-inset-right,0px))}}
+.stage{position:relative;min-width:0;background:var(--stage)}
+@media (max-width:860px){.stage{order:2;height:72vh;min-height:380px}}
+.belowmap{order:3;background:var(--panel);display:grid;gap:14px;padding:16px max(18px,env(safe-area-inset-right,0px)) 28px max(18px,env(safe-area-inset-left,0px))}
+#cesium{position:absolute;inset:0}
+.brand{display:inline-flex;align-items:center;gap:10px;width:max-content;max-width:100%;color:var(--ink);text-decoration:none;border-radius:4px;outline-offset:3px}
+.brand img{flex:none;display:block;width:44px;height:44px;border-radius:4px}
+.brand span{font-family:var(--f-display);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:15px;line-height:1.1}
+.brand:hover span{text-decoration:underline}
+header{display:grid;gap:12px}
+.eyebrow{font-family:var(--f-display);font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);margin:0}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(32px,3.2vw,40px);line-height:.95;text-transform:uppercase;letter-spacing:.01em;margin:2px 0 0;text-wrap:balance}
+.lede{margin:0;color:var(--ink-2);max-width:60ch}
+.lede a,.hint a,details a{color:var(--ink);font-weight:600}
+form{display:grid;gap:8px}
+label.lbl{font-family:var(--f-display);font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:14px}
+.row{display:flex;gap:8px}
+input[type=text]{flex:1;min-width:0;font:16px var(--f-body);color:var(--ink);background:var(--panel);border:1.5px solid var(--rule);border-radius:6px;padding:10px 12px}
+button{font-family:var(--f-display);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:15px;border-radius:6px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);padding:8px 12px;cursor:pointer}
+button.primary{background:var(--ink);color:var(--panel)}
+button:disabled{opacity:.55;cursor:default}
+button:focus-visible,input:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hint{font-size:14px;color:var(--ink-2);margin:0}
+.msg{font-size:14px;border-radius:6px;padding:10px 12px;margin:0}
+.msg.err{background:var(--accent-soft);color:var(--accent)}
+.msg.busy{background:var(--bg);color:var(--ink);border-left:3px solid var(--silver)}
+.result{display:grid;gap:12px;border-top:4px solid var(--ink);padding-top:14px}
+.addr{font-family:var(--f-display);font-weight:700;font-size:21px;line-height:1.15;margin:0;text-transform:uppercase;letter-spacing:.02em}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fact{background:var(--bg);border-radius:4px;padding:8px 10px;border-top:3px solid var(--accent)}
+.fact b{display:block;font-family:var(--f-display);font-weight:800;font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}
+.fact span{font-size:12px;color:var(--ink-2);line-height:1.3;display:block}
+.views{display:flex;flex-wrap:wrap;gap:8px}
+.views button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.note{font-size:14px;color:var(--ink-2);margin:0}
+/* Share panel (mirrors the How Close tool) */
+.sheet{border:1.5px solid var(--rule);border-radius:10px;padding:14px;display:grid;gap:12px}
+.sheet h2{font-family:var(--f-display);font-weight:800;text-transform:uppercase;font-size:22px;margin:0}
+.seg{display:inline-flex;border:1.5px solid var(--ink);border-radius:6px;overflow:hidden;width:max-content}
+.seg label{font-family:var(--f-display);font-weight:700;text-transform:uppercase;font-size:14px;letter-spacing:.06em;padding:7px 14px;cursor:pointer}
+.seg input{position:absolute;opacity:0;width:1px;height:1px}
+.seg label:has(input:checked){background:var(--ink);color:var(--panel)}
+.seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:-3px}
+.cardbtn{display:block;width:100%;max-width:220px;padding:0;border:0;background:none;border-radius:8px;cursor:pointer}
+.cardbtn img{width:100%;height:auto;display:block;border-radius:8px;border:1px solid var(--rule);-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.btns{display:grid;gap:8px}
+.btns button{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left}
+.btns small{text-align:right;font-family:var(--f-body);text-transform:none;letter-spacing:0;font-weight:500;font-size:13px;opacity:.75}
+.msgbox{display:grid;gap:6px;justify-items:end}
+.iconbtn{display:inline-grid;place-items:center;width:38px;height:38px;padding:0;border-radius:6px;border:1.5px solid var(--rule)}
+.iconbtn:hover{border-color:var(--ink)}
+textarea{width:100%;font:14px var(--f-body);padding:10px;border-radius:6px;border:1.5px solid var(--rule);background:var(--bg);color:var(--ink);resize:vertical;min-height:84px}
+.status{font-size:14px;color:var(--ink-2);min-height:1.5em;margin:0}
+.textlink{all:unset;display:inline;font:inherit;color:var(--ink);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.textlink:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+details{border-top:1px solid var(--rule);padding-top:12px}
+summary{cursor:pointer;font-family:var(--f-display);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink)}
+details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--ink-2);font-size:14px}
+.stage .overlay{position:absolute;left:12px;top:12px;max-width:min(360px,calc(100% - 24px));background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--rule);border-radius:6px;padding:10px 12px;font-size:14px;color:var(--ink-2);pointer-events:none}
+.mapctl{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.maptoggle{font:700 12px var(--f-body);letter-spacing:.02em;background:var(--panel);color:var(--ink);border:1px solid var(--rule);border-radius:4px;padding:5px 9px;cursor:pointer}
+.maptoggle:hover,.maptoggle:focus-visible{border-color:var(--ink)}
+.mode{font:600 12px var(--f-body);background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--rule);border-radius:4px;padding:3px 7px;color:var(--ink-3)}
+.cesium-viewer-bottom{left:8px!important;right:auto!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <header>
+      <a class="brand" href="https://www.bridgeportenviros.org/projects/amtrak-railyard" target="_blank" rel="noopener"><img src="data:image/png;base64,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" alt="" width="44" height="44"><span>Bridgeport Environmentalists</span></a>
+      <div>
+        <p class="eyebrow">Amtrak's proposed Canal Street maintenance building</p>
+        <h1>What if it were across the street from you?</h1>
+      </div>
+      <p class="lede">Enter your address. We'll put the 1,209-foot building on the other side of your street, its long wall facing your home. <a href="https://www.bridgeportenviros.org/projects/amtrak-railyard" target="_blank" rel="noopener">Learn more about the proposed facility</a></p>
+    </header>
+
+    <form id="form" autocomplete="on">
+      <label class="lbl" for="addr">Your address</label>
+      <div class="row">
+        <input type="text" id="addr" name="street-address" autocomplete="street-address" placeholder="e.g. 3300 S Normal Ave, Chicago" required>
+        <button class="primary" id="go" type="submit">Place it</button>
+      </div>
+      <p class="hint">Any street address in Illinois. Or try the <a id="mansion" href="?at=42.09664,-87.71454&amp;street=Sheridan%20Rd&amp;label=A%20billionaire%E2%80%99s%20mansion%2C%20Winnetka&amp;view=above">View from a Billionaire's mansion</a>.</p>
+    </form>
+
+    <p class="msg busy" id="busy" hidden></p>
+    <p class="msg err" id="err" hidden></p>
+
+    <section class="result" id="result" hidden aria-live="polite">
+      <p class="addr" id="rAddr"></p>
+      <div class="views" role="group" aria-label="Views">
+        <button type="button" id="vOrbit" aria-pressed="true">From above</button>
+        <button type="button" id="vHome" aria-pressed="false">From your home</button>
+        <!-- Former fixed "From above" view, hidden Oct 27, 2026; to bring it back, uncomment this and add "vAir" to VIEW_IDS:
+        <button type="button" id="vAir" aria-pressed="false">From above</button> -->
+      </div>
+      <div class="row"><button type="button" class="primary" id="share">Share</button></div>
+      <section class="sheet" id="sheet" hidden aria-labelledby="sheet-h">
+        <h2 id="sheet-h">Share this view</h2>
+        <div class="seg" role="radiogroup" aria-label="Image shape">
+          <label><input type="radio" name="fmt" value="story" checked>Story</label>
+          <label><input type="radio" name="fmt" value="post">Post</label>
+        </div>
+        <button type="button" class="cardbtn" id="b-card" aria-label="Share this image"><img id="card" alt=""></button>
+        <div class="btns">
+          <button type="button" id="b-ig">Instagram <small id="ig-note">Saves the image to post</small></button>
+          <button type="button" id="b-fb">Facebook <small id="fb-note">Shares the page link</small></button>
+          <button type="button" id="b-mail">Email <small id="mail-note">Opens your mail app</small></button>
+          <button type="button" id="b-sms">Text <small id="sms-note">Opens Messages</small></button>
+          <button type="button" id="b-save">Save image <small id="save-note">PNG, 1080×1920</small></button>
+        </div>
+        <div class="msgbox">
+          <textarea id="sharetext" aria-label="Message to share" readonly></textarea>
+          <button type="button" class="iconbtn" id="b-copy" aria-label="Copy message" title="Copy message">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+        <p class="status" id="status" role="status"></p>
+      </section>
+      <p class="note" id="noteP" hidden><span id="rStreet"></span> <button type="button" class="textlink" id="flip">Wrong side? Switch sides</button></p>
+    </section>
+
+    <details id="howWorks">
+      <summary>How this works</summary>
+      <ul>
+        <li><b>Your address</b> is located with <span id="geoName">a geocoding service</span>. Nothing is stored by this page.</li>
+        <li><b>Your street's direction</b> comes from U.S. Census TIGER street centerlines. The building is placed on the opposite side, parallel to your street.</li>
+        <li><b>Setback:</b> a typical Chicago residential street is 34 ft curb to curb, with 15 ft from the curb to the inside edge of the sidewalk (66-ft right-of-way; <a href="https://www.chicago.gov/dam/city/depts/cdot/StreetandSitePlanDesignStandards407.pdf" target="_blank" rel="noopener">CDOT Street and Site Plan Design Standards, 2007</a>). The wall starts at that line, 32 ft from the street's center. Your actual street may be wider or narrower.</li>
+        <li><b>The building</b> is drawn from Amtrak/WSP schematic drawings dated Feb 27, 2026: 1,209 ft long, up to 203 ft deep, shop roof 49 ft 8 in and penthouses 73 ft 4 in above the rails. It sits on a 13 ft 7 in wall, the height of the existing rail yard above the street in Bridgeport (USGS LiDAR, 2017).</li>
+        <li><b>Illustrative only.</b> This is not an Amtrak rendering. Windows and doors are approximate. Wall color matches Amtrak's published renderings.</li>
+      </ul>
+    </details>
+  </aside>
+
+  <main class="stage">
+    <div id="cesium" aria-label="3D view"></div>
+    <div class="overlay" id="overlay">Amtrak's proposed maintenance building at Canal Street Yard in Bridgeport. Enter an address to see it across the street from you.</div>
+    <div class="mapctl">
+      <button type="button" class="maptoggle" id="mapToggle" hidden aria-pressed="false">Switch to flat map</button>
+      <div class="mode" id="mode"></div>
+    </div>
+  </main>
+  <!-- Phones only: the placement note and How this works move here, below the map (see moveForPhones) -->
+  <div class="belowmap" id="belowMap" hidden></div>
+</div>
+
+<script>
+"use strict";
+/* ============================== settings ============================== */
+const CONFIG = {
+  // Google Maps Platform API key with Map Tiles API, Maps JavaScript API and Geocoding API enabled.
+  // Restrict it to your site's address (HTTP referrer). Leave empty for the free test mode
+  // (OpenStreetMap search and flat map; no photo-real 3D city).
+  googleApiKey: "AIzaSyCr61myEVzi-hA3CXPwdAD59djTTKWJFwM",
+  roadwayFt: 34,                  // curb face to curb face, two-way street with parking both sides (CDOT 2007, Table 1)
+  curbToSidewalkInsideFt: 15,     // 16-ft parkway incl. sidewalk, sidewalk 1 ft from the property line (CDOT 2007)
+  plinthFt: 13 + 7 / 12,          // raised yard above the street at the Bridgeport site (USGS LiDAR 2017)
+};
+// Loading the 3D city faster (Nov 2026): the building first goes on the flat street map with the camera held
+// still at the view's starting point, while the 3D city loads out of sight for that exact view, coarse first.
+// When it's ready (or after maxWaitMs) the 3D city replaces the flat map and the view starts moving; a few
+// seconds later the city sharpens to full detail.
+const LOAD = { firstDetail: 32,      // Cesium screen-space error while loading (Google's default is 16; higher = coarser, fewer tiles)
+               fullDetail: 16,
+               maxWaitMs: 12000,     // show the 3D city after this long even if parts are still loading
+               sharpenAfterMs: 2500 };
+// Camera presets. Headings are relative to the direction from the home straight across the street to the building.
+const VIEWS = {
+  home:  { backFromStreetFt: 170,   // from the street's center line, on the home's side
+           heightFt: 70,            // above street level
+           pitchDeg: -15,           // tilt; negative looks down
+           panSecondsEachWay: 25,   // slow sweep left to right and back
+           panMarginDeg: 4 },       // extra sweep past each end of the building
+  above: { offsetDeg: 31.5,         // from the home's side, turned this far off straight-across
+           pitchDeg: -28, rangeFt: 2493 },
+  orbit: { startOffsetDeg: 31.5, pitchDeg: -22, rangeFt: 1890,   // 20% closer than the first version (2,362 ft)
+           degPerSecond: 5.5,
+           flySeconds: 2.2 },       // smooth flight to the starting point before it starts turning
+  // Opening view, before any search: the building at its proposed site in Canal Street Yard
+  intro: { headingDeg: 30,          // looking north-northeast, from the southwest (shows the south end and the west wall)
+           pitchDeg: -30, rangeFt: 2400 },
+};
+const B = {"len":1207.8,"width":203.4,"H":{"plinth":13.583333333333334,"shop":49.666666666666664,"office":62.666666666666664,"pent":73.33333333333333},"parts":[{"k":"plinth","ring":[[-2.5,-2.5],[-2.5,205.9],[80.9,205.9],[80.9,196.1],[176.15,196.1],[309.0,179.71],[309.0,176.2],[326.15,176.2],[406.6,166.52],[406.6,154.1],[508.6,154.1],[508.6,125.6],[609.2,125.6],[609.2,65.5],[1210.3,65.5],[1210.3,-2.5]],"lo":-13.583333333333334,"hi":0},{"k":"shop","ring":[[0,0],[0,114.3],[328.0,114.3],[328.0,173.46],[404.1,164.3],[404.1,151.6],[506.1,151.6],[506.1,123.1],[606.7,123.1],[606.7,63.0],[1207.8,63.0],[1207.8,0]],"lo":0,"hi":49.666666666666664},{"k":"office","ring":[[0,114.3],[0,203.4],[78.4,203.4],[78.4,193.6],[176.0,193.6],[306.5,177.5],[306.5,173.7],[326.0,173.7],[328.0,173.46],[328.0,114.3]],"lo":0,"hi":62.666666666666664},{"k":"pent","ring":[[1,177.5],[1,202.4],[33,202.4],[33,177.5]],"lo":62.166666666666664,"hi":73.33333333333333},{"k":"pent","ring":[[294,147.8],[294,172.7],[326,172.7],[326,147.8]],"lo":62.166666666666664,"hi":73.33333333333333},{"k":"window","ring":[[31.0,-0.15],[44.0,-0.15],[44.0,-0.6],[31.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[56.0,-0.15],[69.0,-0.15],[69.0,-0.6],[56.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[81.0,-0.15],[94.0,-0.15],[94.0,-0.6],[81.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[106.0,-0.15],[119.0,-0.15],[119.0,-0.6],[106.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[131.0,-0.15],[144.0,-0.15],[144.0,-0.6],[131.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[156.0,-0.15],[169.0,-0.15],[169.0,-0.6],[156.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[181.0,-0.15],[194.0,-0.15],[194.0,-0.6],[181.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[206.0,-0.15],[219.0,-0.15],[219.0,-0.6],[206.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[231.0,-0.15],[244.0,-0.15],[244.0,-0.6],[231.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[256.0,-0.15],[269.0,-0.15],[269.0,-0.6],[256.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[281.0,-0.15],[294.0,-0.15],[294.0,-0.6],[281.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[306.0,-0.15],[319.0,-0.15],[319.0,-0.6],[306.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[337.0,-0.15],[350.0,-0.15],[350.0,-0.6],[337.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[362.0,-0.15],[375.0,-0.15],[375.0,-0.6],[362.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[387.0,-0.15],[400.0,-0.15],[400.0,-0.6],[387.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[412.0,-0.15],[425.0,-0.15],[425.0,-0.6],[412.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[437.0,-0.15],[450.0,-0.15],[450.0,-0.6],[437.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[462.0,-0.15],[475.0,-0.15],[475.0,-0.6],[462.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[487.0,-0.15],[500.0,-0.15],[500.0,-0.6],[487.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[512.0,-0.15],[525.0,-0.15],[525.0,-0.6],[512.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[537.0,-0.15],[550.0,-0.15],[550.0,-0.6],[537.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[562.0,-0.15],[575.0,-0.15],[575.0,-0.6],[562.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[587.0,-0.15],[600.0,-0.15],[600.0,-0.6],[587.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[615.0,-0.15],[628.0,-0.15],[628.0,-0.6],[615.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[640.0,-0.15],[653.0,-0.15],[653.0,-0.6],[640.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[665.0,-0.15],[678.0,-0.15],[678.0,-0.6],[665.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[690.0,-0.15],[703.0,-0.15],[703.0,-0.6],[690.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[715.0,-0.15],[728.0,-0.15],[728.0,-0.6],[715.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[740.0,-0.15],[753.0,-0.15],[753.0,-0.6],[740.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[765.0,-0.15],[778.0,-0.15],[778.0,-0.6],[765.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[790.0,-0.15],[803.0,-0.15],[803.0,-0.6],[790.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[815.0,-0.15],[828.0,-0.15],[828.0,-0.6],[815.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[840.0,-0.15],[853.0,-0.15],[853.0,-0.6],[840.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[865.0,-0.15],[878.0,-0.15],[878.0,-0.6],[865.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[890.0,-0.15],[903.0,-0.15],[903.0,-0.6],[890.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[918.0,-0.15],[931.0,-0.15],[931.0,-0.6],[918.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[943.0,-0.15],[956.0,-0.15],[956.0,-0.6],[943.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[968.0,-0.15],[981.0,-0.15],[981.0,-0.6],[968.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[993.0,-0.15],[1006.0,-0.15],[1006.0,-0.6],[993.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[1018.0,-0.15],[1031.0,-0.15],[1031.0,-0.6],[1018.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[1043.0,-0.15],[1056.0,-0.15],[1056.0,-0.6],[1043.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[1068.0,-0.15],[1081.0,-0.15],[1081.0,-0.6],[1068.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[1093.0,-0.15],[1106.0,-0.15],[1106.0,-0.6],[1093.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[1118.0,-0.15],[1131.0,-0.15],[1131.0,-0.6],[1118.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[1143.0,-0.15],[1156.0,-0.15],[1156.0,-0.6],[1143.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[1168.0,-0.15],[1181.0,-0.15],[1181.0,-0.6],[1168.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[1193.0,-0.15],[1206.0,-0.15],[1206.0,-0.6],[1193.0,-0.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[615.0,63.15],[628.0,63.15],[628.0,63.6],[615.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[640.0,63.15],[653.0,63.15],[653.0,63.6],[640.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[665.0,63.15],[678.0,63.15],[678.0,63.6],[665.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[690.0,63.15],[703.0,63.15],[703.0,63.6],[690.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[715.0,63.15],[728.0,63.15],[728.0,63.6],[715.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[740.0,63.15],[753.0,63.15],[753.0,63.6],[740.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[765.0,63.15],[778.0,63.15],[778.0,63.6],[765.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[790.0,63.15],[803.0,63.15],[803.0,63.6],[790.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[815.0,63.15],[828.0,63.15],[828.0,63.6],[815.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[840.0,63.15],[853.0,63.15],[853.0,63.6],[840.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[865.0,63.15],[878.0,63.15],[878.0,63.6],[865.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[890.0,63.15],[903.0,63.15],[903.0,63.6],[890.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[918.0,63.15],[931.0,63.15],[931.0,63.6],[918.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[943.0,63.15],[956.0,63.15],[956.0,63.6],[943.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[968.0,63.15],[981.0,63.15],[981.0,63.6],[968.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[993.0,63.15],[1006.0,63.15],[1006.0,63.6],[993.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[1018.0,63.15],[1031.0,63.15],[1031.0,63.6],[1018.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[1043.0,63.15],[1056.0,63.15],[1056.0,63.6],[1043.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[1068.0,63.15],[1081.0,63.15],[1081.0,63.6],[1068.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[1093.0,63.15],[1106.0,63.15],[1106.0,63.6],[1093.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[1118.0,63.15],[1131.0,63.15],[1131.0,63.6],[1118.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[1143.0,63.15],[1156.0,63.15],[1156.0,63.6],[1143.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[1168.0,63.15],[1181.0,63.15],[1181.0,63.6],[1168.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[1193.0,63.15],[1206.0,63.15],[1206.0,63.6],[1193.0,63.6]],"lo":33.75,"hi":40.25},{"k":"window","ring":[[37.0,203.55],[53.0,203.55],[53.0,204.0],[37.0,204.0]],"lo":34.75,"hi":40.25},{"k":"window","ring":[[37.0,203.55],[53.0,203.55],[53.0,204.0],[37.0,204.0]],"lo":47.75,"hi":53.25},{"k":"window","ring":[[62.0,203.55],[78.0,203.55],[78.0,204.0],[62.0,204.0]],"lo":34.75,"hi":40.25},{"k":"window","ring":[[62.0,203.55],[78.0,203.55],[78.0,204.0],[62.0,204.0]],"lo":47.75,"hi":53.25},{"k":"window","ring":[[87.0,193.75],[103.0,193.75],[103.0,194.2],[87.0,194.2]],"lo":34.75,"hi":40.25},{"k":"window","ring":[[87.0,193.75],[103.0,193.75],[103.0,194.2],[87.0,194.2]],"lo":47.75,"hi":53.25},{"k":"window","ring":[[112.0,193.75],[128.0,193.75],[128.0,194.2],[112.0,194.2]],"lo":34.75,"hi":40.25},{"k":"window","ring":[[112.0,193.75],[128.0,193.75],[128.0,194.2],[112.0,194.2]],"lo":47.75,"hi":53.25},{"k":"window","ring":[[137.0,193.75],[153.0,193.75],[153.0,194.2],[137.0,194.2]],"lo":34.75,"hi":40.25},{"k":"window","ring":[[137.0,193.75],[153.0,193.75],[153.0,194.2],[137.0,194.2]],"lo":47.75,"hi":53.25},{"k":"window","ring":[[162.0,193.75],[178.0,193.75],[178.0,194.2],[162.0,194.2]],"lo":34.75,"hi":40.25},{"k":"window","ring":[[162.0,193.75],[178.0,193.75],[178.0,194.2],[162.0,194.2]],"lo":47.75,"hi":53.25},{"k":"window","ring":[[187.08,192.38],[202.96,190.43],[203.01,190.87],[187.13,192.83]],"lo":34.75,"hi":40.25},{"k":"window","ring":[[187.08,192.38],[202.96,190.43],[203.01,190.87],[187.13,192.83]],"lo":47.75,"hi":53.25},{"k":"window","ring":[[212.08,189.3],[227.96,187.34],[228.01,187.79],[212.13,189.75]],"lo":34.75,"hi":40.25},{"k":"window","ring":[[212.08,189.3],[227.96,187.34],[228.01,187.79],[212.13,189.75]],"lo":47.75,"hi":53.25},{"k":"window","ring":[[237.08,186.22],[252.96,184.26],[253.01,184.7],[237.13,186.66]],"lo":34.75,"hi":40.25},{"k":"window","ring":[[237.08,186.22],[252.96,184.26],[253.01,184.7],[237.13,186.66]],"lo":47.75,"hi":53.25},{"k":"window","ring":[[262.08,183.13],[277.96,181.17],[278.01,181.62],[262.13,183.58]],"lo":34.75,"hi":40.25},{"k":"window","ring":[[262.08,183.13],[277.96,181.17],[278.01,181.62],[262.13,183.58]],"lo":47.75,"hi":53.25},{"k":"door","ring":[[-0.15,7.5],[-0.15,23.3],[-0.6,23.3],[-0.6,7.5]],"lo":0,"hi":16.5},{"k":"door","ring":[[-0.15,37.3],[-0.15,53.1],[-0.6,53.1],[-0.6,37.3]],"lo":0,"hi":16.5},{"k":"door","ring":[[-0.15,67.6],[-0.15,83.4],[-0.6,83.4],[-0.6,67.6]],"lo":0,"hi":16.5},{"k":"door","ring":[[-0.15,97.9],[-0.15,113.7],[-0.6,113.7],[-0.6,97.9]],"lo":0,"hi":16.5},{"k":"door","ring":[[-0.15,127.8],[-0.15,143.6],[-0.6,143.6],[-0.6,127.8]],"lo":0,"hi":16.5},{"k":"door","ring":[[-0.15,153.0],[-0.15,168.8],[-0.6,168.8],[-0.6,153.0]],"lo":0,"hi":16.5},{"k":"door","ring":[[1207.95,7.1],[1207.95,22.9],[1208.4,22.9],[1208.4,7.1]],"lo":0,"hi":16.5},{"k":"door","ring":[[1207.95,37.0],[1207.95,52.8],[1208.4,52.8],[1208.4,37.0]],"lo":0,"hi":16.5},{"k":"door","ring":[[606.85,67.4],[606.85,83.2],[607.3,83.2],[607.3,67.4]],"lo":0,"hi":16.5},{"k":"door","ring":[[606.85,97.7],[606.85,113.5],[607.3,113.5],[607.3,97.7]],"lo":0,"hi":16.5},{"k":"door","ring":[[506.25,127.6],[506.25,143.4],[506.7,143.4],[506.7,127.6]],"lo":0,"hi":16.5}],"kmlOpenings":[{"k":"window","ring":[[31.0,-0.9],[44.0,-0.9],[44.0,-1.2],[31.0,-1.2]],"top":40.25},{"k":"cover","ring":[[31.0,-1.2],[44.0,-1.2],[44.0,-1.5],[31.0,-1.5]],"top":33.75},{"k":"window","ring":[[56.0,-0.9],[69.0,-0.9],[69.0,-1.2],[56.0,-1.2]],"top":40.25},{"k":"cover","ring":[[56.0,-1.2],[69.0,-1.2],[69.0,-1.5],[56.0,-1.5]],"top":33.75},{"k":"window","ring":[[81.0,-0.9],[94.0,-0.9],[94.0,-1.2],[81.0,-1.2]],"top":40.25},{"k":"cover","ring":[[81.0,-1.2],[94.0,-1.2],[94.0,-1.5],[81.0,-1.5]],"top":33.75},{"k":"window","ring":[[106.0,-0.9],[119.0,-0.9],[119.0,-1.2],[106.0,-1.2]],"top":40.25},{"k":"cover","ring":[[106.0,-1.2],[119.0,-1.2],[119.0,-1.5],[106.0,-1.5]],"top":33.75},{"k":"window","ring":[[131.0,-0.9],[144.0,-0.9],[144.0,-1.2],[131.0,-1.2]],"top":40.25},{"k":"cover","ring":[[131.0,-1.2],[144.0,-1.2],[144.0,-1.5],[131.0,-1.5]],"top":33.75},{"k":"window","ring":[[156.0,-0.9],[169.0,-0.9],[169.0,-1.2],[156.0,-1.2]],"top":40.25},{"k":"cover","ring":[[156.0,-1.2],[169.0,-1.2],[169.0,-1.5],[156.0,-1.5]],"top":33.75},{"k":"window","ring":[[181.0,-0.9],[194.0,-0.9],[194.0,-1.2],[181.0,-1.2]],"top":40.25},{"k":"cover","ring":[[181.0,-1.2],[194.0,-1.2],[194.0,-1.5],[181.0,-1.5]],"top":33.75},{"k":"window","ring":[[206.0,-0.9],[219.0,-0.9],[219.0,-1.2],[206.0,-1.2]],"top":40.25},{"k":"cover","ring":[[206.0,-1.2],[219.0,-1.2],[219.0,-1.5],[206.0,-1.5]],"top":33.75},{"k":"window","ring":[[231.0,-0.9],[244.0,-0.9],[244.0,-1.2],[231.0,-1.2]],"top":40.25},{"k":"cover","ring":[[231.0,-1.2],[244.0,-1.2],[244.0,-1.5],[231.0,-1.5]],"top":33.75},{"k":"window","ring":[[256.0,-0.9],[269.0,-0.9],[269.0,-1.2],[256.0,-1.2]],"top":40.25},{"k":"cover","ring":[[256.0,-1.2],[269.0,-1.2],[269.0,-1.5],[256.0,-1.5]],"top":33.75},{"k":"window","ring":[[281.0,-0.9],[294.0,-0.9],[294.0,-1.2],[281.0,-1.2]],"top":40.25},{"k":"cover","ring":[[281.0,-1.2],[294.0,-1.2],[294.0,-1.5],[281.0,-1.5]],"top":33.75},{"k":"window","ring":[[306.0,-0.9],[319.0,-0.9],[319.0,-1.2],[306.0,-1.2]],"top":40.25},{"k":"cover","ring":[[306.0,-1.2],[319.0,-1.2],[319.0,-1.5],[306.0,-1.5]],"top":33.75},{"k":"window","ring":[[337.0,-0.9],[350.0,-0.9],[350.0,-1.2],[337.0,-1.2]],"top":40.25},{"k":"cover","ring":[[337.0,-1.2],[350.0,-1.2],[350.0,-1.5],[337.0,-1.5]],"top":33.75},{"k":"window","ring":[[362.0,-0.9],[375.0,-0.9],[375.0,-1.2],[362.0,-1.2]],"top":40.25},{"k":"cover","ring":[[362.0,-1.2],[375.0,-1.2],[375.0,-1.5],[362.0,-1.5]],"top":33.75},{"k":"window","ring":[[387.0,-0.9],[400.0,-0.9],[400.0,-1.2],[387.0,-1.2]],"top":40.25},{"k":"cover","ring":[[387.0,-1.2],[400.0,-1.2],[400.0,-1.5],[387.0,-1.5]],"top":33.75},{"k":"window","ring":[[412.0,-0.9],[425.0,-0.9],[425.0,-1.2],[412.0,-1.2]],"top":40.25},{"k":"cover","ring":[[412.0,-1.2],[425.0,-1.2],[425.0,-1.5],[412.0,-1.5]],"top":33.75},{"k":"window","ring":[[437.0,-0.9],[450.0,-0.9],[450.0,-1.2],[437.0,-1.2]],"top":40.25},{"k":"cover","ring":[[437.0,-1.2],[450.0,-1.2],[450.0,-1.5],[437.0,-1.5]],"top":33.75},{"k":"window","ring":[[462.0,-0.9],[475.0,-0.9],[475.0,-1.2],[462.0,-1.2]],"top":40.25},{"k":"cover","ring":[[462.0,-1.2],[475.0,-1.2],[475.0,-1.5],[462.0,-1.5]],"top":33.75},{"k":"window","ring":[[487.0,-0.9],[500.0,-0.9],[500.0,-1.2],[487.0,-1.2]],"top":40.25},{"k":"cover","ring":[[487.0,-1.2],[500.0,-1.2],[500.0,-1.5],[487.0,-1.5]],"top":33.75},{"k":"window","ring":[[512.0,-0.9],[525.0,-0.9],[525.0,-1.2],[512.0,-1.2]],"top":40.25},{"k":"cover","ring":[[512.0,-1.2],[525.0,-1.2],[525.0,-1.5],[512.0,-1.5]],"top":33.75},{"k":"window","ring":[[537.0,-0.9],[550.0,-0.9],[550.0,-1.2],[537.0,-1.2]],"top":40.25},{"k":"cover","ring":[[537.0,-1.2],[550.0,-1.2],[550.0,-1.5],[537.0,-1.5]],"top":33.75},{"k":"window","ring":[[562.0,-0.9],[575.0,-0.9],[575.0,-1.2],[562.0,-1.2]],"top":40.25},{"k":"cover","ring":[[562.0,-1.2],[575.0,-1.2],[575.0,-1.5],[562.0,-1.5]],"top":33.75},{"k":"window","ring":[[587.0,-0.9],[600.0,-0.9],[600.0,-1.2],[587.0,-1.2]],"top":40.25},{"k":"cover","ring":[[587.0,-1.2],[600.0,-1.2],[600.0,-1.5],[587.0,-1.5]],"top":33.75},{"k":"window","ring":[[615.0,-0.9],[628.0,-0.9],[628.0,-1.2],[615.0,-1.2]],"top":40.25},{"k":"cover","ring":[[615.0,-1.2],[628.0,-1.2],[628.0,-1.5],[615.0,-1.5]],"top":33.75},{"k":"window","ring":[[640.0,-0.9],[653.0,-0.9],[653.0,-1.2],[640.0,-1.2]],"top":40.25},{"k":"cover","ring":[[640.0,-1.2],[653.0,-1.2],[653.0,-1.5],[640.0,-1.5]],"top":33.75},{"k":"window","ring":[[665.0,-0.9],[678.0,-0.9],[678.0,-1.2],[665.0,-1.2]],"top":40.25},{"k":"cover","ring":[[665.0,-1.2],[678.0,-1.2],[678.0,-1.5],[665.0,-1.5]],"top":33.75},{"k":"window","ring":[[690.0,-0.9],[703.0,-0.9],[703.0,-1.2],[690.0,-1.2]],"top":40.25},{"k":"cover","ring":[[690.0,-1.2],[703.0,-1.2],[703.0,-1.5],[690.0,-1.5]],"top":33.75},{"k":"window","ring":[[715.0,-0.9],[728.0,-0.9],[728.0,-1.2],[715.0,-1.2]],"top":40.25},{"k":"cover","ring":[[715.0,-1.2],[728.0,-1.2],[728.0,-1.5],[715.0,-1.5]],"top":33.75},{"k":"window","ring":[[740.0,-0.9],[753.0,-0.9],[753.0,-1.2],[740.0,-1.2]],"top":40.25},{"k":"cover","ring":[[740.0,-1.2],[753.0,-1.2],[753.0,-1.5],[740.0,-1.5]],"top":33.75},{"k":"window","ring":[[765.0,-0.9],[778.0,-0.9],[778.0,-1.2],[765.0,-1.2]],"top":40.25},{"k":"cover","ring":[[765.0,-1.2],[778.0,-1.2],[778.0,-1.5],[765.0,-1.5]],"top":33.75},{"k":"window","ring":[[790.0,-0.9],[803.0,-0.9],[803.0,-1.2],[790.0,-1.2]],"top":40.25},{"k":"cover","ring":[[790.0,-1.2],[803.0,-1.2],[803.0,-1.5],[790.0,-1.5]],"top":33.75},{"k":"window","ring":[[815.0,-0.9],[828.0,-0.9],[828.0,-1.2],[815.0,-1.2]],"top":40.25},{"k":"cover","ring":[[815.0,-1.2],[828.0,-1.2],[828.0,-1.5],[815.0,-1.5]],"top":33.75},{"k":"window","ring":[[840.0,-0.9],[853.0,-0.9],[853.0,-1.2],[840.0,-1.2]],"top":40.25},{"k":"cover","ring":[[840.0,-1.2],[853.0,-1.2],[853.0,-1.5],[840.0,-1.5]],"top":33.75},{"k":"window","ring":[[865.0,-0.9],[878.0,-0.9],[878.0,-1.2],[865.0,-1.2]],"top":40.25},{"k":"cover","ring":[[865.0,-1.2],[878.0,-1.2],[878.0,-1.5],[865.0,-1.5]],"top":33.75},{"k":"window","ring":[[890.0,-0.9],[903.0,-0.9],[903.0,-1.2],[890.0,-1.2]],"top":40.25},{"k":"cover","ring":[[890.0,-1.2],[903.0,-1.2],[903.0,-1.5],[890.0,-1.5]],"top":33.75},{"k":"window","ring":[[918.0,-0.9],[931.0,-0.9],[931.0,-1.2],[918.0,-1.2]],"top":40.25},{"k":"cover","ring":[[918.0,-1.2],[931.0,-1.2],[931.0,-1.5],[918.0,-1.5]],"top":33.75},{"k":"window","ring":[[943.0,-0.9],[956.0,-0.9],[956.0,-1.2],[943.0,-1.2]],"top":40.25},{"k":"cover","ring":[[943.0,-1.2],[956.0,-1.2],[956.0,-1.5],[943.0,-1.5]],"top":33.75},{"k":"window","ring":[[968.0,-0.9],[981.0,-0.9],[981.0,-1.2],[968.0,-1.2]],"top":40.25},{"k":"cover","ring":[[968.0,-1.2],[981.0,-1.2],[981.0,-1.5],[968.0,-1.5]],"top":33.75},{"k":"window","ring":[[993.0,-0.9],[1006.0,-0.9],[1006.0,-1.2],[993.0,-1.2]],"top":40.25},{"k":"cover","ring":[[993.0,-1.2],[1006.0,-1.2],[1006.0,-1.5],[993.0,-1.5]],"top":33.75},{"k":"window","ring":[[1018.0,-0.9],[1031.0,-0.9],[1031.0,-1.2],[1018.0,-1.2]],"top":40.25},{"k":"cover","ring":[[1018.0,-1.2],[1031.0,-1.2],[1031.0,-1.5],[1018.0,-1.5]],"top":33.75},{"k":"window","ring":[[1043.0,-0.9],[1056.0,-0.9],[1056.0,-1.2],[1043.0,-1.2]],"top":40.25},{"k":"cover","ring":[[1043.0,-1.2],[1056.0,-1.2],[1056.0,-1.5],[1043.0,-1.5]],"top":33.75},{"k":"window","ring":[[1068.0,-0.9],[1081.0,-0.9],[1081.0,-1.2],[1068.0,-1.2]],"top":40.25},{"k":"cover","ring":[[1068.0,-1.2],[1081.0,-1.2],[1081.0,-1.5],[1068.0,-1.5]],"top":33.75},{"k":"window","ring":[[1093.0,-0.9],[1106.0,-0.9],[1106.0,-1.2],[1093.0,-1.2]],"top":40.25},{"k":"cover","ring":[[1093.0,-1.2],[1106.0,-1.2],[1106.0,-1.5],[1093.0,-1.5]],"top":33.75},{"k":"window","ring":[[1118.0,-0.9],[1131.0,-0.9],[1131.0,-1.2],[1118.0,-1.2]],"top":40.25},{"k":"cover","ring":[[1118.0,-1.2],[1131.0,-1.2],[1131.0,-1.5],[1118.0,-1.5]],"top":33.75},{"k":"window","ring":[[1143.0,-0.9],[1156.0,-0.9],[1156.0,-1.2],[1143.0,-1.2]],"top":40.25},{"k":"cover","ring":[[1143.0,-1.2],[1156.0,-1.2],[1156.0,-1.5],[1143.0,-1.5]],"top":33.75},{"k":"window","ring":[[1168.0,-0.9],[1181.0,-0.9],[1181.0,-1.2],[1168.0,-1.2]],"top":40.25},{"k":"cover","ring":[[1168.0,-1.2],[1181.0,-1.2],[1181.0,-1.5],[1168.0,-1.5]],"top":33.75},{"k":"window","ring":[[1193.0,-0.9],[1206.0,-0.9],[1206.0,-1.2],[1193.0,-1.2]],"top":40.25},{"k":"cover","ring":[[1193.0,-1.2],[1206.0,-1.2],[1206.0,-1.5],[1193.0,-1.5]],"top":33.75},{"k":"window","ring":[[615.0,63.9],[628.0,63.9],[628.0,64.2],[615.0,64.2]],"top":40.25},{"k":"cover","ring":[[615.0,64.2],[628.0,64.2],[628.0,64.5],[615.0,64.5]],"top":33.75},{"k":"window","ring":[[640.0,63.9],[653.0,63.9],[653.0,64.2],[640.0,64.2]],"top":40.25},{"k":"cover","ring":[[640.0,64.2],[653.0,64.2],[653.0,64.5],[640.0,64.5]],"top":33.75},{"k":"window","ring":[[665.0,63.9],[678.0,63.9],[678.0,64.2],[665.0,64.2]],"top":40.25},{"k":"cover","ring":[[665.0,64.2],[678.0,64.2],[678.0,64.5],[665.0,64.5]],"top":33.75},{"k":"window","ring":[[690.0,63.9],[703.0,63.9],[703.0,64.2],[690.0,64.2]],"top":40.25},{"k":"cover","ring":[[690.0,64.2],[703.0,64.2],[703.0,64.5],[690.0,64.5]],"top":33.75},{"k":"window","ring":[[715.0,63.9],[728.0,63.9],[728.0,64.2],[715.0,64.2]],"top":40.25},{"k":"cover","ring":[[715.0,64.2],[728.0,64.2],[728.0,64.5],[715.0,64.5]],"top":33.75},{"k":"window","ring":[[740.0,63.9],[753.0,63.9],[753.0,64.2],[740.0,64.2]],"top":40.25},{"k":"cover","ring":[[740.0,64.2],[753.0,64.2],[753.0,64.5],[740.0,64.5]],"top":33.75},{"k":"window","ring":[[765.0,63.9],[778.0,63.9],[778.0,64.2],[765.0,64.2]],"top":40.25},{"k":"cover","ring":[[765.0,64.2],[778.0,64.2],[778.0,64.5],[765.0,64.5]],"top":33.75},{"k":"window","ring":[[790.0,63.9],[803.0,63.9],[803.0,64.2],[790.0,64.2]],"top":40.25},{"k":"cover","ring":[[790.0,64.2],[803.0,64.2],[803.0,64.5],[790.0,64.5]],"top":33.75},{"k":"window","ring":[[815.0,63.9],[828.0,63.9],[828.0,64.2],[815.0,64.2]],"top":40.25},{"k":"cover","ring":[[815.0,64.2],[828.0,64.2],[828.0,64.5],[815.0,64.5]],"top":33.75},{"k":"window","ring":[[840.0,63.9],[853.0,63.9],[853.0,64.2],[840.0,64.2]],"top":40.25},{"k":"cover","ring":[[840.0,64.2],[853.0,64.2],[853.0,64.5],[840.0,64.5]],"top":33.75},{"k":"window","ring":[[865.0,63.9],[878.0,63.9],[878.0,64.2],[865.0,64.2]],"top":40.25},{"k":"cover","ring":[[865.0,64.2],[878.0,64.2],[878.0,64.5],[865.0,64.5]],"top":33.75},{"k":"window","ring":[[890.0,63.9],[903.0,63.9],[903.0,64.2],[890.0,64.2]],"top":40.25},{"k":"cover","ring":[[890.0,64.2],[903.0,64.2],[903.0,64.5],[890.0,64.5]],"top":33.75},{"k":"window","ring":[[918.0,63.9],[931.0,63.9],[931.0,64.2],[918.0,64.2]],"top":40.25},{"k":"cover","ring":[[918.0,64.2],[931.0,64.2],[931.0,64.5],[918.0,64.5]],"top":33.75},{"k":"window","ring":[[943.0,63.9],[956.0,63.9],[956.0,64.2],[943.0,64.2]],"top":40.25},{"k":"cover","ring":[[943.0,64.2],[956.0,64.2],[956.0,64.5],[943.0,64.5]],"top":33.75},{"k":"window","ring":[[968.0,63.9],[981.0,63.9],[981.0,64.2],[968.0,64.2]],"top":40.25},{"k":"cover","ring":[[968.0,64.2],[981.0,64.2],[981.0,64.5],[968.0,64.5]],"top":33.75},{"k":"window","ring":[[993.0,63.9],[1006.0,63.9],[1006.0,64.2],[993.0,64.2]],"top":40.25},{"k":"cover","ring":[[993.0,64.2],[1006.0,64.2],[1006.0,64.5],[993.0,64.5]],"top":33.75},{"k":"window","ring":[[1018.0,63.9],[1031.0,63.9],[1031.0,64.2],[1018.0,64.2]],"top":40.25},{"k":"cover","ring":[[1018.0,64.2],[1031.0,64.2],[1031.0,64.5],[1018.0,64.5]],"top":33.75},{"k":"window","ring":[[1043.0,63.9],[1056.0,63.9],[1056.0,64.2],[1043.0,64.2]],"top":40.25},{"k":"cover","ring":[[1043.0,64.2],[1056.0,64.2],[1056.0,64.5],[1043.0,64.5]],"top":33.75},{"k":"window","ring":[[1068.0,63.9],[1081.0,63.9],[1081.0,64.2],[1068.0,64.2]],"top":40.25},{"k":"cover","ring":[[1068.0,64.2],[1081.0,64.2],[1081.0,64.5],[1068.0,64.5]],"top":33.75},{"k":"window","ring":[[1093.0,63.9],[1106.0,63.9],[1106.0,64.2],[1093.0,64.2]],"top":40.25},{"k":"cover","ring":[[1093.0,64.2],[1106.0,64.2],[1106.0,64.5],[1093.0,64.5]],"top":33.75},{"k":"window","ring":[[1118.0,63.9],[1131.0,63.9],[1131.0,64.2],[1118.0,64.2]],"top":40.25},{"k":"cover","ring":[[1118.0,64.2],[1131.0,64.2],[1131.0,64.5],[1118.0,64.5]],"top":33.75},{"k":"window","ring":[[1143.0,63.9],[1156.0,63.9],[1156.0,64.2],[1143.0,64.2]],"top":40.25},{"k":"cover","ring":[[1143.0,64.2],[1156.0,64.2],[1156.0,64.5],[1143.0,64.5]],"top":33.75},{"k":"window","ring":[[1168.0,63.9],[1181.0,63.9],[1181.0,64.2],[1168.0,64.2]],"top":40.25},{"k":"cover","ring":[[1168.0,64.2],[1181.0,64.2],[1181.0,64.5],[1168.0,64.5]],"top":33.75},{"k":"window","ring":[[1193.0,63.9],[1206.0,63.9],[1206.0,64.2],[1193.0,64.2]],"top":40.25},{"k":"cover","ring":[[1193.0,64.2],[1206.0,64.2],[1206.0,64.5],[1193.0,64.5]],"top":33.75},{"k":"window","ring":[[37.0,204.3],[53.0,204.3],[53.0,204.6],[37.0,204.6]],"top":40.25},{"k":"cover","ring":[[37.0,204.6],[53.0,204.6],[53.0,204.9],[37.0,204.9]],"top":34.75},{"k":"window","ring":[[37.0,203.7],[53.0,203.7],[53.0,204.0],[37.0,204.0]],"top":53.25},{"k":"cover","ring":[[37.0,204.0],[53.0,204.0],[53.0,204.3],[37.0,204.3]],"top":47.75},{"k":"window","ring":[[62.0,204.3],[78.0,204.3],[78.0,204.6],[62.0,204.6]],"top":40.25},{"k":"cover","ring":[[62.0,204.6],[78.0,204.6],[78.0,204.9],[62.0,204.9]],"top":34.75},{"k":"window","ring":[[62.0,203.7],[78.0,203.7],[78.0,204.0],[62.0,204.0]],"top":53.25},{"k":"cover","ring":[[62.0,204.0],[78.0,204.0],[78.0,204.3],[62.0,204.3]],"top":47.75},{"k":"window","ring":[[87.0,194.5],[103.0,194.5],[103.0,194.8],[87.0,194.8]],"top":40.25},{"k":"cover","ring":[[87.0,194.8],[103.0,194.8],[103.0,195.1],[87.0,195.1]],"top":34.75},{"k":"window","ring":[[87.0,193.9],[103.0,193.9],[103.0,194.2],[87.0,194.2]],"top":53.25},{"k":"cover","ring":[[87.0,194.2],[103.0,194.2],[103.0,194.5],[87.0,194.5]],"top":47.75},{"k":"window","ring":[[112.0,194.5],[128.0,194.5],[128.0,194.8],[112.0,194.8]],"top":40.25},{"k":"cover","ring":[[112.0,194.8],[128.0,194.8],[128.0,195.1],[112.0,195.1]],"top":34.75},{"k":"window","ring":[[112.0,193.9],[128.0,193.9],[128.0,194.2],[112.0,194.2]],"top":53.25},{"k":"cover","ring":[[112.0,194.2],[128.0,194.2],[128.0,194.5],[112.0,194.5]],"top":47.75},{"k":"window","ring":[[137.0,194.5],[153.0,194.5],[153.0,194.8],[137.0,194.8]],"top":40.25},{"k":"cover","ring":[[137.0,194.8],[153.0,194.8],[153.0,195.1],[137.0,195.1]],"top":34.75},{"k":"window","ring":[[137.0,193.9],[153.0,193.9],[153.0,194.2],[137.0,194.2]],"top":53.25},{"k":"cover","ring":[[137.0,194.2],[153.0,194.2],[153.0,194.5],[137.0,194.5]],"top":47.75},{"k":"window","ring":[[162.0,194.5],[178.0,194.5],[178.0,194.8],[162.0,194.8]],"top":40.25},{"k":"cover","ring":[[162.0,194.8],[178.0,194.8],[178.0,195.1],[162.0,195.1]],"top":34.75},{"k":"window","ring":[[162.0,193.9],[178.0,193.9],[178.0,194.2],[162.0,194.2]],"top":53.25},{"k":"cover","ring":[[162.0,194.2],[178.0,194.2],[178.0,194.5],[162.0,194.5]],"top":47.75},{"k":"window","ring":[[187.17,193.13],[203.05,191.17],[203.09,191.47],[187.21,193.43]],"top":40.25},{"k":"cover","ring":[[187.21,193.43],[203.09,191.47],[203.12,191.77],[187.24,193.72]],"top":34.75},{"k":"window","ring":[[187.1,192.53],[202.98,190.57],[203.01,190.87],[187.13,192.83]],"top":53.25},{"k":"cover","ring":[[187.13,192.83],[203.01,190.87],[203.05,191.17],[187.17,193.13]],"top":47.75},{"k":"window","ring":[[212.17,190.04],[228.05,188.09],[228.09,188.38],[212.21,190.34]],"top":40.25},{"k":"cover","ring":[[212.21,190.34],[228.09,188.38],[228.12,188.68],[212.24,190.64]],"top":34.75},{"k":"window","ring":[[212.1,189.45],[227.98,187.49],[228.01,187.79],[212.13,189.75]],"top":53.25},{"k":"cover","ring":[[212.13,189.75],[228.01,187.79],[228.05,188.09],[212.17,190.04]],"top":47.75},{"k":"window","ring":[[237.17,186.96],[253.05,185.0],[253.09,185.3],[237.21,187.26]],"top":40.25},{"k":"cover","ring":[[237.21,187.26],[253.09,185.3],[253.12,185.6],[237.24,187.56]],"top":34.75},{"k":"window","ring":[[237.1,186.36],[252.98,184.41],[253.01,184.7],[237.13,186.66]],"top":53.25},{"k":"cover","ring":[[237.13,186.66],[253.01,184.7],[253.05,185.0],[237.17,186.96]],"top":47.75},{"k":"window","ring":[[262.17,183.88],[278.05,181.92],[278.09,182.21],[262.21,184.17]],"top":40.25},{"k":"cover","ring":[[262.21,184.17],[278.09,182.21],[278.12,182.51],[262.24,184.47]],"top":34.75},{"k":"window","ring":[[262.1,183.28],[277.98,181.32],[278.01,181.62],[262.13,183.58]],"top":53.25},{"k":"cover","ring":[[262.13,183.58],[278.01,181.62],[278.05,181.92],[262.17,183.88]],"top":47.75},{"k":"door","ring":[[-0.3,7.5],[-0.3,23.3],[-0.9,23.3],[-0.9,7.5]],"top":16.5},{"k":"door","ring":[[-0.3,37.3],[-0.3,53.1],[-0.9,53.1],[-0.9,37.3]],"top":16.5},{"k":"door","ring":[[-0.3,67.6],[-0.3,83.4],[-0.9,83.4],[-0.9,67.6]],"top":16.5},{"k":"door","ring":[[-0.3,97.9],[-0.3,113.7],[-0.9,113.7],[-0.9,97.9]],"top":16.5},{"k":"door","ring":[[-0.3,127.8],[-0.3,143.6],[-0.9,143.6],[-0.9,127.8]],"top":16.5},{"k":"door","ring":[[-0.3,153.0],[-0.3,168.8],[-0.9,168.8],[-0.9,153.0]],"top":16.5},{"k":"door","ring":[[1208.1,7.1],[1208.1,22.9],[1208.7,22.9],[1208.7,7.1]],"top":16.5},{"k":"door","ring":[[1208.1,37.0],[1208.1,52.8],[1208.7,52.8],[1208.7,37.0]],"top":16.5},{"k":"door","ring":[[607.0,67.4],[607.0,83.2],[607.6,83.2],[607.6,67.4]],"top":16.5},{"k":"door","ring":[[607.0,97.7],[607.0,113.5],[607.6,113.5],[607.6,97.7]],"top":16.5},{"k":"door","ring":[[506.4,127.6],[506.4,143.4],[507.0,143.4],[507.0,127.6]],"top":16.5}],"nWindows":91,"nDoors":11};
+const FT = 0.3048;
+const COLORS = { wall: "#d4cdc2", edge: "#7d776d", plinth: "#5d5850", window: "#909193", door: "#2b3236" };
+const USE_GOOGLE = !!CONFIG.googleApiKey && !CONFIG.googleApiKey.startsWith("__");
+
+/* ============================== small helpers ============================== */
+const $ = id => document.getElementById(id);
+const fmtInt = n => Math.round(n).toLocaleString("en-US");
+function show(id, text){ const el = $(id); if (text == null){ el.hidden = true; return; } el.textContent = text; el.hidden = false; }
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ============================== geocoding ============================== */
+if (USE_GOOGLE) {
+  // Google's dynamic library loader (Maps JavaScript API). Only the geocoding library is used; no map is drawn,
+  // so only the Geocoding SKU is billed.
+  (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({key: CONFIG.googleApiKey, v: "weekly"});
+}
+class UserError extends Error {}
+
+const NOT_FOUND = "We couldn't find that address. Check the spelling and include the city.";
+/** Google's search first; OpenStreetMap's if Google refuses (daily cap reached, key problem) or doesn't load. */
+async function geocode(q){
+  if (!USE_GOOGLE) return geocodeOSM(q);
+  try { return await geocodeGoogle(q); }
+  catch (e) {
+    if (e instanceof UserError) throw e;
+    console.warn("Google address search unavailable, using OpenStreetMap:", e);
+    return geocodeOSM(q);
+  }
+}
+async function geocodeGoogle(q){
+  {
+    const { Geocoder } = await google.maps.importLibrary("geocoding");
+    let res;
+    try { res = await new Geocoder().geocode({ address: q, componentRestrictions: { country: "US", administrativeArea: "IL" } }); }
+    catch (e) { if (e && e.code === "ZERO_RESULTS") throw new UserError(NOT_FOUND); throw e; }
+    const r = res.results && res.results[0];
+    if (!r) throw new UserError("We couldn't find that address. Check the spelling and include the city.");
+    const comp = t => r.address_components.find(c => c.types.includes(t));
+    if (comp("administrative_area_level_1")?.short_name !== "IL") throw new UserError("This tool covers addresses in Illinois only.");
+    const route = comp("route");
+    if (!route || !comp("street_number")) throw new UserError("Enter a full street address, with the house number and street.");
+    return { lat: r.geometry.location.lat(), lon: r.geometry.location.lng(), label: r.formatted_address.replace(/, USA$/, ""),
+             street: route.short_name, streetLong: route.long_name, exact: r.geometry.location_type === "ROOFTOP" };
+  }
+}
+async function geocodeOSM(q){
+  const url = "https://nominatim.openstreetmap.org/search?" + new URLSearchParams({ q, format: "jsonv2", addressdetails: "1", countrycodes: "us", limit: "1", "accept-language": "en" });
+  const r = (await (await fetch(url)).json())[0];
+  if (!r) throw new UserError("We couldn't find that address. Check the spelling and include the city.");
+  const a = r.address || {};
+  if (a.state !== "Illinois") throw new UserError("This tool covers addresses in Illinois only.");
+  if (!a.road || !a.house_number) throw new UserError("Enter a full street address, with the house number and street.");
+  const label = `${a.house_number} ${a.road}, ${a.city || a.town || a.village || a.suburb || ""}, IL`.replace(/, ,/, ",");
+  return { lat: +r.lat, lon: +r.lon, label, street: a.road, streetLong: a.road, exact: false };
+}
+
+/* ============================== street centerlines (U.S. Census TIGERweb) ============================== */
+const TIGER = "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Transportation/MapServer/";
+async function fetchRoads(lat, lon){
+  const params = new URLSearchParams({ geometry: `${lon},${lat}`, geometryType: "esriGeometryPoint", inSR: "4326",
+    spatialRel: "esriSpatialRelIntersects", distance: "100", units: "esriSRUnit_Meter", outFields: "NAME,MTFCC",
+    returnGeometry: "true", outSR: "4326", f: "json" });
+  const layers = [8, 6, 2];          // local roads, secondary roads (full detail), primary roads
+  const out = await Promise.allSettled(layers.map(l => fetch(`${TIGER}${l}/query?${params}`).then(r => r.json())));
+  const feats = [];
+  for (const o of out) if (o.status === "fulfilled" && o.value.features) feats.push(...o.value.features);
+  return feats;
+}
+const ABBR = { north:"n", south:"s", east:"e", west:"w", street:"st", avenue:"ave", av:"ave", boulevard:"blvd", road:"rd",
+  drive:"dr", place:"pl", court:"ct", parkway:"pkwy", lane:"ln", terrace:"ter", highway:"hwy", square:"sq", circle:"cir",
+  trail:"trl", expressway:"expy", plaza:"plz", point:"pt", crossing:"xing" };
+const norm = s => (s || "").toLowerCase().replace(/[.,']/g, "").split(/\s+/).filter(Boolean).map(w => ABBR[w] || w).join(" ");
+const stripDir = s => s.replace(/^(n|s|e|w|ne|nw|se|sw) /, "").replace(/ (n|s|e|w)$/, "");
+
+/** Find the address's street, its direction at the address, and which side the home is on. Local metres, home at origin. */
+function analyzeStreet(home, feats, streetName){
+  const R = 6371008.8, kx = Math.cos(home.lat * Math.PI / 180) * R * Math.PI / 180, ky = R * Math.PI / 180;
+  const toXY = (lon, lat) => [(lon - home.lon) * kx, (lat - home.lat) * ky];
+  const want = norm(streetName), wantBase = stripDir(want);
+  let best = null;
+  for (const f of feats) {
+    const nm = norm(f.attributes && f.attributes.NAME);
+    const tier = nm && nm === want ? 0 : nm && stripDir(nm) === wantBase ? 1 : 2;
+    for (const path of (f.geometry && f.geometry.paths) || []) {
+      const pts = path.map(([x, y]) => toXY(x, y));
+      const cum = [0];
+      for (let i = 1; i < pts.length; i++) cum.push(cum[i-1] + Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]));
+      for (let i = 0; i < pts.length - 1; i++) {
+        const [ax, ay] = pts[i], [bx, by] = pts[i+1], dx = bx-ax, dy = by-ay, L2 = dx*dx + dy*dy;
+        if (L2 === 0) continue;
+        const t = Math.max(0, Math.min(1, -(ax*dx + ay*dy) / L2));
+        const cx = ax + t*dx, cy = ay + t*dy, d = Math.hypot(cx, cy);
+        const score = tier * 1000 + d;
+        if (!best || score < best.score) best = { score, tier, d, c: [cx, cy], pts, cum, along: cum[i] + t*Math.sqrt(L2), name: f.attributes.NAME };
+      }
+    }
+  }
+  if (!best || best.d > 100) return null;
+  // direction from points 25 m either side along the centerline (smooths short kinks)
+  const at = s => { const { pts, cum } = best; s = Math.max(0, Math.min(cum[cum.length-1], s));
+    let i = 1; while (i < cum.length - 1 && cum[i] < s) i++;
+    const seg = cum[i] - cum[i-1] || 1, t = (s - cum[i-1]) / seg;
+    return [pts[i-1][0] + t*(pts[i][0]-pts[i-1][0]), pts[i-1][1] + t*(pts[i][1]-pts[i-1][1])]; };
+  const p1 = at(best.along - 25), p2 = at(best.along + 25);
+  let dir = [p2[0]-p1[0], p2[1]-p1[1]]; const dl = Math.hypot(...dir) || 1; dir = [dir[0]/dl, dir[1]/dl];
+  const h = [-best.c[0], -best.c[1]];                      // centerline -> home
+  const cross = dir[0]*h[1] - dir[1]*h[0];                 // > 0: home on the left of dir
+  const away = cross > 0 ? [dir[1], -dir[0]] : [-dir[1], dir[0]];   // unit normal pointing to the far side
+  return { c: best.c, dir, away, name: best.name, matched: best.tier < 2, homeDist: best.d, ambiguous: best.d < 4, kx, ky, home };
+}
+
+/* ============================== placement ============================== */
+let placement = null;   // { st, n, m (east-face midpoint, local m), u (length axis), toLonLat }
+function makePlacement(st, n){
+  const off = (CONFIG.roadwayFt / 2 + CONFIG.curbToSidewalkInsideFt) * FT;
+  const m = [st.c[0] + n[0]*off, st.c[1] + n[1]*off];
+  const u = [n[1], -n[0]];                                  // length axis; n = u rotated 90° counter-clockwise (as at the real site)
+  const L = B.len;
+  const local = (s, w) => [m[0] + u[0]*(s - L/2)*FT + n[0]*w*FT, m[1] + u[1]*(s - L/2)*FT + n[1]*w*FT];
+  const toLonLat = ([x, y]) => [st.home.lon + x / st.kx, st.home.lat + y / st.ky];
+  const porch = [st.c[0] - n[0]*off, st.c[1] - n[1]*off];   // inside edge of the sidewalk on the home's side
+  return { st, n, m, u, local, toLonLat, porch, off };
+}
+
+/** The building at its proposed site: east face along the main line between the 33rd and 35th St viaducts
+    (corners from the WSP site plan, see the project notes). Same shape as makePlacement's result. */
+function sitePlacement(){
+  const SE = [41.831059, -87.636566], NE = [41.834373, -87.636646];   // [lat, lon] of the east face's ends
+  const lat0 = (SE[0] + NE[0]) / 2, lon0 = (SE[1] + NE[1]) / 2;
+  const R = 6371008.8, kx = Math.cos(lat0 * Math.PI / 180) * R * Math.PI / 180, ky = R * Math.PI / 180;
+  const v = [(NE[1] - SE[1]) * kx, (NE[0] - SE[0]) * ky], len = Math.hypot(v[0], v[1]);
+  const u = [v[0] / len, v[1] / len], n = [-u[1], u[0]];               // u: south to north along the east face; n: west
+  const L = B.len;
+  const local = (s, w) => [u[0]*(s - L/2)*FT + n[0]*w*FT, u[1]*(s - L/2)*FT + n[1]*w*FT];
+  const toLonLat = ([x, y]) => [lon0 + x / kx, lat0 + y / ky];
+  return { n, m: [0, 0], u, local, toLonLat, porch: [-n[0]*30, -n[1]*30], off: 0, site: true };
+}
+async function showProposedSite(){
+  const p = sitePlacement();
+  await drawBuilding(p);
+  const [lo, la] = p.centerLL, V = VIEWS.intro;
+  viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(Cesium.Cartesian3.fromDegrees(lo, la, p.rail + 10), 1),
+    { offset: new Cesium.HeadingPitchRange(rad(V.headingDeg), rad(V.pitchDeg), V.rangeFt * FT), duration: 0 });
+}
+
+/* ============================== 3D view (CesiumJS) ============================== */
+let viewer, tileset = null, building = null, orbitHandler = null;
+async function initViewer(){
+  const opts = { animation: false, timeline: false, geocoder: false, homeButton: false, sceneModePicker: false,
+    navigationHelpButton: false, baseLayerPicker: false, fullscreenButton: false, infoBox: false, selectionIndicator: false };
+  // Every page starts on a free flat street map. In Google mode the 3D city (billed per session) loads only
+  // when someone places the building, so visitors who look and leave cost nothing.
+  viewer = new Cesium.Viewer("cesium", { ...opts,
+    baseLayer: new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({ url: "https://tile.openstreetmap.org/" })) });
+  viewer.scene.skyAtmosphere.show = true;
+  if (USE_GOOGLE) {
+    Cesium.GoogleMaps.defaultApiKey = CONFIG.googleApiKey;
+    $("mode").textContent = "Street map (3D city loads when you search)";
+    $("mapToggle").hidden = false;
+    $("geoName").textContent = "Google's geocoding service";
+  } else {
+    $("mode").textContent = "Test mode: flat map";
+    $("geoName").textContent = "OpenStreetMap's Nominatim search";
+  }
+  const ssc = viewer.scene.screenSpaceCameraController;
+  ssc.enableCollisionDetection = true;
+  ssc.enableTranslate = false;                 // no panning; see lockOn
+  ssc.minimumZoomDistance = 15;                // metres
+  ssc.maximumZoomDistance = 3000;              // keeps the building in sight when zooming out
+  viewer.clock.currentTime = Cesium.JulianDate.fromIso8601("2026-06-21T20:30:00Z");   // 3:30 pm Chicago, summer light
+  viewer.clock.shouldAnimate = false;
+  viewer.camera.setView({ destination: Cesium.Cartesian3.fromDegrees(-87.6367, 41.8150, 2600),
+    orientation: { heading: 0, pitch: Cesium.Math.toRadians(-38), roll: 0 } });
+}
+
+/** Load Google's 3D city once, on the first placement. Resolves true if it's showing, false if we're on the flat map. */
+let cityLoading = null;
+let flatOnly = false;   // the map toggle: stay on the flat street map even when the 3D city is available
+function ensureCity(){
+  if (!USE_GOOGLE || flatOnly) return Promise.resolve(false);
+  if (tileset) return Promise.resolve(true);
+  if (!cityLoading) cityLoading = (async () => {
+    try {
+      // Loads out of sight (preloadWhenHidden) so the flat map stays up until revealCity().
+      const t = await Cesium.createGooglePhotorealistic3DTileset(undefined,
+        { showCreditsOnScreen: true, preloadWhenHidden: true, maximumScreenSpaceError: LOAD.firstDetail });
+      t.show = false;
+      viewer.scene.primitives.add(t);
+      tileset = t;
+      if (flatOnly) return false;               // switched to the flat map while it loaded
+      return true;
+    } catch (e) {
+      // daily cap reached, key problem or network: stay on the flat map; try again on the next search
+      console.warn("Google 3D city unavailable, using the flat map:", e);
+      $("mode").textContent = "Flat map (3D city unavailable)";
+      return false;
+    } finally { cityLoading = null; }
+  })();
+  return cityLoading;
+}
+
+/** Wait (up to ms) until the hidden 3D city has loaded what the camera is looking at. */
+async function waitForCity(ms, token){
+  const t0 = performance.now(); let ok = 0;
+  while (performance.now() - t0 < ms && ok < 3) {
+    await new Promise(r => requestAnimationFrame(r));
+    if (token !== placeToken) return false;
+    ok = tileset && tileset.tilesLoaded ? ok + 1 : 0;
+  }
+  return true;
+}
+function revealCity(){
+  tileset.show = true; viewer.scene.globe.show = false;
+  $("mode").textContent = "Google 3D city";
+  setToggleLabel();
+}
+function hideCity(){ if (tileset) tileset.show = false; viewer.scene.globe.show = true; setToggleLabel(); }
+let sharpenTimer = null;
+function sharpenSoon(){
+  clearTimeout(sharpenTimer);
+  if (tileset) tileset.maximumScreenSpaceError = LOAD.firstDetail;
+  sharpenTimer = setTimeout(() => { if (tileset) tileset.maximumScreenSpaceError = LOAD.fullDetail; }, LOAD.sharpenAfterMs);
+}
+
+async function groundHeights(lonlats){
+  if (!USE_GOOGLE || !tileset || !tileset.show || flatOnly) return lonlats.map(() => 0);
+  const carts = lonlats.map(([lo, la]) => Cesium.Cartographic.fromDegrees(lo, la));
+  const exclude = building ? building.entities.values : [];
+  // Quick: read heights from the city tiles already on screen. Only if that misses, wait for the most detailed tiles.
+  viewer.scene.render();
+  const quick = carts.map(c => { const h = viewer.scene.sampleHeight(c, exclude, 0.5); return Number.isFinite(h) ? h : null; });
+  if (quick.filter(v => v != null).length >= Math.ceil(carts.length * .7)) return quick;
+  try {
+    // Never wait more than 6 seconds: a tile that fails to load can leave this pending.
+    const out = await Promise.race([viewer.scene.sampleHeightMostDetailed(carts, exclude, 0.5), sleep(6000).then(() => null)]);
+    if (!out) return quick;
+    return out.map((c, i) => (c && Number.isFinite(c.height)) ? c.height : quick[i]);
+  } catch (e) { return quick; }
+}
+const quantile = (a, q) => { const s = a.filter(v => v != null).sort((x, y) => x - y); return s.length ? s[Math.floor((s.length-1)*q)] : 0; };
+
+async function drawBuilding(p){
+  stopOrbit();
+  // ground along the far sidewalk (where the wall stands) and at the home's sidewalk
+  const face = []; for (let s = 0; s <= B.len; s += B.len / 10) face.push(p.toLonLat(p.local(s, -3)));
+  const porchLL = p.toLonLat(p.porch);
+  const hs = await groundHeights([...face, porchLL]);
+  const faceH = hs.slice(0, face.length), porchH = hs[hs.length - 1];
+  const ground = quantile(faceH, 0.25);                 // low quarter: skips cars and tree tops
+  const lowest = Math.min(...faceH.filter(v => v != null), ground);
+  const rail = ground + CONFIG.plinthFt * FT;
+  // replace the old building only now, after the heights are in, so it never disappears while they load
+  if (building) { viewer.dataSources.remove(building, true); building = null; }
+  building = new Cesium.CustomDataSource("building");
+  const col = k => Cesium.Color.fromCssColorString(k);
+  const mat = { plinth: col(COLORS.plinth), shop: col(COLORS.wall), office: col(COLORS.wall), pent: col(COLORS.wall), window: col(COLORS.window), door: col(COLORS.door) };
+  for (const part of B.parts) {
+    const ll = part.ring.map(([s, w]) => p.toLonLat(p.local(s, w)));
+    const lo = part.k === "plinth" ? lowest - 3 : rail + part.lo * FT;
+    const hi = rail + part.hi * FT;
+    const big = part.k === "shop" || part.k === "office" || part.k === "pent" || part.k === "plinth";
+    building.entities.add({ polygon: {
+      hierarchy: Cesium.Cartesian3.fromDegreesArray(ll.flat()), height: lo, extrudedHeight: hi, perPositionHeight: false,
+      material: mat[part.k], outline: big, outlineColor: col(COLORS.edge), closeTop: true, closeBottom: false } });
+  }
+  await viewer.dataSources.add(building);
+  p.ground = ground; p.rail = rail; p.porchGround = porchH != null ? porchH : ground;
+  p.centerLL = p.toLonLat(p.local(B.len / 2, B.width / 2));
+  focus = Cesium.Cartesian3.fromDegrees(p.centerLL[0], p.centerLL[1], rail + 10);
+  resetShare();                                          // a new placement needs a new share image
+}
+
+function heading(n){ return Math.atan2(n[0], n[1]); }    // n = [east, north] -> compass heading, radians
+const rad = Cesium.Math.toRadians;
+let anim = null;                                          // running pan/orbit: { remove() }
+let orbitToken = 0;                                       // bumped to cancel a circle that is still flying in
+const VIEW_OPTS = { instant: false, still: false };      // set briefly by the first placement: jump there, hold still
+function stopAnim(){
+  orbitToken++;                                           // cancels a circle that is still flying in
+  if (anim) { anim.remove(); anim = null; }
+  if (viewer) { viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY); viewer.clock.shouldAnimate = false; }
+}
+function stopOrbit(){ stopAnim(); }
+function runEachFrame(fn){
+  const t0 = performance.now();
+  const off = viewer.scene.preRender.addEventListener(() => fn((performance.now() - t0) / 1000));
+  viewer.scene.requestRenderMode = false;
+  return { remove: off };
+}
+function horizontalFov(){
+  const f = viewer.camera.frustum, a = f.aspectRatio || (viewer.canvas.clientWidth / viewer.canvas.clientHeight);
+  return a >= 1 ? f.fov : 2 * Math.atan(Math.tan(f.fov / 2) * a);
+}
+
+/* From your home: up high behind the home, across from the building's midpoint, sweeping left to right and back. */
+function viewHome(p){
+  stopAnim();
+  const V = VIEWS.home;
+  const back = V.backFromStreetFt * FT;
+  const spot = [p.st.c[0] - p.n[0]*back, p.st.c[1] - p.n[1]*back];
+  const [lo, la] = p.toLonLat(spot);
+  const camH = p.porchGround + V.heightFt * FT;
+  const center = heading(p.n);
+  const toWall = back + p.off;                               // camera to the wall, metres
+  const endAngle = Math.atan((B.len * FT / 2) / toWall);       // angle from straight-across to each end of the building
+  const amp = Math.max(0, endAngle - horizontalFov() / 2 + rad(V.panMarginDeg));
+  const pitch = rad(V.pitchDeg);
+  const dest = Cesium.Cartesian3.fromDegrees(lo, la, camH);
+  const headingAt = t => center - amp * Math.cos(Math.PI * t / V.panSecondsEachWay);   // starts at the left end
+  const { instant, still } = VIEW_OPTS;
+  viewer.camera.flyTo({ destination: dest, orientation: { heading: headingAt(0), pitch, roll: 0 }, duration: instant ? 0 : 2.2,
+    complete: () => {
+      if (still || amp === 0 || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      anim = runEachFrame(t => viewer.camera.setView({ destination: dest, orientation: { heading: headingAt(t), pitch, roll: 0 } }));
+    } });
+}
+
+/* From above: from the home's side of the street, turned a little off straight-across, looking at the building. */
+function viewAir(p){
+  stopAnim();
+  const V = VIEWS.above;
+  const [lo, la] = p.centerLL;
+  const target = Cesium.Cartesian3.fromDegrees(lo, la, p.rail + 10);
+  viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(target, 260), {
+    offset: new Cesium.HeadingPitchRange(heading(p.n) + rad(V.offsetDeg), rad(V.pitchDeg), V.rangeFt * FT), duration: 2.2 });
+}
+
+/* Circle around: starts on the home's side and keeps turning. */
+function startOrbit(p){
+  stopAnim();
+  const V = VIEWS.orbit;
+  const [lo, la] = p.centerLL;
+  const target = Cesium.Cartesian3.fromDegrees(lo, la, p.rail + 10);
+  const h0 = heading(p.n) + rad(V.startOffsetDeg);
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const hpr = h => new Cesium.HeadingPitchRange(h, rad(V.pitchDeg), V.rangeFt * FT);
+  const at = h => viewer.camera.lookAt(target, hpr(h));
+  // Fly to the starting point first (as the other views do), then start turning from exactly there.
+  const token = ++orbitToken;
+  const { instant, still } = VIEW_OPTS;
+  viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(target, 1), { offset: hpr(h0), duration: instant ? 0 : V.flySeconds,
+    complete: () => {
+      if (token !== orbitToken) return;             // another view was picked during the flight
+      at(h0);
+      if (!reduce && !still) anim = runEachFrame(t => at(h0 + rad(V.degPerSecond) * t));
+    } });
+}
+
+const VIEW_IDS = ["vOrbit", "vHome"];   // "vAir" (the fixed view from above) is hidden; see the commented-out button
+let currentView = "vOrbit";
+function setViewWith(id, opts){
+  Object.assign(VIEW_OPTS, opts);
+  try { setView(id); } finally { VIEW_OPTS.instant = false; VIEW_OPTS.still = false; }
+}
+function setView(id){
+  currentView = id;
+  for (const b of VIEW_IDS) $(b).setAttribute("aria-pressed", b === id);
+  if (!placement) return;
+  if (id === "vHome") viewHome(placement); else if (id === "vAir") viewAir(placement); else startOrbit(placement);
+}
+// Grabbing the view stops any sweep or circling so people can explore on their own. There is no panning:
+// - From above (and the opening view): the camera is pinned to the building's center, so dragging moves the
+//   camera around it; pinch or scroll zooms toward it, and tilting still works.
+// - From your home: the camera stays where it is and dragging only turns it to look around (no zoom).
+function stopOnUserInput(){
+  const c = viewer.canvas;
+  for (const ev of ["pointerdown", "wheel", "touchstart"]) c.addEventListener(ev, () => {
+    if (anim) stopAnim();
+    viewer.camera.cancelFlight();
+    if (placement && currentView === "vHome") { viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY); setControls("look"); }
+    else { setControls("orbit"); lockOn(); }
+  }, { passive: true });
+  viewer.scene.preRender.addEventListener(clampOrbitPitch);
+  c.addEventListener("webglcontextlost", () => show("err", "The 3D view ran out of memory on this device. Reload the page to try again."));
+}
+// Keep the orbiting camera above the horizon so dragging can't swing it under the ground.
+const MIN_ORBIT_PITCH = Cesium.Math.toRadians(-5);
+function clampOrbitPitch(){
+  const cam = viewer.camera;
+  if (!focus || anim || Cesium.Matrix4.equals(cam.transform, Cesium.Matrix4.IDENTITY)) return;
+  if (cam.pitch > MIN_ORBIT_PITCH) cam.lookAt(focus, new Cesium.HeadingPitchRange(cam.heading, MIN_ORBIT_PITCH, Cesium.Cartesian3.distance(cam.positionWC, focus)));
+}
+function setControls(mode){
+  const ssc = viewer.scene.screenSpaceCameraController, look = mode === "look";
+  ssc.enableRotate = !look; ssc.enableTilt = !look; ssc.enableZoom = !look;
+  ssc.enableLook = true;
+  ssc.lookEventTypes = look ? [Cesium.CameraEventType.LEFT_DRAG, Cesium.CameraEventType.RIGHT_DRAG]
+                            : { eventType: Cesium.CameraEventType.LEFT_DRAG, modifier: Cesium.KeyboardEventModifier.SHIFT };   // Cesium's default
+}
+let focus = null;                                         // the building's center; the camera orbits around it
+function lockOn(){
+  if (!focus || anim) return;
+  viewer.camera.lookAtTransform(Cesium.Transforms.eastNorthUpToFixedFrame(focus));   // keeps the camera where it is
+}
+
+/* ============================== Google Earth download (KML) ==============================
+   Not linked from the page since Oct 27, 2026 (button removed); kept so it can be brought back. */
+function kmlColor(hex, a = "ff"){ return (a + hex.slice(5, 7) + hex.slice(3, 5) + hex.slice(1, 3)).toLowerCase(); }
+function buildKml(p, label){
+  const plinth = CONFIG.plinthFt;
+  const ring = (r, topFt) => { const pts = r.map(([s, w]) => p.toLonLat(p.local(s, w))); pts.push(pts[0]);
+    return `<Polygon><extrude>1</extrude><altitudeMode>relativeToGround</altitudeMode><outerBoundaryIs><LinearRing><coordinates>${
+      pts.map(([lo, la]) => `${lo.toFixed(7)},${la.toFixed(7)},${(topFt * FT).toFixed(2)}`).join(" ")}</coordinates></LinearRing></outerBoundaryIs></Polygon>`; };
+  const style = (id, fill, line) => `<Style id="${id}"><LineStyle><color>${line ? kmlColor(line) : "00ffffff"}</color><width>${line ? 1 : 0}</width></LineStyle><PolyStyle><color>${kmlColor(fill)}</color><fill>1</fill><outline>${line ? 1 : 0}</outline></PolyStyle></Style>`;
+  const pm = (name, styleId, geoms) => `<Placemark><name>${name}</name><styleUrl>#${styleId}</styleUrl><MultiGeometry>${geoms.join("")}</MultiGeometry></Placemark>`;
+  const g = { plinth: [], shop: [], office: [], pent: [] };
+  for (const part of B.parts) if (g[part.k]) g[part.k].push(ring(part.ring, part.k === "plinth" ? plinth : plinth + part.hi));
+  const op = { window: [], cover: [], door: [] };
+  for (const o of B.kmlOpenings) op[o.k].push(ring(o.ring, plinth + o.top));
+  const [clo, cla] = p.centerLL;
+  const esc = s => s.replace(/[<&>]/g, c => ({ "<": "&lt;", "&": "&amp;", ">": "&gt;" }[c]));
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Amtrak M&amp;I building across from ${esc(label)}</name>
+<description><![CDATA[Illustrative massing of Amtrak's proposed Canal Street maintenance and inspection building (not an Amtrak rendering), placed across the street from ${esc(label)}. From Amtrak/WSP schematic drawings dated Feb 27, 2026, on a 13 ft 7 in raised-yard wall.]]></description>
+<LookAt><longitude>${clo.toFixed(7)}</longitude><latitude>${cla.toFixed(7)}</latitude><altitude>0</altitude><heading>${(((heading(p.n) * 180 / Math.PI) + 35) % 360 + 360) % 360}</heading><tilt>66</tilt><range>1500</range><altitudeMode>relativeToGround</altitudeMode></LookAt>
+${style("plinth", COLORS.plinth, "#2b2926")}${style("wall", COLORS.wall, COLORS.edge)}${style("window", COLORS.window)}${style("cover", COLORS.wall)}${style("door", COLORS.door)}
+${pm("Raised yard wall (13 ft 7 in)", "plinth", g.plinth)}${pm("Shop (63 ft 3 in above street)", "wall", g.shop)}${pm("Office block (76 ft 3 in above street)", "wall", g.office)}${pm("Penthouses (86 ft 11 in above street)", "wall", g.pent)}
+${pm("Windows", "window", op.window)}${pm("Wall strips below windows", "cover", op.cover)}${pm("Track doors", "door", op.door)}
+</Document></kml>`;
+}
+function downloadKml(){
+  if (!placement) return;
+  const blob = new Blob([buildKml(placement, placement.label)], { type: "application/vnd.google-earth.kml+xml" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "amtrak-building-across-from-" + placement.label.split(",")[0].toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".kml";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+/* ============================== the flow ============================== */
+/** Place from a typed address (geocoded), or from a point given as coordinates (no address lookup). */
+function place(query){ return placeFrom(() => geocode(query)); }
+function placeAt(lat, lon, street, label, startView){
+  return placeFrom(async () => ({ lat, lon, street: street || "", label: label || "This spot", exact: true, fromCoords: true }), startView);
+}
+// view names a link can start on with &view=
+const START_VIEWS = { home: "vHome", above: "vOrbit", circle: "vOrbit" };   // "above" is now the circling view (renamed Oct 27, 2026)
+let cityPending = false;   // true while a placement waits for the 3D city (the toggle treats that as 3D)
+let placeToken = 0;   // a newer search abandons an older one that is still waiting for the 3D city
+async function placeFrom(findHome, startView){
+  const token = ++placeToken;
+  show("err", null); show("busy", "Finding the spot…"); $("go").disabled = true;
+  const city = ensureCity();          // starts the 3D city (once) while the address is looked up
+  try {
+    const home = await findHome();
+    show("busy", "Reading your street's direction…");
+    const feats = await fetchRoads(home.lat, home.lon);
+    const st = analyzeStreet(home, feats, home.street);
+    if (!st) throw new UserError("We found the address but couldn't find its street in the Census street map. Try a nearby address.");
+    show("busy", "Placing the building…");
+    const has3D = await city;
+    if (token !== placeToken) return;
+    // 1) Right away: the building on the flat street map, camera jumped to the view's starting point and held still.
+    hideCity();
+    placement = makePlacement(st, st.away);
+    placement.label = home.label;
+    await drawBuilding(placement);
+    if (USE_GOOGLE) setToggleLabel();
+    // result panel
+    $("rAddr").textContent = home.label;
+    const homeToWall = (st.homeDist + placement.off) / FT;
+    let note = `Placed along ${st.name || home.street}, on the side across from ${home.fromCoords ? "this home" : "your address"}.`;
+    if (!st.matched) note += ` We couldn't match "${home.street}" exactly in the Census street map, so we used the nearest street.`;
+    const approx = (st.ambiguous || !home.exact) ? " Address locations can be approximate." : "";
+    placement.noteFor = flat => note + (flat ? FLAT_NOTE : "") + approx;   // the map toggle rewrites the note
+    $("rStreet").textContent = placement.noteFor(USE_GOOGLE && !has3D);
+    $("result").hidden = false; $("noteP").hidden = false;
+    if (matchMedia("(max-width:860px)").matches) document.querySelector(".stage").scrollIntoView({ behavior: "smooth", block: "start" });
+    const who = home.label.split(",")[0];
+    const overlay = `The proposed building across from ${home.fromCoords ? who.charAt(0).toLowerCase() + who.slice(1) : who}. Drag to look around.`;
+    const viewId = START_VIEWS[startView] || "vOrbit";
+    if (!has3D) { $("overlay").textContent = overlay; setViewWith(viewId, { instant: true }); return; }
+    setViewWith(viewId, { instant: true, still: true });
+    // 2) Meanwhile the 3D city loads, coarse first, for exactly this view. Then it replaces the flat map,
+    //    the building is set on the real ground, and the view starts moving; full detail follows.
+    show("busy", null); $("go").disabled = false;
+    $("overlay").textContent = "Loading the 3D city around this address…";
+    $("mode").textContent = "Street map (3D city loading)";
+    sharpenSoon(); clearTimeout(sharpenTimer);   // coarse while loading
+    cityPending = true; setToggleLabel();
+    const waited = await waitForCity(LOAD.maxWaitMs, token);
+    if (token === placeToken) { cityPending = false; setToggleLabel(); }
+    if (!waited) return;
+    if (flatOnly) { $("overlay").textContent = overlay; setViewWith(currentView, { instant: true }); return; }
+    revealCity();
+    await drawBuilding(placement);
+    if (token !== placeToken) return;
+    setToggleLabel();
+    $("overlay").textContent = overlay;
+    setViewWith(currentView, { instant: true });
+    sharpenSoon();
+  } catch (e) {
+    console.error(e);
+    show("err", e instanceof UserError ? e.message : "Something went wrong placing the building. Try again in a moment.");
+  } finally {
+    show("busy", null); $("go").disabled = false;
+  }
+}
+
+$("form").addEventListener("submit", e => { e.preventDefault(); const q = $("addr").value.trim(); if (q) place(q); });
+$("vHome").addEventListener("click", () => setView("vHome"));
+if ($("vAir")) $("vAir").addEventListener("click", () => setView("vAir"));
+$("vOrbit").addEventListener("click", () => setView("vOrbit"));
+const FLAT_NOTE = " The 3D city view isn't available right now, so this shows a flat street map. The building's size and placement are the same.";
+/** Map toggle (bottom right, Google mode only): flat street map <-> Google 3D city. The flat map follows the same
+    path as the quota fallback, so it can be tested while the 3D city still works. Switching to 3D starts a billed
+    session only if none has started on this visit. */
+$("mapToggle").addEventListener("click", async () => {
+  const btn = $("mapToggle"); btn.disabled = true;
+  flatOnly = !showingFlat();                // switch away from whichever map is showing (or chosen, before a search)
+  try {
+    let has3D = false;
+    if (flatOnly) {
+      if (tileset) tileset.show = false;
+      viewer.scene.globe.show = true;
+      $("mode").textContent = "Flat map";
+    } else if (placement) {
+      show("busy", "Loading the 3D city…");
+      has3D = await ensureCity();
+      if (has3D) { await waitForCity(LOAD.maxWaitMs, placeToken); revealCity(); sharpenSoon(); }
+    } else {
+      $("mode").textContent = tileset ? "Google 3D city" : "Street map (3D city loads when you search)";
+      if (tileset) revealCity();
+    }
+    if (placement) {
+      await drawBuilding(placement); setView(currentView);
+      if (placement.noteFor) $("rStreet").textContent = placement.noteFor(!has3D);
+    }
+  } finally { show("busy", null); btn.disabled = false; setToggleLabel(); }
+});
+/** The toggle names the map it switches to; on the flat map after a refused 3D city it offers to try again. */
+const showingFlat = () => cityPending ? flatOnly : (placement || tileset) ? viewer.scene.globe.show : flatOnly;
+function setToggleLabel(){
+  const btn = $("mapToggle"), onFlat = showingFlat();
+  btn.textContent = !onFlat ? "Switch to flat map" : (flatOnly || !placement ? "Switch to 3D city" : "Try the 3D city again");
+  btn.setAttribute("aria-pressed", String(onFlat));
+}
+$("flip").addEventListener("click", async () => {
+  if (!placement) return;
+  const p = makePlacement(placement.st, [-placement.n[0], -placement.n[1]]);
+  p.label = placement.label; p.noteFor = placement.noteFor; placement = p;
+  await drawBuilding(placement); setView(currentView);
+});
+/* ============================== sharing (mirrors the How Close tool) ============================== */
+const SHARE = {
+  kids500: 1101,       // children within 500 ft of the proposed site: the neighborhood dashboard's figure, as on How Close
+  pageUrl: "https://bridgeportenviros.github.io/howclose/across/",
+  learnMoreLabel: "www.bridgeportenviros.org/projects/amtrak-railyard",
+  fillWidth: 0.92,     // the building spans this share of the rendering's width
+};
+const FORMATS = { story: { W: 1080, H: 1920, s: 1, note: "1080×1920" }, post: { W: 1080, H: 1350, s: .72, note: "1080×1350" } };
+let cardFormat = "story", cards = {}, shot = null, canFiles = false;
+function resetShare(){ cards = {}; shot = null; if ($("sheet")) $("sheet").hidden = true; }
+const shareText = () => `${SHARE.kids500.toLocaleString("en-US")} children live within 500 feet of the 24/7 facility Amtrak wants to build at Canal Street Yard in Bridgeport. None live by its current site at 14th Street. I wouldn’t want it in my neighborhood either. See it across the street from you: ${SHARE.pageUrl}`;
+const fileName = () => `railyard-across-the-street-${cardFormat}.png`;
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
+
+/** Renders the From above view, zoomed so the building fills almost the whole width, and copies it off the map.
+    Returns { img (canvas), cx, cy, span } in image pixels, where span is the building's width on screen. */
+async function captureRendering(){
+  const p = placement; if (!p || !focus) return null;
+  const cam = viewer.camera, scene = viewer.scene;
+  const wasCircling = !!anim;
+  stopAnim(); cam.cancelFlight();
+  const saved = { pos: Cesium.Cartesian3.clone(cam.positionWC), dir: Cesium.Cartesian3.clone(cam.directionWC), up: Cesium.Cartesian3.clone(cam.upWC) };
+  const overlayText = $("overlay").textContent;
+  $("overlay").textContent = "Making your image…";
+  // Render sharper for the image, within limits phones can handle (a bigger drawing buffer and more 3D tiles
+  // crashed the page on a phone, Oct 27). Raising the tiles' error threshold by the same factor keeps the
+  // number of tiles about the same, so only the pixels get sharper.
+  const prevScale = viewer.resolutionScale, prevRec = viewer.useBrowserRecommendedResolution;
+  const cssW = Math.max(1, viewer.canvas.clientWidth), cssH = Math.max(1, viewer.canvas.clientHeight);
+  let scale = Math.min(Math.max(1, 1100 / cssW), PHONE.matches ? 1.6 : 2.5);
+  const maxPx = PHONE.matches ? 1.2e6 : 3.5e6;
+  if (cssW * cssH * scale * scale > maxPx) scale = Math.max(1, Math.sqrt(maxPx / (cssW * cssH)));
+  const prevSSE = tileset ? tileset.maximumScreenSpaceError : null, prevGlobeSSE = viewer.scene.globe.maximumScreenSpaceError;
+  viewer.useBrowserRecommendedResolution = false;
+  viewer.resolutionScale = scale;
+  if (tileset) tileset.maximumScreenSpaceError = prevSSE * scale;
+  viewer.scene.globe.maximumScreenSpaceError = prevGlobeSSE * scale;
+  try {
+    const V = VIEWS.orbit, h = heading(p.n) + rad(V.startOffsetDeg), pitch = rad(V.pitchDeg);
+    // the building's box: footprint corners at the base and the penthouse top
+    const corners = [];
+    for (const [sx, wx] of [[0, 0], [B.len, 0], [0, B.width], [B.len, B.width]])
+      for (const z of [p.rail - CONFIG.plinthFt * FT, p.rail + B.H.pent * FT]) {
+        const [lo, la] = p.toLonLat(p.local(sx, wx)); corners.push(Cesium.Cartesian3.fromDegrees(lo, la, z));
+      }
+    const measure = () => {
+      const pts = corners.map(c => Cesium.SceneTransforms.worldToWindowCoordinates(scene, c)).filter(Boolean);
+      const xs = pts.map(q => q.x), ys = pts.map(q => q.y);
+      return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+    };
+    // Fit the whole building inside the view with a margin (perspective puts it a little off center); the card
+    // then crops around it so it fills SHARE.fillWidth of the image. Rendered at high resolution for that crop.
+    let range = V.rangeFt * FT;
+    const cw = viewer.canvas.clientWidth, chh = viewer.canvas.clientHeight;
+    for (let i = 0; i < 8; i++) {               // the on-screen width shrinks about in proportion to distance
+      cam.lookAt(focus, new Cesium.HeadingPitchRange(h, pitch, range)); scene.render();
+      const m = measure(), span = m.x1 - m.x0;
+      if (!(span > 0)) break;
+      const over = Math.max((cw * .04 - m.x0), (m.x1 - cw * .96), (chh * .04 - m.y0), (m.y1 - chh * .96)) > 0;
+      const k2 = over ? 1.15 : span / (cw * .80);
+      range *= Math.max(k2, over ? 1.15 : 0);
+      if (!over && Math.abs(span - cw * .80) < 4) break;
+    }
+    cam.lookAt(focus, new Cesium.HeadingPitchRange(h, pitch, range));
+    // let the map and 3D city finish loading at this view (up to 10 seconds)
+    const t0 = performance.now(); let ready = 0;
+    while (performance.now() - t0 < 10000 && ready < 3) {
+      await nextFrame();
+      const done = (tileset && tileset.show) ? tileset.tilesLoaded : scene.globe.tilesLoaded;
+      ready = done ? ready + 1 : 0;
+    }
+    // Copy the frame right after drawing it, in the same step, so the browser hasn't cleared it yet.
+    scene.render();
+    const img = document.createElement("canvas"); img.width = viewer.canvas.width; img.height = viewer.canvas.height;
+    img.getContext("2d").drawImage(viewer.canvas, 0, 0);
+    const k = viewer.canvas.width / viewer.canvas.clientWidth, m = measure();
+    return { img, cx: (m.x0 + m.x1) / 2 * k, cy: (m.y0 + m.y1) / 2 * k, span: (m.x1 - m.x0) * k,
+             credit: (tileset && tileset.show) ? "Map data ©2026 Google" : "© OpenStreetMap contributors" };
+  } finally {
+    viewer.resolutionScale = prevScale; viewer.useBrowserRecommendedResolution = prevRec;
+    if (tileset && prevSSE != null) tileset.maximumScreenSpaceError = prevSSE;
+    viewer.scene.globe.maximumScreenSpaceError = prevGlobeSSE;
+    cam.lookAtTransform(Cesium.Matrix4.IDENTITY);
+    cam.setView({ destination: saved.pos, orientation: { direction: saved.dir, up: saved.up } });
+    $("overlay").textContent = overlayText;
+    if (wasCircling) startOrbit(p); else if (currentView !== "vHome") lockOn();
+  }
+}
+
+async function makeCard(key){
+  try { await Promise.all(["800 100px 'Barlow Condensed'", "700 40px 'Barlow Condensed'"].map(f => document.fonts.load(f))); } catch (e) {}
+  if (!shot) shot = await captureRendering();
+  const FM = FORMATS[key], W = FM.W, H = FM.H, s = FM.s, M = Math.round(80 * (s < 1 ? .85 : 1)), CW = W - 2 * M;
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const c = cv.getContext("2d"), F = '"Barlow Condensed", "Arial Narrow", sans-serif', WH = "#f5f5f3", RD = "#ff5a70";
+  const txt = l => l.p.map(q => q[0]).join("");
+  const fitSize = (l, maxW) => { let z = l.size * s; do { c.font = `800 ${z}px ${F}`; } while (c.measureText(txt(l)).width > maxW && (z -= 2) > 12); return z; };
+  const groupMin = (lines, sizes) => { const g = {}; lines.forEach((l, i) => { if (l.g) g[l.g] = Math.min(g[l.g] ?? 1e9, sizes[i]); }); return sizes.map((z, i) => lines[i].g ? g[lines[i].g] : z); };
+  const drawLine = (l, z, y) => { let x = M - (l.big ? 6 * s : 0); for (const [t, col] of l.p) { c.font = `800 ${z}px ${F}`; c.fillStyle = col; c.fillText(t, x, y); x += c.measureText(t).width; } };
+  c.fillStyle = "#0d0e0f"; c.fillRect(0, 0, W, H);
+  c.fillStyle = "#c8102e"; c.fillRect(0, 0, W, 14 * s);
+  // header: logo and the group's name
+  const LG = 92 * s, LT = 50 * s, logo = document.querySelector(".brand img");
+  try { if (!logo.complete) await logo.decode(); c.imageSmoothingQuality = "high"; c.drawImage(logo, M, LT, LG, LG); } catch (e) {}
+  c.fillStyle = WH; c.textBaseline = "middle"; c.font = `700 ${40 * s}px ${F}`;
+  c.fillText("BRIDGEPORT ENVIRONMENTALISTS", M + LG + 22 * s, LT + LG / 2 + 2 * s); c.textBaseline = "alphabetic"; c.textAlign = "left";
+  // top: the 500 ft children figure
+  const top = [{ p: [[SHARE.kids500.toLocaleString("en-US"), RD]], size: 270, big: true },
+    { p: [["CHILDREN LIVE WITHIN", WH]], size: 92, g: 1 }, { p: [["500 FEET OF THE", WH]], size: 92, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 92, g: 1 }];
+  const tz = groupMin(top, top.map(l => fitSize(l, CW))), base = [];
+  top.forEach((l, i) => base.push(i === 0 ? LT + LG + 56 * s + tz[0] * .72 : base[i - 1] + tz[i] * (l.big ? .88 : 1.0)));
+  top.forEach((l, i) => drawLine(l, tz[i], base[i]));
+  const boxTop = base[base.length - 1] + 50 * s;
+  // footer
+  c.fillStyle = WH; const foot = "LEARN MORE  " + SHARE.learnMoreLabel.toUpperCase();
+  let fz = 40 * s; do { c.font = `700 ${fz}px ${F}`; } while (c.measureText(foot).width > CW && (fz -= 2) > 10); c.fillText(foot, M, H - 80 * s);
+  // bottom: current site and the kicker, bottom-up above the footer
+  const bottom = [{ p: [["NONE", RD], [" LIVE BY ITS CURRENT SITE", WH]], size: 88 },
+    { p: [["I WOULDN’T WANT IT IN MY", WH]], size: 70, g: 2 }, { p: [["NEIGHBORHOOD EITHER.", WH]], size: 70, g: 2 }];
+  const bz = groupMin(bottom, bottom.map(l => fitSize(l, CW))), bb = new Array(bz.length);
+  bb[bz.length - 1] = H - 160 * s;
+  for (let i = bz.length - 2; i >= 0; i--) bb[i] = bb[i + 1] - bz[i + 1];
+  const ruleY = bb[0] - bz[0] * .72 - 34 * s;
+  c.fillStyle = "#c8102e"; c.fillRect(M, ruleY, CW, 6 * s);
+  bottom.forEach((l, i) => drawLine(l, bz[i], bb[i]));
+  // the rendering, cropped around the building so it fills almost the full width
+  const boxH = ruleY - 40 * s - boxTop;
+  c.fillStyle = "#1b1d1f"; c.fillRect(M, boxTop, CW, boxH);
+  if (shot) {
+    let sw = shot.span / SHARE.fillWidth, sh = sw * boxH / CW;
+    if (sh > shot.img.height) { sh = shot.img.height; sw = sh * CW / boxH; }
+    if (sw > shot.img.width) { sw = shot.img.width; sh = sw * boxH / CW; }
+    const sx = Math.min(Math.max(0, shot.cx - sw / 2), shot.img.width - sw), sy = Math.min(Math.max(0, shot.cy - sh / 2), shot.img.height - sh);
+    c.imageSmoothingQuality = "high";
+    c.drawImage(shot.img, sx, sy, sw, sh, M, boxTop, CW, boxH);
+    // map attribution, required with the map imagery
+    c.font = `500 ${22 * s}px "Barlow", system-ui, sans-serif`; const cwid = c.measureText(shot.credit).width;
+    c.fillStyle = "rgba(13,14,15,.65)"; c.fillRect(M + CW - cwid - 20 * s, boxTop + boxH - 34 * s, cwid + 20 * s, 34 * s);
+    c.fillStyle = WH; c.fillText(shot.credit, M + CW - cwid - 10 * s, boxTop + boxH - 10 * s);
+  }
+  c.strokeStyle = "#3a3e42"; c.lineWidth = 2; c.strokeRect(M, boxTop, CW, boxH);
+  return new Promise(res => cv.toBlob(b => res({ blob: b, url: URL.createObjectURL(b) }), "image/png"));
+}
+async function getCard(){ if (!cards[cardFormat]) cards[cardFormat] = await makeCard(cardFormat); return cards[cardFormat]; }
+async function refreshSheet(){
+  $("status").textContent = "Making your image…";
+  const cd = await getCard();
+  $("card").src = cd.url;
+  $("card").alt = shareText().replace(/ See it across.*$/, "");
+  $("save-note").textContent = canFiles ? "Then tap Save Image" : `PNG, ${FORMATS[cardFormat].note}`;
+  $("status").textContent = "";
+  return cd;
+}
+async function openSheet(){
+  if (!placement) return;
+  $("sheet").hidden = false; $("share").disabled = true;
+  $("sharetext").value = shareText();
+  try {
+    const cd = await refreshSheet();
+    const file = new File([cd.blob], fileName(), { type: "image/png" });
+    canFiles = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+    $("ig-note").textContent = canFiles ? "Then choose Story or Post" : "Saves the image to post";
+    $("fb-note").textContent = canFiles ? "Then choose Facebook" : "Shares the page link";
+    $("sms-note").textContent = canFiles ? "Image and message · then choose Messages" : "Opens Messages";
+    $("mail-note").textContent = canFiles ? "Image and message · then choose Mail" : "Opens your mail app";
+    $("save-note").textContent = canFiles ? "Then tap Save Image" : `PNG, ${FORMATS[cardFormat].note}`;
+    $("sheet").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  } finally { $("share").disabled = false; }
+}
+// Image only for Instagram, Facebook and Save (adding text can drop Instagram from the iPhone share sheet);
+// image plus the message for Text and Email.
+async function nativeShare(withText){
+  const cd = await getCard();
+  const data = { files: [new File([cd.blob], fileName(), { type: "image/png" })] };
+  if (withText) { data.text = shareText(); data.title = "What if it were across the street from you?"; }
+  try { await navigator.share(data); }
+  catch (e) { if (e && e.name !== "AbortError") $("status").textContent = "Sharing isn’t available here. Save the image instead."; }
+}
+function openLink(href, what){
+  const a = document.createElement("a"); a.href = href; a.target = "_top"; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove();
+  $("status").textContent = `If ${what} didn’t open, copy the message below and paste it in.`;
+}
+async function saveImage(){
+  if (canFiles) return nativeShare(false);
+  const cd = await getCard();
+  const a = document.createElement("a"); a.href = cd.url; a.download = fileName(); document.body.appendChild(a); a.click(); a.remove();
+  $("status").textContent = "If nothing downloaded, press and hold (or right-click) the image to save it.";
+}
+async function copyText(){
+  const t = $("sharetext");
+  try { await navigator.clipboard.writeText(t.value); $("status").textContent = "Message copied."; }
+  catch (e) { t.focus(); t.select(); $("status").textContent = "Select the message and copy it."; }
+}
+$("share").addEventListener("click", openSheet);
+document.querySelectorAll('input[name="fmt"]').forEach(el => el.addEventListener("change", () => { cardFormat = el.value; refreshSheet(); }));
+$("b-ig").addEventListener("click", () => (canFiles ? nativeShare(false) : saveImage()));
+$("b-fb").addEventListener("click", () => {
+  if (canFiles) return nativeShare(false);
+  openLink("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(SHARE.pageUrl), "Facebook");
+});
+$("b-sms").addEventListener("click", () => canFiles ? nativeShare(true) : openLink("sms:?&body=" + encodeURIComponent(shareText()), "Messages"));
+$("b-mail").addEventListener("click", () => canFiles ? nativeShare(true) : openLink("mailto:?subject=" + encodeURIComponent("What if it were across the street from you?") + "&body=" + encodeURIComponent(shareText()), "your mail app"));
+$("b-card").addEventListener("click", () => canFiles ? nativeShare(false) : null);
+$("b-save").addEventListener("click", saveImage);
+$("b-copy").addEventListener("click", copyText);
+
+/* Phones: show the placement note and How this works below the map instead of above it. */
+const PHONE = matchMedia("(max-width:860px)");
+const noteHome = { el: $("noteP"), parent: $("noteP").parentNode, next: $("noteP").nextSibling };
+const howHome = { el: $("howWorks"), parent: $("howWorks").parentNode, next: $("howWorks").nextSibling };
+function moveForPhones(){
+  const box = $("belowMap");
+  if (PHONE.matches) {
+    box.append(noteHome.el, howHome.el);
+    box.hidden = false;
+  } else {
+    noteHome.parent.insertBefore(noteHome.el, noteHome.next);
+    howHome.parent.insertBefore(howHome.el, howHome.next);
+    box.hidden = true;
+  }
+}
+moveForPhones();
+PHONE.addEventListener("change", moveForPhones);
+
+viewer = null;
+initViewer().then(() => {
+  stopOnUserInput();
+  const qs = new URLSearchParams(location.search);
+  const at = parseAt(qs.get("at"));
+  if (at) placeAt(at[0], at[1], qs.get("street"), qs.get("label"), qs.get("view"));
+  else if (qs.get("address")) { $("addr").value = qs.get("address"); place(qs.get("address")); }
+  else showProposedSite();   // opening view: the building where Amtrak proposes it, on the flat map (no 3D session)
+});
+/** "lat,lon" -> [lat, lon], only for points in or near Illinois. */
+function parseAt(v){
+  const m = /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/.exec(v || "");
+  if (!m) return null;
+  const lat = +m[1], lon = +m[2];
+  return lat > 36.9 && lat < 42.6 && lon > -91.6 && lon < -87.0 ? [lat, lon] : null;
+}
+// Example links (like the mansion link) place in this page, without reloading the 3D city.
+document.querySelectorAll("a[href^='?at=']").forEach(a => a.addEventListener("click", e => {
+  const qs = new URLSearchParams(a.getAttribute("href").slice(1)), at = parseAt(qs.get("at"));
+  if (!at || !viewer) return;          // let the link load normally if the 3D view isn't ready
+  e.preventDefault();
+  history.replaceState(null, "", a.getAttribute("href"));
+  $("addr").value = "";
+  placeAt(at[0], at[1], qs.get("street"), qs.get("label"), qs.get("view"));
+}));
+</script>
+</body>
+</html>
