@@ -67,6 +67,10 @@ button:focus-visible,input:focus-visible,summary:focus-visible,a:focus-visible{o
 .fact b{display:block;font-family:var(--f-display);font-weight:800;font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}
 .fact span{font-size:12px;color:var(--ink-2);line-height:1.3;display:block}
 .views{display:flex;flex-wrap:wrap;gap:8px}
+.sites{display:grid;gap:8px}
+.sites .lbl{font-family:var(--f-display);font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:14px}
+.sites .row{flex-wrap:wrap}
+.sites button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
 .views button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
 .note{font-size:14px;color:var(--ink-2);margin:0}
 /* Share panel (mirrors the How Close tool) */
@@ -111,6 +115,13 @@ details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--in
         <h1>What if it were across the street from you?</h1>
       </div>
       <p class="lede">Enter your address. We'll put the 1,209-foot building on the other side of your street, its long wall facing your home. <a href="https://www.bridgeportenviros.org/projects/amtrak-railyard" target="_blank" rel="noopener">Learn more about the proposed facility</a></p>
+      <div class="sites" role="group" aria-labelledby="sitesLbl">
+        <span class="lbl" id="sitesLbl">See the building at</span>
+        <div class="row">
+          <button type="button" id="siteCanal" aria-pressed="true">Proposed site · Canal St</button>
+          <button type="button" id="site14th" aria-pressed="false">Current site · 14th St</button>
+        </div>
+      </div>
     </header>
 
     <form id="form" autocomplete="on">
@@ -338,8 +349,17 @@ function makePlacement(st, n){
 
 /** The building at its proposed site: east face along the main line between the 33rd and 35th St viaducts
     (corners from the WSP site plan, see the project notes). Same shape as makePlacement's result. */
-function sitePlacement(){
-  const SE = [41.831059, -87.636566], NE = [41.834373, -87.636646];   // [lat, lon] of the east face's ends
+// Preset sites: [lat, lon] of the ends of the building's long east face.
+// Canal St: from the WSP site plan (see the project notes). 14th St: Matt's Google Earth placement at the existing
+// yard, southeast corner 41.862518, -87.635160, long axis about 1.9 degrees west of north, extended 1,207.8 ft north.
+const SITES = {
+  canal: { SE: [41.831059, -87.636566], NE: [41.834373, -87.636646],
+           overlay: "Amtrak's proposed maintenance building at Canal Street Yard in Bridgeport. Enter an address to see it across the street from you." },
+  "14th": { SE: [41.862518, -87.635160], NE: [41.865827, -87.635308],
+           overlay: "The same building at Amtrak's current site, the 14th Street yard. Enter an address to see it across the street from you." },
+};
+function sitePlacement(key = "canal"){
+  const { SE, NE } = SITES[key];
   const lat0 = (SE[0] + NE[0]) / 2, lon0 = (SE[1] + NE[1]) / 2;
   const R = 6371008.8, kx = Math.cos(lat0 * Math.PI / 180) * R * Math.PI / 180, ky = R * Math.PI / 180;
   const v = [(NE[1] - SE[1]) * kx, (NE[0] - SE[0]) * ky], len = Math.hypot(v[0], v[1]);
@@ -349,13 +369,24 @@ function sitePlacement(){
   const toLonLat = ([x, y]) => [lon0 + x / kx, lat0 + y / ky];
   return { n, m: [0, 0], u, local, toLonLat, porch: [-n[0]*30, -n[1]*30], off: 0, site: true };
 }
-async function showProposedSite(){
-  const p = sitePlacement();
+let currentSite = null;   // "canal" or "14th" while a preset site is showing; null once an address is placed
+async function showSite(key){
+  currentSite = key;
+  for (const [id, k] of [["siteCanal", "canal"], ["site14th", "14th"]]) $(id).setAttribute("aria-pressed", String(k === key));
+  stopAnim();
+  placement = null; $("result").hidden = true; $("noteP").hidden = true; resetShare();
+  $("overlay").textContent = SITES[key].overlay;
+  if (!flatOnly && USE_GOOGLE) { show("busy", "Loading the 3D city…"); await ensureCity(); show("busy", null); }
+  if (currentSite !== key) return;
+  if (USE_GOOGLE) setToggleLabel();
+  const p = sitePlacement(key);
   await drawBuilding(p);
   const [lo, la] = p.centerLL, V = VIEWS.intro;
   viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(Cesium.Cartesian3.fromDegrees(lo, la, p.rail + 10), 1),
-    { offset: new Cesium.HeadingPitchRange(rad(V.headingDeg), rad(V.pitchDeg), V.rangeFt * FT), duration: 0 });
+    { offset: new Cesium.HeadingPitchRange(rad(V.headingDeg), rad(V.pitchDeg), V.rangeFt * FT), duration: firstSite ? 0 : 2.2 });
+  firstSite = false;
 }
+let firstSite = true;   // the opening view appears in place; switching sites later flies there
 
 /* ============================== 3D view (CesiumJS) ============================== */
 let viewer, tileset = null, building = null, orbitHandler = null;
@@ -433,7 +464,7 @@ async function drawBuilding(p){
   const faceH = hs.slice(0, face.length), porchH = hs[hs.length - 1];
   const ground = quantile(faceH, 0.25);                 // low quarter: skips cars and tree tops
   const lowest = Math.min(...faceH.filter(v => v != null), ground);
-  const rail = ground + CONFIG.plinthFt * FT;
+  const rail = ground + (p.site ? 0 : CONFIG.plinthFt * FT);   // at a preset site the ground sampled is the yard itself
   building = new Cesium.CustomDataSource("building");
   const col = k => Cesium.Color.fromCssColorString(k);
   const mat = { plinth: col(COLORS.plinth), shop: col(COLORS.wall), office: col(COLORS.wall), pent: col(COLORS.wall), window: col(COLORS.window), door: col(COLORS.door) };
@@ -623,6 +654,8 @@ async function placeFrom(findHome, startView){
     if (!st) throw new UserError("We found the address but couldn't find its street in the Census street map. Try a nearby address.");
     show("busy", USE_GOOGLE ? "Loading the 3D city and placing the building…" : "Placing the building…");
     const has3D = await city;
+    currentSite = null;
+    for (const id of ["siteCanal", "site14th"]) $(id).setAttribute("aria-pressed", "false");
     placement = makePlacement(st, st.away);
     placement.label = home.label;
     await drawBuilding(placement);
@@ -648,6 +681,9 @@ async function placeFrom(findHome, startView){
   }
 }
 
+$("siteCanal").addEventListener("click", () => { showSite("canal"); scrollToMapOnPhones(); });
+$("site14th").addEventListener("click", () => { showSite("14th"); scrollToMapOnPhones(); });
+function scrollToMapOnPhones(){ if (matchMedia("(max-width:860px)").matches) document.querySelector(".stage").scrollIntoView({ behavior: "smooth", block: "start" }); }
 $("form").addEventListener("submit", e => { e.preventDefault(); const q = $("addr").value.trim(); if (q) place(q); });
 $("vHome").addEventListener("click", () => setView("vHome"));
 if ($("vAir")) $("vAir").addEventListener("click", () => setView("vAir"));
@@ -669,9 +705,10 @@ $("mapToggle").addEventListener("click", async () => {
       show("busy", "Loading the 3D city…");
       has3D = await ensureCity();
     } else {
-      $("mode").textContent = tileset ? "Google 3D city" : "Street map (3D city loads when you search)";
-      if (tileset) { tileset.show = true; viewer.scene.globe.show = false; }
+      show("busy", "Loading the 3D city…");
+      has3D = await ensureCity();
     }
+    if (!placement && currentSite) await showSite(currentSite);
     if (placement) {
       await drawBuilding(placement); setView(currentView);
       if (placement.noteFor) $("rStreet").textContent = placement.noteFor(!has3D);
@@ -922,7 +959,7 @@ initViewer().then(() => {
   const at = parseAt(qs.get("at"));
   if (at) placeAt(at[0], at[1], qs.get("street"), qs.get("label"), qs.get("view"));
   else if (qs.get("address")) { $("addr").value = qs.get("address"); place(qs.get("address")); }
-  else showProposedSite();   // opening view: the building where Amtrak proposes it, on the flat map (no 3D session)
+  else showSite("canal");   // opening view: the building where Amtrak proposes it, in the full 3D city (this variant starts a 3D session on every visit)
 });
 /** "lat,lon" -> [lat, lon], only for points in or near Illinois. */
 function parseAt(v){
