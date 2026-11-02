@@ -212,7 +212,9 @@ const VIEWS = {
            panMarginDeg: 4 },       // extra sweep past each end of the building
   above: { offsetDeg: 31.5,         // from the home's side, turned this far off straight-across
            pitchDeg: -28, rangeFt: 2493 },
-  orbit: { startOffsetDeg: 31.5, pitchDeg: -35, rangeFt: 1890,   // 35° down (was 22°, test Nov 2026): keeps the horizon and far-off city out of view, so far fewer 3D tiles load; 20% closer than the first version (2,362 ft)
+  orbit: { startOffsetDeg: 31.5, pitchDeg: -50,   // 50° down (was 35°, and 22° before Nov 2026): keeps the horizon and far-off city out of view, so fewer 3D tiles load
+           rangeFt: 1890,           // fallback only: the distance is fitted to the screen (see fitOrbitRange)
+           fill: 0.92,              // the building, at any point of the circle, stays inside this share of the view's width and height
            degPerSecond: 5.5,
            flySeconds: 2.2 },       // smooth flight to the starting point before it starts turning
   // Opening view, before any search: the building at its proposed site in Canal Street Yard
@@ -473,9 +475,13 @@ async function drawBuilding(p){
   stopOrbit();
   // ground along the far sidewalk (where the wall stands) and at the home's sidewalk
   const face = []; for (let s = 0; s <= B.len; s += B.len / 10) face.push(p.toLonLat(p.local(s, -3)));
+  // ...and along the home's sidewalk, for the From your home camera: several points and their low quarter, so one
+  // sample that lands on a tree, car or roof can't lift the camera (a single porch sample did, Nov 2026)
+  const homeSide = []; for (let s = 0; s <= B.len; s += B.len / 10) homeSide.push(p.toLonLat(p.local(s, -2 * p.off / FT)));
   const porchLL = p.toLonLat(p.porch);
-  const hs = await groundHeights([...face, porchLL]);
-  const faceH = hs.slice(0, face.length), porchH = hs[hs.length - 1];
+  const hs = await groundHeights([...face, ...homeSide, porchLL]);
+  const faceH = hs.slice(0, face.length), homeH = hs.slice(face.length, face.length + homeSide.length);
+  const porchH = homeH.some(v => v != null) ? quantile(homeH, 0.25) : hs[hs.length - 1];
   const ground = quantile(faceH, 0.25);                 // low quarter: skips cars and tree tops
   const lowest = Math.min(...faceH.filter(v => v != null), ground);
   const rail = ground + CONFIG.plinthFt * FT;
@@ -495,6 +501,7 @@ async function drawBuilding(p){
   }
   await viewer.dataSources.add(building);
   p.ground = ground; p.rail = rail; p.porchGround = porchH != null ? porchH : ground;
+  p.homeSideLL = homeSide; p.homeRefined = false;
   p.centerLL = p.toLonLat(p.local(B.len / 2, B.width / 2));
   focus = Cesium.Cartesian3.fromDegrees(p.centerLL[0], p.centerLL[1], rail + 10);
   resetShare();                                          // a new placement needs a new share image
@@ -523,8 +530,21 @@ function horizontalFov(){
 }
 
 /* From your home: up high behind the home, across from the building's midpoint, sweeping left to right and back. */
-function viewHome(p){
+async function viewHome(p){
   stopAnim();
+  const tok = orbitToken;
+  // The first time, read the home side's ground from the most detailed 3D tiles (at most 4 s), so the camera sits
+  // 70 ft above the street and not above a tree or roof that a coarser tile was showing.
+  if (!p.homeRefined && tileset && tileset.show && p.homeSideLL && !VIEW_OPTS.still) {
+    p.homeRefined = true;
+    try {
+      const carts = p.homeSideLL.map(([lo, la]) => Cesium.Cartographic.fromDegrees(lo, la));
+      const out = await Promise.race([viewer.scene.sampleHeightMostDetailed(carts, building ? building.entities.values : [], 0.5), sleep(4000).then(() => null)]);
+      const hs = out ? out.map(c => (c && Number.isFinite(c.height)) ? c.height : null) : [];
+      if (hs.some(v => v != null)) p.porchGround = quantile(hs, 0.25);
+    } catch (e) {}
+    if (tok !== orbitToken || placement !== p) return;   // another view was picked meanwhile
+  }
   const V = VIEWS.home;
   const back = V.backFromStreetFt * FT;
   const spot = [p.st.c[0] - p.n[0]*back, p.st.c[1] - p.n[1]*back];
@@ -555,6 +575,39 @@ function viewAir(p){
     offset: new Cesium.HeadingPitchRange(heading(p.n) + rad(V.offsetDeg), rad(V.pitchDeg), V.rangeFt * FT), duration: 2.2 });
 }
 
+/** The closest camera distance (metres) at which the whole building stays in view all the way around the circle,
+    for this screen's shape: a closer camera means a smaller patch of city in view and fewer 3D tiles to load. */
+function fitOrbitRange(p){
+  const V = VIEWS.orbit, pitch = rad(V.pitchDeg);
+  const f = viewer.camera.frustum, a = viewer.canvas.clientWidth / Math.max(1, viewer.canvas.clientHeight);
+  const t = Math.tan(f.fov / 2), tanH = (a >= 1 ? t : t * a) * V.fill, tanV = (a >= 1 ? t / a : t) * V.fill;
+  // the building's corners, in metres east/north/up from the point the camera circles
+  const c = p.local(B.len / 2, B.width / 2), zc = p.rail + 10;
+  const pts = [];
+  for (const [s, w] of [[0, 0], [B.len, 0], [0, B.width], [B.len, B.width]]) {
+    const [x, y] = p.local(s, w);
+    for (const z of [p.rail - CONFIG.plinthFt * FT, p.rail + B.H.pent * FT]) pts.push([x - c[0], y - c[1], z - zc]);
+  }
+  const fits = r => {
+    for (let hd = 0; hd < 360; hd += 10) {
+      const h = rad(hd), d = [Math.sin(h) * Math.cos(pitch), Math.cos(h) * Math.cos(pitch), Math.sin(pitch)];
+      const right = [Math.cos(h), -Math.sin(h), 0], up = [-Math.sin(h) * Math.sin(pitch), -Math.cos(h) * Math.sin(pitch), Math.cos(pitch)];
+      for (const q of pts) {
+        const v = [q[0] + r * d[0], q[1] + r * d[1], q[2] + r * d[2]];
+        const z = v[0]*d[0] + v[1]*d[1] + v[2]*d[2];
+        if (z <= 0) return false;
+        if (Math.abs(v[0]*right[0] + v[1]*right[1]) / z > tanH) return false;
+        if (Math.abs(v[0]*up[0] + v[1]*up[1] + v[2]*up[2]) / z > tanV) return false;
+      }
+    }
+    return true;
+  };
+  let lo = 50, hi = 3000;
+  if (!fits(hi)) return V.rangeFt * FT;
+  for (let i = 0; i < 30; i++) { const m = (lo + hi) / 2; if (fits(m)) hi = m; else lo = m; }
+  return hi;
+}
+
 /* Circle around: starts on the home's side and keeps turning. */
 function startOrbit(p){
   stopAnim();
@@ -563,7 +616,8 @@ function startOrbit(p){
   const target = Cesium.Cartesian3.fromDegrees(lo, la, p.rail + 10);
   const h0 = heading(p.n) + rad(V.startOffsetDeg);
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const hpr = h => new Cesium.HeadingPitchRange(h, rad(V.pitchDeg), V.rangeFt * FT);
+  const range = fitOrbitRange(p);
+  const hpr = h => new Cesium.HeadingPitchRange(h, rad(V.pitchDeg), range);
   const at = h => viewer.camera.lookAt(target, hpr(h));
   // Fly to the starting point first (as the other views do), then start turning from exactly there.
   const token = ++orbitToken;
