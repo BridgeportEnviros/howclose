@@ -475,9 +475,13 @@ async function drawBuilding(p){
   stopOrbit();
   // ground along the far sidewalk (where the wall stands) and at the home's sidewalk
   const face = []; for (let s = 0; s <= B.len; s += B.len / 10) face.push(p.toLonLat(p.local(s, -3)));
+  // ...and along the home's sidewalk, for the From your home camera: several points and their low quarter, so one
+  // sample that lands on a tree, car or roof can't lift the camera (a single porch sample did, Nov 2026)
+  const homeSide = []; for (let s = 0; s <= B.len; s += B.len / 10) homeSide.push(p.toLonLat(p.local(s, -2 * p.off / FT)));
   const porchLL = p.toLonLat(p.porch);
-  const hs = await groundHeights([...face, porchLL]);
-  const faceH = hs.slice(0, face.length), porchH = hs[hs.length - 1];
+  const hs = await groundHeights([...face, ...homeSide, porchLL]);
+  const faceH = hs.slice(0, face.length), homeH = hs.slice(face.length, face.length + homeSide.length);
+  const porchH = homeH.some(v => v != null) ? quantile(homeH, 0.25) : hs[hs.length - 1];
   const ground = quantile(faceH, 0.25);                 // low quarter: skips cars and tree tops
   const lowest = Math.min(...faceH.filter(v => v != null), ground);
   const rail = ground + CONFIG.plinthFt * FT;
@@ -497,6 +501,7 @@ async function drawBuilding(p){
   }
   await viewer.dataSources.add(building);
   p.ground = ground; p.rail = rail; p.porchGround = porchH != null ? porchH : ground;
+  p.homeSideLL = homeSide; p.homeRefined = false;
   p.centerLL = p.toLonLat(p.local(B.len / 2, B.width / 2));
   focus = Cesium.Cartesian3.fromDegrees(p.centerLL[0], p.centerLL[1], rail + 10);
   resetShare();                                          // a new placement needs a new share image
@@ -525,8 +530,21 @@ function horizontalFov(){
 }
 
 /* From your home: up high behind the home, across from the building's midpoint, sweeping left to right and back. */
-function viewHome(p){
+async function viewHome(p){
   stopAnim();
+  const tok = orbitToken;
+  // The first time, read the home side's ground from the most detailed 3D tiles (at most 4 s), so the camera sits
+  // 70 ft above the street and not above a tree or roof that a coarser tile was showing.
+  if (!p.homeRefined && tileset && tileset.show && p.homeSideLL && !VIEW_OPTS.still) {
+    p.homeRefined = true;
+    try {
+      const carts = p.homeSideLL.map(([lo, la]) => Cesium.Cartographic.fromDegrees(lo, la));
+      const out = await Promise.race([viewer.scene.sampleHeightMostDetailed(carts, building ? building.entities.values : [], 0.5), sleep(4000).then(() => null)]);
+      const hs = out ? out.map(c => (c && Number.isFinite(c.height)) ? c.height : null) : [];
+      if (hs.some(v => v != null)) p.porchGround = quantile(hs, 0.25);
+    } catch (e) {}
+    if (tok !== orbitToken || placement !== p) return;   // another view was picked meanwhile
+  }
   const V = VIEWS.home;
   const back = V.backFromStreetFt * FT;
   const spot = [p.st.c[0] - p.n[0]*back, p.st.c[1] - p.n[1]*back];
