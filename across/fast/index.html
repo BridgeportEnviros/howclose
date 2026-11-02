@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>The Railyard Across the Street (test: faster loading)</title>
+<title>The Railyard Across the Street (test: tighter From above)</title>
 <meta name="robots" content="noindex">
 <meta name="description" content="Enter an Illinois address to see Amtrak's proposed 1,209-foot maintenance building placed directly across the street.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -213,7 +213,9 @@ const VIEWS = {
            panMarginDeg: 4 },       // extra sweep past each end of the building
   above: { offsetDeg: 31.5,         // from the home's side, turned this far off straight-across
            pitchDeg: -28, rangeFt: 2493 },
-  orbit: { startOffsetDeg: 31.5, pitchDeg: -22, rangeFt: 1890,   // 20% closer than the first version (2,362 ft)
+  orbit: { startOffsetDeg: 31.5, pitchDeg: -50,   // 50° down (was 35°, and 22° before Nov 2026): keeps the horizon and far-off city out of view, so fewer 3D tiles load
+           rangeFt: 1890,           // fallback only: the distance is fitted to the screen (see fitOrbitRange)
+           fill: 0.92,              // the building, at any point of the circle, stays inside this share of the view's width and height
            degPerSecond: 5.5,
            flySeconds: 2.2 },       // smooth flight to the starting point before it starts turning
   // Opening view, before any search: the building at its proposed site in Canal Street Yard
@@ -408,6 +410,7 @@ function ensureCity(){
       const t = await Cesium.createGooglePhotorealistic3DTileset(undefined,
         { showCreditsOnScreen: true, preloadWhenHidden: true, maximumScreenSpaceError: LOAD.firstDetail });
       t.show = false;
+      t.loadProgress.addEventListener((pending, processing) => { cityPendingTiles = pending + processing; });
       viewer.scene.primitives.add(t);
       tileset = t;
       if (flatOnly) return false;               // switched to the flat map while it loaded
@@ -423,13 +426,20 @@ function ensureCity(){
 }
 
 /** Wait (up to ms) until the hidden 3D city has loaded what the camera is looking at. */
-async function waitForCity(ms, token){
-  const t0 = performance.now(); let ok = 0;
+let cityPendingTiles = 0;   // 3D city tiles still downloading or being processed (from the tileset's loadProgress event)
+/** Wait (up to ms) until the hidden 3D city has loaded what the camera is looking at. onProgress(percent) is
+    called as it goes: the share of the most tiles seen waiting that have since arrived, so it only moves forward. */
+async function waitForCity(ms, token, onProgress){
+  const t0 = performance.now(); let ok = 0, most = 0, shown = 0;
   while (performance.now() - t0 < ms && ok < 3) {
     await new Promise(r => requestAnimationFrame(r));
     if (token !== placeToken) return false;
+    most = Math.max(most, cityPendingTiles);
+    const pct = most ? Math.round(100 * (1 - cityPendingTiles / most)) : 0;
+    if (onProgress && pct > shown) { shown = pct; onProgress(pct); }
     ok = tileset && tileset.tilesLoaded ? ok + 1 : 0;
   }
+  if (onProgress) onProgress(100);
   return true;
 }
 function revealCity(){
@@ -548,6 +558,39 @@ function viewAir(p){
     offset: new Cesium.HeadingPitchRange(heading(p.n) + rad(V.offsetDeg), rad(V.pitchDeg), V.rangeFt * FT), duration: 2.2 });
 }
 
+/** The closest camera distance (metres) at which the whole building stays in view all the way around the circle,
+    for this screen's shape: a closer camera means a smaller patch of city in view and fewer 3D tiles to load. */
+function fitOrbitRange(p){
+  const V = VIEWS.orbit, pitch = rad(V.pitchDeg);
+  const f = viewer.camera.frustum, a = viewer.canvas.clientWidth / Math.max(1, viewer.canvas.clientHeight);
+  const t = Math.tan(f.fov / 2), tanH = (a >= 1 ? t : t * a) * V.fill, tanV = (a >= 1 ? t / a : t) * V.fill;
+  // the building's corners, in metres east/north/up from the point the camera circles
+  const c = p.local(B.len / 2, B.width / 2), zc = p.rail + 10;
+  const pts = [];
+  for (const [s, w] of [[0, 0], [B.len, 0], [0, B.width], [B.len, B.width]]) {
+    const [x, y] = p.local(s, w);
+    for (const z of [p.rail - CONFIG.plinthFt * FT, p.rail + B.H.pent * FT]) pts.push([x - c[0], y - c[1], z - zc]);
+  }
+  const fits = r => {
+    for (let hd = 0; hd < 360; hd += 10) {
+      const h = rad(hd), d = [Math.sin(h) * Math.cos(pitch), Math.cos(h) * Math.cos(pitch), Math.sin(pitch)];
+      const right = [Math.cos(h), -Math.sin(h), 0], up = [-Math.sin(h) * Math.sin(pitch), -Math.cos(h) * Math.sin(pitch), Math.cos(pitch)];
+      for (const q of pts) {
+        const v = [q[0] + r * d[0], q[1] + r * d[1], q[2] + r * d[2]];
+        const z = v[0]*d[0] + v[1]*d[1] + v[2]*d[2];
+        if (z <= 0) return false;
+        if (Math.abs(v[0]*right[0] + v[1]*right[1]) / z > tanH) return false;
+        if (Math.abs(v[0]*up[0] + v[1]*up[1] + v[2]*up[2]) / z > tanV) return false;
+      }
+    }
+    return true;
+  };
+  let lo = 50, hi = 3000;
+  if (!fits(hi)) return V.rangeFt * FT;
+  for (let i = 0; i < 30; i++) { const m = (lo + hi) / 2; if (fits(m)) hi = m; else lo = m; }
+  return hi;
+}
+
 /* Circle around: starts on the home's side and keeps turning. */
 function startOrbit(p){
   stopAnim();
@@ -556,7 +599,8 @@ function startOrbit(p){
   const target = Cesium.Cartesian3.fromDegrees(lo, la, p.rail + 10);
   const h0 = heading(p.n) + rad(V.startOffsetDeg);
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const hpr = h => new Cesium.HeadingPitchRange(h, rad(V.pitchDeg), V.rangeFt * FT);
+  const range = fitOrbitRange(p);
+  const hpr = h => new Cesium.HeadingPitchRange(h, rad(V.pitchDeg), range);
   const at = h => viewer.camera.lookAt(target, hpr(h));
   // Fly to the starting point first (as the other views do), then start turning from exactly there.
   const token = ++orbitToken;
@@ -702,7 +746,9 @@ async function placeFrom(findHome, startView){
     $("mode").textContent = "Street map (3D city loading)";
     sharpenSoon(); clearTimeout(sharpenTimer);   // coarse while loading
     cityPending = true; setToggleLabel();
-    const waited = await waitForCity(LOAD.maxWaitMs, token);
+    const waited = await waitForCity(LOAD.maxWaitMs, token, pct => {
+      if (token === placeToken) $("overlay").textContent = `Loading the 3D city around this address… ${pct}%`;
+    });
     if (token === placeToken) { cityPending = false; setToggleLabel(); }
     if (!waited) return;
     if (flatOnly) { $("overlay").textContent = overlay; setViewWith(currentView, { instant: true }); return; }
@@ -741,7 +787,7 @@ $("mapToggle").addEventListener("click", async () => {
     } else if (placement) {
       show("busy", "Loading the 3D city…");
       has3D = await ensureCity();
-      if (has3D) { await waitForCity(LOAD.maxWaitMs, placeToken); revealCity(); sharpenSoon(); }
+      if (has3D) { await waitForCity(LOAD.maxWaitMs, placeToken, pct => show("busy", `Loading the 3D city… ${pct}%`)); revealCity(); sharpenSoon(); }
     } else {
       $("mode").textContent = tileset ? "Google 3D city" : "Street map (3D city loads when you search)";
       if (tileset) revealCity();
