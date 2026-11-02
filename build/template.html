@@ -18,6 +18,7 @@
   --silver: #7f8489; --accent: #e8344f; --ink: #050506; --ink-fg: #f5f5f3; color-scheme: dark }
 * { box-sizing: border-box }
 [hidden] { display: none !important }
+#result, #msg { scroll-margin-top: 12px; outline: none }   /* room above the answer when the page scrolls to it */
 body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.5 }
 .wrap { max-width: 640px; margin: 0 auto; padding: 28px 16px 64px; display: grid; gap: 22px }
 h1 { font-family: var(--display); font-weight: 800; font-size: clamp(34px, 8vw, 52px); line-height: .95; text-transform: uppercase; letter-spacing: .01em; margin: 0; text-wrap: balance }
@@ -110,9 +111,9 @@ textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px; border-ra
     <div class="hint" id="addr-hint">Chicago addresses within 2 miles of the site. Try <button type="button" data-ex="3500 S Halsted St">3500 S Halsted St</button></div>
   </form>
 
-  <div id="msg" class="msg" hidden></div>
+  <div id="msg" class="msg" tabindex="-1" hidden></div>
 
-  <section class="result" id="result" aria-live="polite">
+  <section class="result" id="result" tabindex="-1" aria-live="polite">
     <div class="txt">
       <div class="tag" id="tag">Within 500 feet of the proposed yard</div>
       <div class="big" id="big"><span class="n">—</span> people live within 500 feet of the 24/7 Amtrak facility</div>
@@ -684,11 +685,22 @@ async function copyText() {
 function run(addr, isExample) {
   const r = lookup(addr);
   const m = $("msg");
-  if (r.error) { m.textContent = r.error; m.hidden = false; return; }
+  if (r.error) { m.textContent = r.error; m.hidden = false; return m; }
   m.hidden = true; render(r, isExample);
+  return $("result");
 }
-$("f").addEventListener("submit", e => { e.preventDefault(); run($("addr").value, false); });
-document.querySelectorAll("[data-ex]").forEach(b => b.addEventListener("click", () => { $("addr").value = b.dataset.ex; run(b.dataset.ex, true); }));
+// Scroll-into-view after a search: bring the answer (or the error message) to the top of the screen.
+// Blurring the input first closes the phone keyboard, which changes the screen height, so the scroll waits a moment.
+// Focus moves to the answer too, so screen readers start reading there.
+function showOutput(el) {
+  $("addr").blur();
+  setTimeout(() => {
+    el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    el.focus({ preventScroll: true });
+  }, 120);
+}
+$("f").addEventListener("submit", e => { e.preventDefault(); showOutput(run($("addr").value, false)); });
+document.querySelectorAll("[data-ex]").forEach(b => b.addEventListener("click", () => { $("addr").value = b.dataset.ex; showOutput(run(b.dataset.ex, true)); }));
 $("share").addEventListener("click", openSheet);
 $("showhome").addEventListener("change", e => {
   showHome = e.target.checked; card = {};
