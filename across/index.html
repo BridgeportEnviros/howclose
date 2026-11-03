@@ -71,6 +71,8 @@ button:focus-visible,input:focus-visible,summary:focus-visible,a:focus-visible{o
 .views{display:flex;flex-wrap:wrap;gap:8px}
 .views button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
 .note{font-size:14px;color:var(--ink-2);margin:0}
+.sharebox{display:grid;gap:12px}
+.result{scroll-margin-top:8px}
 /* Share panel (mirrors the How Close tool) */
 .sheet{border:1.5px solid var(--rule);border-radius:10px;padding:14px;display:grid;gap:12px}
 .sheet h2{font-family:var(--f-display);font-weight:800;text-transform:uppercase;font-size:22px;margin:0}
@@ -139,6 +141,7 @@ details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--in
         <!-- Former fixed "From above" view, hidden Oct 27, 2026; to bring it back, uncomment this and add "vAir" to VIEW_IDS:
         <button type="button" id="vAir" aria-pressed="false">From above</button> -->
       </div>
+      <div class="sharebox" id="shareBox" hidden><!-- on phones this moves below the map, above the placement note (see moveForPhones) -->
       <div class="row"><button type="button" class="primary" id="share">Share</button></div>
       <section class="sheet" id="sheet" hidden aria-labelledby="sheet-h">
         <h2 id="sheet-h">Share this view</h2>
@@ -162,6 +165,7 @@ details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--in
         </div>
         <p class="status" id="status" role="status"></p>
       </section>
+      </div>
       <p class="note" id="noteP" hidden><span id="rStreet"></span> <button type="button" class="textlink" id="flip">Wrong side? Switch sides</button></p>
     </section>
 
@@ -775,8 +779,11 @@ async function placeFrom(findHome, startView){
     const approx = (st.ambiguous || !home.exact) ? " Address locations can be approximate." : "";
     placement.noteFor = flat => note + (flat ? FLAT_NOTE : "") + approx;   // the map toggle rewrites the note
     $("rStreet").textContent = placement.noteFor(USE_GOOGLE && !has3D);
-    $("result").hidden = false; $("noteP").hidden = false;
-    if (matchMedia("(max-width:860px)").matches) document.querySelector(".stage").scrollIntoView({ behavior: "smooth", block: "start" });
+    $("result").hidden = false; $("noteP").hidden = false; $("shareBox").hidden = false;
+    // Phones: scroll so the address sits just under the dividing line, keeping the view buttons in sight above the map.
+    // The busy message above is cleared first, or the page would shift up after the scroll.
+    show("busy", null);
+    if (matchMedia("(max-width:860px)").matches) $("result").scrollIntoView({ behavior: "smooth", block: "start" });
     const who = home.label.split(",")[0];
     const overlay = `The proposed building across from ${home.fromCoords ? who.charAt(0).toLowerCase() + who.slice(1) : who}. Drag to look around.`;
     const viewId = START_VIEWS[startView] || "vOrbit";
@@ -1106,13 +1113,15 @@ $("b-copy").addEventListener("click", copyText);
 /* Phones: show the placement note and How this works below the map instead of above it. */
 const PHONE = matchMedia("(max-width:860px)");
 const noteHome = { el: $("noteP"), parent: $("noteP").parentNode, next: $("noteP").nextSibling };
+const shareHome = { el: $("shareBox"), parent: $("shareBox").parentNode, next: $("shareBox").nextSibling };
 const howHome = { el: $("howWorks"), parent: $("howWorks").parentNode, next: $("howWorks").nextSibling };
 function moveForPhones(){
   const box = $("belowMap");
   if (PHONE.matches) {
-    box.append(noteHome.el, howHome.el);
+    box.append(shareHome.el, noteHome.el, howHome.el);   // Share right under the map, then the note
     box.hidden = false;
   } else {
+    shareHome.parent.insertBefore(shareHome.el, shareHome.next);
     noteHome.parent.insertBefore(noteHome.el, noteHome.next);
     howHome.parent.insertBefore(howHome.el, howHome.next);
     box.hidden = true;
