@@ -617,6 +617,9 @@ function startOrbit(p){
   const h0 = heading(p.n) + rad(V.startOffsetDeg);
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const range = fitOrbitRange(p);
+  // Zooming in is allowed, but not out past this starting distance (Nov 2026), so the building can't be lost
+  // and no extra city loads beyond the starting view.
+  viewer.scene.screenSpaceCameraController.maximumZoomDistance = range + 1;
   const hpr = h => new Cesium.HeadingPitchRange(h, rad(V.pitchDeg), range);
   const at = h => viewer.camera.lookAt(target, hpr(h));
   // Fly to the starting point first (as the other views do), then start turning from exactly there.
@@ -638,6 +641,7 @@ function setViewWith(id, opts){
 }
 function setView(id){
   currentView = id;
+  viewer.scene.screenSpaceCameraController.maximumZoomDistance = 3000;   // From above narrows this to its starting distance
   for (const b of VIEW_IDS) $(b).setAttribute("aria-pressed", b === id);
   // From your home is a fixed, sweeping view: dragging, zooming and tilting are switched off there (Nov 2026),
   // because dragging tipped the camera around at an angle. They come back with any other view.
