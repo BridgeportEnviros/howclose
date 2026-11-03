@@ -1,0 +1,38 @@
+{
+ "checked": "2026-11-03",
+ "notes": [
+  "Cook County Board names come from Wikipedia's list (checked Nov 3, 2026) and were not confirmed against cookcountyil.gov, which Claude's tools couldn't open. Confirm each name before going live. Commissioners elected Nov 3, 2026 take office in early December 2026 (Cook County Board terms start the first Monday in December; unverified for 2026).",
+  "Roster reflects officeholders as of Nov 3, 2026 (Election Day). State legislators elected today are seated in January 2027; U.S. House members on Jan 3, 2027. Rebuild after both dates.",
+  "Decision-maker contact details other than FRA's environmental review email have not been confirmed."
+ ],
+ "cook_county_board": [
+  {"office_key": "cook-board-1",  "office": "Cook County Commissioner, District 1",  "title": "Commissioner", "name": "Tara Stamps",       "party": "Democratic", "website": "https://www.cookcountyil.gov/agency/board-commissioners", "verify": true},
+  {"office_key": "cook-board-2",  "office": "Cook County Commissioner, District 2",  "title": "Commissioner", "name": "Michael Scott Jr.", "party": "Democratic", "website": "https://www.cookcountyil.gov/agency/board-commissioners", "verify": true},
+  {"office_key": "cook-board-3",  "office": "Cook County Commissioner, District 3",  "title": "Commissioner", "name": "Bill Lowry",        "party": "Democratic", "website": "https://www.cookcountyil.gov/agency/board-commissioners", "verify": true},
+  {"office_key": "cook-board-4",  "office": "Cook County Commissioner, District 4",  "title": "Commissioner", "name": "Stanley Moore",     "party": "Democratic", "website": "https://www.cookcountyil.gov/agency/board-commissioners", "verify": true},
+  {"office_key": "cook-board-5",  "office": "Cook County Commissioner, District 5",  "title": "Commissioner", "name": "Kisha McCaskill",   "party": "Democratic", "website": "https://www.cookcountyil.gov/agency/board-commissioners", "verify": true},
+  {"office_key": "cook-board-6",  "office": "Cook County Commissioner, District 6",  "title": "Commissioner", "name": "Donna Miller",      "party": "Democratic", "website": "https://www.cookcountyil.gov/agency/board-commissioners", "verify": true},
+  {"office_key": "cook-board-7",  "office": "Cook County Commissioner, District 7",  "title": "Commissioner", "name": "Alma Anaya",        "party": "Democratic", "website": "https://www.cookcountyil.gov/agency/board-commissioners", "verify": true},
+  {"office_key": "cook-board-8",  "office": "Cook County Commissioner, District 8",  "title": "Commissioner", "name": "Jessica Vasquez",   "party": "Democratic", "website": "https://www.cookcountyil.gov/agency/board-commissioners", "verify": true},
+  {"office_key": "cook-board-9",  "office": "Cook County Commissioner, District 9",  "title": "Commissioner", "name": "Maggie Trevor",     "party": "Democratic", "website": "https://www.cookcountyil.gov/agency/board-commissioners", "verify": true},
+  {"office_key": "cook-board-10", "office": "Cook County Commissioner, District 10", "title": "Commissioner", "name": "Bridget Gainer",    "party": "Democratic", "website": "https://www.cookcountyil.gov/agency/board-commissioners", "verify": true},
+  {"office_key": "cook-board-11", "office": "Cook County Commissioner, District 11", "title": "Commissioner", "name": "John Daley",        "party": "Democratic", "website": "https://www.cookcountyil.gov/agency/board-commissioners", "verify": true},
+  {"office_key": "cook-board-12", "office": "Cook County Commissioner, District 12", "title": "Commissioner", "name": "Bridget Degnen",    "party": "Democratic", "website": "https://www.cookcountyil.gov/agency/board-commissioners", "verify": true},
+  {"office_key": "cook-board-13", "office": "Cook County Commissioner, District 13", "title": "Commissioner", "name": "Josina Morita",     "party": "Democratic", "website": "https://www.cookcountyil.gov/agency/board-commissioners", "verify": true},
+  {"office_key": "cook-board-14", "office": "Cook County Commissioner, District 14", "title": "Commissioner", "name": "Scott Britton",     "party": "Democratic", "website": "https://www.cookcountyil.gov/agency/board-commissioners", "verify": true},
+  {"office_key": "cook-board-15", "office": "Cook County Commissioner, District 15", "title": "Commissioner", "name": "Kevin Morrison",    "party": "Democratic", "website": "https://www.cookcountyil.gov/agency/board-commissioners", "verify": true},
+  {"office_key": "cook-board-16", "office": "Cook County Commissioner, District 16", "title": "Commissioner", "name": "Frank Aguilar",     "party": "Democratic", "website": "https://www.cookcountyil.gov/agency/board-commissioners", "verify": true},
+  {"office_key": "cook-board-17", "office": "Cook County Commissioner, District 17", "title": "Commissioner", "name": "Sean Morrison",     "party": "Republican", "website": "https://www.cookcountyil.gov/agency/board-commissioners", "verify": true}
+ ],
+ "decision_makers": [
+  {"office_key": "fra-environment", "office": "FRA environmental review team (Canal Street EA)", "title": "", "name": "Andrea Martin, Environmental Protection Specialist",
+   "email": "FRAEnvironment@dot.gov", "website": "https://www.permits.performance.gov/permitting-project/dot-projects/midwest-maintenance-facilities",
+   "source_note": "Contact listed on the federal Permitting Dashboard (read Oct 26, 2026)"},
+  {"office_key": "fra-administrator", "office": "Administrator, Federal Railroad Administration", "title": "Administrator", "name": "David Fink",
+   "website": "https://railroads.dot.gov/", "source_note": "Confirmed Oct 7, 2025 (Mass Transit, Oct 9, 2025); contact route not yet chosen"},
+  {"office_key": "amtrak-president", "office": "Interim President, Amtrak", "title": "Mr.", "name": "Byl Herrmann",
+   "website": "https://www.amtrak.com/about-amtrak/executive-leadership/william-herrmann.html", "source_note": "Interim President since Aug 1, 2026 (amtrak.com); contact route not yet chosen"},
+  {"office_key": "amtrak-board-chair", "office": "Chair, Amtrak Board of Directors", "title": "Mr.", "name": "Tony Coscia",
+   "website": "https://media.amtrak.com/2026/05/an-update-from-our-board-chair-tony-coscia/", "source_note": "Board chair per Amtrak's May 19, 2026 statement; contact route not yet chosen"}
+ ]
+}

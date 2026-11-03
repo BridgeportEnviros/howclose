@@ -1,0 +1,58 @@
+{
+ "_note": "Placeholders only. Bridgeport Environmentalists will write the real asks. {greeting} is filled in by the page (e.g. 'Dear Rep. Mah,'). A person-specific ask can be set in ratings.csv (the 'ask' column) and replaces the cohort text for that person.",
+ "groups": {
+  "opposes": {
+   "label": "Stands with the community",
+   "explainer": "Has publicly opposed moving Amtrak's yard to Bridgeport.",
+   "button": "Thank them",
+   "subject": "[SUBJECT PLACEHOLDER: thank-you]",
+   "ask": "[CALL TO ACTION PLACEHOLDER: thank them for opposing the relocation. Bridgeport Environmentalists to write.]"
+  },
+  "boilerplate": {
+   "label": "Statements, but no opposition",
+   "explainer": "Has made general statements about the project without opposing it.",
+   "button": "Ask them to oppose",
+   "subject": "[SUBJECT PLACEHOLDER: please oppose]",
+   "ask": "[CALL TO ACTION PLACEHOLDER: ask them to oppose the relocation. Bridgeport Environmentalists to write.]"
+  },
+  "no_statement": {
+   "label": "Hasn't come out against it",
+   "explainer": "No public opposition found in news coverage or the official's own channels.",
+   "button": "Ask them to oppose",
+   "subject": "[SUBJECT PLACEHOLDER: please oppose]",
+   "ask": "[CALL TO ACTION PLACEHOLDER: ask them to oppose the relocation. Bridgeport Environmentalists to write.]"
+  },
+  "supports": {
+   "label": "Supports the relocation",
+   "explainer": "Has publicly supported moving the yard to Bridgeport.",
+   "button": "Tell them you disagree",
+   "subject": "[SUBJECT PLACEHOLDER: disappointment]",
+   "ask": "[CALL TO ACTION PLACEHOLDER: state disappointment, and that your support depends on opposing the relocation. Bridgeport Environmentalists to write.]"
+  },
+  "unreviewed": {
+   "label": "Not yet reviewed",
+   "explainer": "Bridgeport Environmentalists hasn't rated this person yet. (Shown in the test version only.)",
+   "button": "Contact",
+   "subject": "[SUBJECT PLACEHOLDER: not yet rated]",
+   "ask": "[CALL TO ACTION PLACEHOLDER: no rating yet. Bridgeport Environmentalists to decide what, if anything, to ask.]"
+  },
+  "decision_maker": {
+   "label": "The decision-makers: Amtrak and FRA",
+   "explainer": "Not elected, but they decide whether and how the project goes ahead.",
+   "button": "Contact",
+   "subject": "[SUBJECT PLACEHOLDER: Amtrak/FRA]",
+   "ask": "[CALL TO ACTION PLACEHOLDER: ask for Amtrak and FRA. Bridgeport Environmentalists to write.]"
+  }
+ },
+ "candidate": {
+  "heading": "Running for this seat",
+  "subject": "[SUBJECT PLACEHOLDER: candidate]",
+  "asks": {
+   "opposes": "[CALL TO ACTION PLACEHOLDER: candidate who opposes the relocation. Bridgeport Environmentalists to write.]",
+   "boilerplate": "[CALL TO ACTION PLACEHOLDER: candidate with general statements only. Bridgeport Environmentalists to write.]",
+   "no_statement": "[CALL TO ACTION PLACEHOLDER: candidate who hasn't taken a position. Bridgeport Environmentalists to write.]",
+   "supports": "[CALL TO ACTION PLACEHOLDER: candidate who supports the relocation. Bridgeport Environmentalists to write.]",
+   "unreviewed": "[CALL TO ACTION PLACEHOLDER: candidate not yet rated. Bridgeport Environmentalists to write.]"
+  }
+ }
+}
