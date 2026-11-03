@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>The Railyard Across the Street (test: PR #4 + #5)</title>
+<title>The Railyard Across the Street (test: PR #6 + #7)</title>
 <meta name="robots" content="noindex">
 <meta name="description" content="Enter an Illinois address to see Amtrak's proposed 1,209-foot maintenance building placed directly across the street.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -58,6 +58,8 @@ button.primary{background:var(--ink);color:var(--panel)}
 button:disabled{opacity:.55;cursor:default}
 button:focus-visible,input:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .hint{font-size:14px;color:var(--ink-2);margin:0}
+.tries{list-style:none;margin:-2px 0 0;padding:0;display:grid;gap:4px;font-size:14px}
+.tries a{color:var(--ink);font-weight:600}
 .msg{font-size:14px;border-radius:6px;padding:10px 12px;margin:0}
 .msg.err{background:var(--accent-soft);color:var(--accent)}
 .msg.busy{background:var(--bg);color:var(--ink);border-left:3px solid var(--silver)}
@@ -70,6 +72,8 @@ button:focus-visible,input:focus-visible,summary:focus-visible,a:focus-visible{o
 .views{display:flex;flex-wrap:wrap;gap:8px}
 .views button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
 .note{font-size:14px;color:var(--ink-2);margin:0}
+.sharebox{display:grid;gap:12px}
+.result{scroll-margin-top:8px}
 /* Share panel (mirrors the How Close tool) */
 .sheet{border:1.5px solid var(--rule);border-radius:10px;padding:14px;display:grid;gap:12px}
 .sheet h2{font-family:var(--f-display);font-weight:800;text-transform:uppercase;font-size:22px;margin:0}
@@ -120,7 +124,11 @@ details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--in
         <input type="text" id="addr" name="street-address" autocomplete="street-address" placeholder="e.g. 3300 S Normal Ave, Chicago" required>
         <button class="primary" id="go" type="submit">Place it</button>
       </div>
-      <p class="hint">Any street address in Illinois. Or try the <a id="mansion" href="?at=42.09664,-87.71454&amp;street=Sheridan%20Rd&amp;label=A%20billionaire%E2%80%99s%20mansion%2C%20Winnetka&amp;view=above">View from a Billionaire's mansion</a>.</p>
+      <p class="hint">Any street address in Illinois. Or try:</p>
+      <ul class="tries">
+        <li><a id="mansion" href="?at=42.09664,-87.71454&amp;street=Sheridan%20Rd&amp;label=A%20billionaire%E2%80%99s%20mansion%2C%20Winnetka&amp;view=above">View from a Billionaire's mansion</a></li>
+        <li><a id="site14th" href="?site=14th">See it at Amtrak's current 14th Street yard</a></li>
+      </ul>
     </form>
 
     <p class="msg busy" id="busy" hidden></p>
@@ -134,6 +142,7 @@ details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--in
         <!-- Former fixed "From above" view, hidden Oct 27, 2026; to bring it back, uncomment this and add "vAir" to VIEW_IDS:
         <button type="button" id="vAir" aria-pressed="false">From above</button> -->
       </div>
+      <div class="sharebox" id="shareBox" hidden><!-- on phones this moves below the map, above the placement note (see moveForPhones) -->
       <div class="row"><button type="button" class="primary" id="share">Share</button></div>
       <section class="sheet" id="sheet" hidden aria-labelledby="sheet-h">
         <h2 id="sheet-h">Share this view</h2>
@@ -157,6 +166,7 @@ details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--in
         </div>
         <p class="status" id="status" role="status"></p>
       </section>
+      </div>
       <p class="note" id="noteP" hidden><span id="rStreet"></span> <button type="button" class="textlink" id="flip">Wrong side? Switch sides</button></p>
     </section>
 
@@ -347,10 +357,20 @@ function makePlacement(st, n){
   return { st, n, m, u, local, toLonLat, porch, off };
 }
 
-/** The building at its proposed site: east face along the main line between the 33rd and 35th St viaducts
-    (corners from the WSP site plan, see the project notes). Same shape as makePlacement's result. */
-function sitePlacement(){
-  const SE = [41.831059, -87.636566], NE = [41.834373, -87.636646];   // [lat, lon] of the east face's ends
+/** Fixed sites, given by [lat, lon] of the two ends of the building's long east face.
+    canal: the proposed site, along the main line between the 33rd and 35th St viaducts (WSP site plan; project notes).
+    14th: Amtrak's existing 14th Street yard, from Matt's Google Earth placement (southeast corner 41.862518, -87.635160,
+    long axis about 1.9 degrees west of north, extended 1,207.8 ft north). */
+const SITES = {
+  canal: { SE: [41.831059, -87.636566], NE: [41.834373, -87.636646] },
+  "14th": { SE: [41.862518, -87.635160], NE: [41.865827, -87.635308],
+            title: "Amtrak's current site: the 14th Street yard",
+            note: "The same building, shown at Amtrak's existing 14th Street maintenance yard. Its position there is approximate.",
+            overlay: "The proposed building at Amtrak's current 14th Street yard. Drag to look around." },
+};
+/** The building at a fixed site (see SITES). Same shape as makePlacement's result, without a street. */
+function sitePlacement(key = "canal"){
+  const { SE, NE } = SITES[key];
   const lat0 = (SE[0] + NE[0]) / 2, lon0 = (SE[1] + NE[1]) / 2;
   const R = 6371008.8, kx = Math.cos(lat0 * Math.PI / 180) * R * Math.PI / 180, ky = R * Math.PI / 180;
   const v = [(NE[1] - SE[1]) * kx, (NE[0] - SE[0]) * ky], len = Math.hypot(v[0], v[1]);
@@ -485,7 +505,9 @@ async function drawBuilding(p){
   const porchH = homeH.some(v => v != null) ? quantile(homeH, 0.25) : hs[hs.length - 1];
   const ground = quantile(faceH, 0.25);                 // low quarter: skips cars and tree tops
   const lowest = Math.min(...faceH.filter(v => v != null), ground);
-  const rail = ground + CONFIG.plinthFt * FT;
+  // At a fixed site in the 3D city the ground sampled is the yard itself, so no added wall; on the flat map
+  // (no heights) the wall stays, to show the raised yard's height.
+  const rail = ground + ((p.site && tileset && tileset.show) ? 0 : CONFIG.plinthFt * FT);
   // replace the old building only now, after the heights are in, so it never disappears while they load
   if (building) { viewer.dataSources.remove(building, true); building = null; }
   building = new Cesium.CustomDataSource("building");
@@ -749,6 +771,7 @@ async function placeFrom(findHome, startView){
     placement.label = home.label;
     await drawBuilding(placement);
     if (USE_GOOGLE) setToggleLabel();
+    setSiteMode(false);
     // result panel
     $("rAddr").textContent = home.label;
     const homeToWall = (st.homeDist + placement.off) / FT;
@@ -757,22 +780,37 @@ async function placeFrom(findHome, startView){
     const approx = (st.ambiguous || !home.exact) ? " Address locations can be approximate." : "";
     placement.noteFor = flat => note + (flat ? FLAT_NOTE : "") + approx;   // the map toggle rewrites the note
     $("rStreet").textContent = placement.noteFor(USE_GOOGLE && !has3D);
-    $("result").hidden = false; $("noteP").hidden = false;
-    if (matchMedia("(max-width:860px)").matches) document.querySelector(".stage").scrollIntoView({ behavior: "smooth", block: "start" });
+    $("result").hidden = false; $("noteP").hidden = false; $("shareBox").hidden = false;
+    // Phones: scroll so the address sits just under the dividing line, keeping the view buttons in sight above the map.
+    // The busy message above is cleared first, or the page would shift up after the scroll.
+    show("busy", null);
+    if (matchMedia("(max-width:860px)").matches) $("result").scrollIntoView({ behavior: "smooth", block: "start" });
     const who = home.label.split(",")[0];
     const overlay = `The proposed building across from ${home.fromCoords ? who.charAt(0).toLowerCase() + who.slice(1) : who}. Drag to look around.`;
     const viewId = START_VIEWS[startView] || "vOrbit";
+    await finishPlacement(token, has3D, overlay, viewId);
+  } catch (e) {
+    console.error(e);
+    show("err", e instanceof UserError ? e.message : "Something went wrong placing the building. Try again in a moment.");
+  } finally {
+    show("busy", null); $("go").disabled = false;
+  }
+}
+/** After the building is on the flat map: jump to the view and hold, load the 3D city for that view, then
+    swap it in, set the building on the real ground and start the view moving. */
+async function finishPlacement(token, has3D, overlay, viewId, loading = "Loading the 3D city around this address…"){
+  {
     if (!has3D) { $("overlay").textContent = overlay; setViewWith(viewId, { instant: true }); return; }
     setViewWith(viewId, { instant: true, still: true });
     // 2) Meanwhile the 3D city loads, coarse first, for exactly this view. Then it replaces the flat map,
     //    the building is set on the real ground, and the view starts moving; full detail follows.
     show("busy", null); $("go").disabled = false;
-    $("overlay").textContent = "Loading the 3D city around this address…";
+    $("overlay").textContent = loading;
     $("mode").textContent = "Street map (3D city loading)";
     sharpenSoon(); clearTimeout(sharpenTimer);   // coarse while loading
     cityPending = true; setToggleLabel();
     const waited = await waitForCity(LOAD.maxWaitMs, token, pct => {
-      if (token === placeToken) $("overlay").textContent = `Loading the 3D city around this address… ${pct}%`;
+      if (token === placeToken) $("overlay").textContent = `${loading} ${pct}%`;
     });
     if (token === placeToken) { cityPending = false; setToggleLabel(); }
     if (!waited) return;
@@ -784,9 +822,39 @@ async function placeFrom(findHome, startView){
     $("overlay").textContent = overlay;
     setViewWith(currentView, { instant: true });
     sharpenSoon();
+  }
+}
+
+/** Address-only controls (From your home, Switch sides, Share) are hidden while the building is at a fixed site. */
+function setSiteMode(on){
+  $("vHome").hidden = on; $("flip").hidden = on;
+  $("share").parentElement.hidden = on; if (on) $("sheet").hidden = true;
+}
+/** Place the building at a fixed site (the 14th Street yard link), with the same loading steps as an address. */
+async function placeSite(key){
+  const site = SITES[key]; if (!site) return;
+  const token = ++placeToken;
+  show("err", null); show("busy", "Placing the building…"); $("go").disabled = true;
+  const city = ensureCity();
+  try {
+    const has3D = await city;
+    if (token !== placeToken) return;
+    hideCity();
+    placement = sitePlacement(key);
+    placement.label = site.title;
+    await drawBuilding(placement);
+    if (USE_GOOGLE) setToggleLabel();
+    setSiteMode(true);
+    $("rAddr").textContent = site.title;
+    placement.noteFor = flat => site.note + (flat ? FLAT_NOTE : "");
+    $("rStreet").textContent = placement.noteFor(USE_GOOGLE && !has3D);
+    $("result").hidden = false; $("noteP").hidden = false;
+    show("busy", null);   // cleared before scrolling, or the page shifts up afterwards
+    if (matchMedia("(max-width:860px)").matches) $("result").scrollIntoView({ behavior: "smooth", block: "start" });   // phones: site name just under the dividing line
+    await finishPlacement(token, has3D, site.overlay, "vOrbit", "Loading the 3D city around the 14th Street yard…");
   } catch (e) {
     console.error(e);
-    show("err", e instanceof UserError ? e.message : "Something went wrong placing the building. Try again in a moment.");
+    show("err", "Something went wrong placing the building. Try again in a moment.");
   } finally {
     show("busy", null); $("go").disabled = false;
   }
@@ -1046,13 +1114,15 @@ $("b-copy").addEventListener("click", copyText);
 /* Phones: show the placement note and How this works below the map instead of above it. */
 const PHONE = matchMedia("(max-width:860px)");
 const noteHome = { el: $("noteP"), parent: $("noteP").parentNode, next: $("noteP").nextSibling };
+const shareHome = { el: $("shareBox"), parent: $("shareBox").parentNode, next: $("shareBox").nextSibling };
 const howHome = { el: $("howWorks"), parent: $("howWorks").parentNode, next: $("howWorks").nextSibling };
 function moveForPhones(){
   const box = $("belowMap");
   if (PHONE.matches) {
-    box.append(noteHome.el, howHome.el);
+    box.append(shareHome.el, noteHome.el, howHome.el);   // Share right under the map, then the note
     box.hidden = false;
   } else {
+    shareHome.parent.insertBefore(shareHome.el, shareHome.next);
     noteHome.parent.insertBefore(noteHome.el, noteHome.next);
     howHome.parent.insertBefore(howHome.el, howHome.next);
     box.hidden = true;
@@ -1068,6 +1138,7 @@ initViewer().then(() => {
   const at = parseAt(qs.get("at"));
   if (at) placeAt(at[0], at[1], qs.get("street"), qs.get("label"), qs.get("view"));
   else if (qs.get("address")) { $("addr").value = qs.get("address"); place(qs.get("address")); }
+  else if (SITES[qs.get("site")] && qs.get("site") !== "canal") placeSite(qs.get("site"));
   else showProposedSite();   // opening view: the building where Amtrak proposes it, on the flat map (no 3D session)
 });
 /** "lat,lon" -> [lat, lon], only for points in or near Illinois. */
@@ -1077,6 +1148,13 @@ function parseAt(v){
   const lat = +m[1], lon = +m[2];
   return lat > 36.9 && lat < 42.6 && lon > -91.6 && lon < -87.0 ? [lat, lon] : null;
 }
+$("site14th").addEventListener("click", e => {
+  if (!viewer) return;                  // let the link load normally if the 3D view isn't ready
+  e.preventDefault();
+  history.replaceState(null, "", "?site=14th");
+  $("addr").value = "";
+  placeSite("14th");
+});
 // Example links (like the mansion link) place in this page, without reloading the 3D city.
 document.querySelectorAll("a[href^='?at=']").forEach(a => a.addEventListener("click", e => {
   const qs = new URLSearchParams(a.getAttribute("href").slice(1)), at = parseAt(qs.get("at"));
