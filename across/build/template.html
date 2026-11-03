@@ -841,7 +841,8 @@ async function placeSite(key){
     placement.noteFor = flat => site.note + (flat ? FLAT_NOTE : "");
     $("rStreet").textContent = placement.noteFor(USE_GOOGLE && !has3D);
     $("result").hidden = false; $("noteP").hidden = false;
-    if (matchMedia("(max-width:860px)").matches) document.querySelector(".stage").scrollIntoView({ behavior: "smooth", block: "start" });
+    show("busy", null);   // cleared before scrolling, or the page shifts up afterwards
+    if (matchMedia("(max-width:860px)").matches) $("result").scrollIntoView({ behavior: "smooth", block: "start" });   // phones: site name just under the dividing line
     await finishPlacement(token, has3D, site.overlay, "vOrbit", "Loading the 3D city around the 14th Street yard…");
   } catch (e) {
     console.error(e);
