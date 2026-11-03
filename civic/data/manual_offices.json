@@ -1,7 +1,7 @@
 {
  "checked": "2026-11-03",
  "notes": [
-  "Cook County Board names come from Wikipedia's list (checked Nov 3, 2026) and were not confirmed against cookcountyil.gov, which Claude's tools couldn't open. Confirm each name before going live. Commissioners elected Nov 3, 2026 take office in early December 2026 (Cook County Board terms start the first Monday in December; unverified for 2026).",
+  "Cook County Board names come from Wikipedia's list (checked Nov 3, 2026). All 17 commissioner names match the sponsor list of the Board's own resolution 26-2333 (approved Sept. 24, 2026), so the names are confirmed; the district numbers are not, because the resolution doesn't give them. Confirm districts against cookcountyil.gov. Confirm each name before going live. Commissioners elected Nov 3, 2026 take office in early December 2026 (Cook County Board terms start the first Monday in December; unverified for 2026).",
   "Roster reflects officeholders as of Nov 3, 2026 (Election Day). State legislators elected today are seated in January 2027; U.S. House members on Jan 3, 2027. Rebuild after both dates.",
   "Decision-maker contact details other than FRA's environmental review email have not been confirmed."
  ],
