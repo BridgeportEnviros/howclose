@@ -208,7 +208,7 @@ const VIEWS = {
   home:  { backFromStreetFt: 170,   // from the street's center line, on the home's side
            heightFt: 70,            // above street level
            pitchDeg: -15,           // tilt; negative looks down
-           panSecondsEachWay: 25,   // slow sweep left to right and back
+           panSecondsEachWay: 25 / 1.2,   // sweep left to right and back; 20% faster than the first 25 s (Nov 2026), since visitors can't steer this view
            panMarginDeg: 4 },       // extra sweep past each end of the building
   above: { offsetDeg: 31.5,         // from the home's side, turned this far off straight-across
            pitchDeg: -28, rangeFt: 2493 },
@@ -639,6 +639,9 @@ function setViewWith(id, opts){
 function setView(id){
   currentView = id;
   for (const b of VIEW_IDS) $(b).setAttribute("aria-pressed", b === id);
+  // From your home is a fixed, sweeping view: dragging, zooming and tilting are switched off there (Nov 2026),
+  // because dragging tipped the camera around at an angle. They come back with any other view.
+  viewer.scene.screenSpaceCameraController.enableInputs = !(id === "vHome" && placement);
   if (!placement) return;
   if (id === "vHome") viewHome(placement); else if (id === "vAir") viewAir(placement); else startOrbit(placement);
 }
@@ -649,10 +652,10 @@ function setView(id){
 function stopOnUserInput(){
   const c = viewer.canvas;
   for (const ev of ["pointerdown", "wheel", "touchstart"]) c.addEventListener(ev, () => {
+    if (placement && currentView === "vHome") return;        // From your home ignores the map: the sweep keeps going
     if (anim) stopAnim();
     viewer.camera.cancelFlight();
-    if (placement && currentView === "vHome") { viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY); setControls("look"); }
-    else { setControls("orbit"); lockOn(); }
+    setControls("orbit"); lockOn();
   }, { passive: true });
   viewer.scene.preRender.addEventListener(clampOrbitPitch);
   c.addEventListener("webglcontextlost", () => show("err", "The 3D view ran out of memory on this device. Reload the page to try again."));
@@ -913,7 +916,8 @@ async function captureRendering(){
     cam.lookAtTransform(Cesium.Matrix4.IDENTITY);
     cam.setView({ destination: saved.pos, orientation: { direction: saved.dir, up: saved.up } });
     $("overlay").textContent = overlayText;
-    if (wasCircling) startOrbit(p); else if (currentView !== "vHome") lockOn();
+    if (currentView === "vHome") viewHome(p);                 // restart the home sweep from its start
+    else if (wasCircling) startOrbit(p); else lockOn();
   }
 }
 
