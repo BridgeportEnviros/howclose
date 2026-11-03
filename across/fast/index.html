@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>The Railyard Across the Street (test: tighter From above)</title>
+<title>The Railyard Across the Street (test: PR #4 + #5)</title>
 <meta name="robots" content="noindex">
 <meta name="description" content="Enter an Illinois address to see Amtrak's proposed 1,209-foot maintenance building placed directly across the street.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -209,7 +209,7 @@ const VIEWS = {
   home:  { backFromStreetFt: 170,   // from the street's center line, on the home's side
            heightFt: 70,            // above street level
            pitchDeg: -15,           // tilt; negative looks down
-           panSecondsEachWay: 25,   // slow sweep left to right and back
+           panSecondsEachWay: 25 / 1.2,   // sweep left to right and back; 20% faster than the first 25 s (Nov 2026), since visitors can't steer this view
            panMarginDeg: 4 },       // extra sweep past each end of the building
   above: { offsetDeg: 31.5,         // from the home's side, turned this far off straight-across
            pitchDeg: -28, rangeFt: 2493 },
@@ -618,6 +618,9 @@ function startOrbit(p){
   const h0 = heading(p.n) + rad(V.startOffsetDeg);
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const range = fitOrbitRange(p);
+  // Zooming in is allowed, but not out past this starting distance (Nov 2026), so the building can't be lost
+  // and no extra city loads beyond the starting view.
+  viewer.scene.screenSpaceCameraController.maximumZoomDistance = range + 1;
   const hpr = h => new Cesium.HeadingPitchRange(h, rad(V.pitchDeg), range);
   const at = h => viewer.camera.lookAt(target, hpr(h));
   // Fly to the starting point first (as the other views do), then start turning from exactly there.
@@ -639,7 +642,11 @@ function setViewWith(id, opts){
 }
 function setView(id){
   currentView = id;
+  viewer.scene.screenSpaceCameraController.maximumZoomDistance = 3000;   // From above narrows this to its starting distance
   for (const b of VIEW_IDS) $(b).setAttribute("aria-pressed", b === id);
+  // From your home is a fixed, sweeping view: dragging, zooming and tilting are switched off there (Nov 2026),
+  // because dragging tipped the camera around at an angle. They come back with any other view.
+  viewer.scene.screenSpaceCameraController.enableInputs = !(id === "vHome" && placement);
   if (!placement) return;
   if (id === "vHome") viewHome(placement); else if (id === "vAir") viewAir(placement); else startOrbit(placement);
 }
@@ -650,10 +657,10 @@ function setView(id){
 function stopOnUserInput(){
   const c = viewer.canvas;
   for (const ev of ["pointerdown", "wheel", "touchstart"]) c.addEventListener(ev, () => {
+    if (placement && currentView === "vHome") return;        // From your home ignores the map: the sweep keeps going
     if (anim) stopAnim();
     viewer.camera.cancelFlight();
-    if (placement && currentView === "vHome") { viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY); setControls("look"); }
-    else { setControls("orbit"); lockOn(); }
+    setControls("orbit"); lockOn();
   }, { passive: true });
   viewer.scene.preRender.addEventListener(clampOrbitPitch);
   c.addEventListener("webglcontextlost", () => show("err", "The 3D view ran out of memory on this device. Reload the page to try again."));
@@ -914,7 +921,8 @@ async function captureRendering(){
     cam.lookAtTransform(Cesium.Matrix4.IDENTITY);
     cam.setView({ destination: saved.pos, orientation: { direction: saved.dir, up: saved.up } });
     $("overlay").textContent = overlayText;
-    if (wasCircling) startOrbit(p); else if (currentView !== "vHome") lockOn();
+    if (currentView === "vHome") viewHome(p);                 // restart the home sweep from its start
+    else if (wasCircling) startOrbit(p); else lockOn();
   }
 }
 
