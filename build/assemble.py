@@ -19,7 +19,9 @@ else:
     DESC = "6,741 people live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport. How close are you?"
     OG_DESC = "6,741 people live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport, 1,101 of them children. Enter your address to see how close you are."
     OG_ALT = "6,741 people live within 500 feet of the proposed 24/7 Amtrak facility; 1,101 are children. Map of Canal Street Yard in Bridgeport."
-HEAD = ('<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
+HEAD = ('<!doctype html>\n<html lang="en"><head>\n'
+        '<!-- Google tag (gtag.js) -->\n<script async src="https://www.googletagmanager.com/gtag/js?id=G-3D6V7GK2EW"></script>\n<script>\n  window.dataLayer = window.dataLayer || [];\n  function gtag(){dataLayer.push(arguments);}\n  gtag(\'js\', new Date());\n\n  gtag(\'config\', \'G-3D6V7GK2EW\');\n</script>\n'
+        '<meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
         f'<meta name="description" content="{DESC}">'
         '<meta property="og:title" content="How close do you live to the 24/7 Amtrak facility?">'
