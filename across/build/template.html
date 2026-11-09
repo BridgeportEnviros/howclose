@@ -370,11 +370,16 @@ function makePlacement(st, n){
     14th: Amtrak's existing 14th Street yard, from Matt's Google Earth placement (southeast corner 41.862518, -87.635160,
     long axis about 1.9 degrees west of north, extended 1,207.8 ft north). */
 const SITES = {
-  canal: { SE: [41.831059, -87.636566], NE: [41.834373, -87.636646] },
+  canal: { SE: [41.831059, -87.636566], NE: [41.834373, -87.636646],
+           title: "Amtrak's proposed site: Canal Street Yard",
+           note: "The proposed building where Amtrak wants to put it: Canal Street Yard in Bridgeport, between the 33rd and 35th Street viaducts. Enter an address above to see it across the street from you.",
+           overlay: "The proposed building at Canal Street Yard. Drag to look around.",
+           loading: "Loading the 3D city around Canal Street Yard…" },
   "14th": { SE: [41.862518, -87.635160], NE: [41.865827, -87.635308],
             title: "Amtrak's current site: the 14th Street yard",
             note: "The same building, shown at Amtrak's existing 14th Street maintenance yard. Its position there is approximate.",
-            overlay: "The proposed building at Amtrak's current 14th Street yard. Drag to look around." },
+            overlay: "The proposed building at Amtrak's current 14th Street yard. Drag to look around.",
+            loading: "Loading the 3D city around the 14th Street yard…" },
 };
 /** The building at a fixed site (see SITES). Same shape as makePlacement's result, without a street. */
 function sitePlacement(key = "canal"){
@@ -386,7 +391,7 @@ function sitePlacement(key = "canal"){
   const L = B.len;
   const local = (s, w) => [u[0]*(s - L/2)*FT + n[0]*w*FT, u[1]*(s - L/2)*FT + n[1]*w*FT];
   const toLonLat = ([x, y]) => [lon0 + x / kx, lat0 + y / ky];
-  return { n, m: [0, 0], u, local, toLonLat, porch: [-n[0]*30, -n[1]*30], off: 0, site: true };
+  return { n, m: [0, 0], u, local, toLonLat, porch: [-n[0]*30, -n[1]*30], off: 0, site: true, siteKey: key };
 }
 async function showProposedSite(){
   const p = sitePlacement();
@@ -833,10 +838,13 @@ async function finishPlacement(token, has3D, overlay, viewId, loading = "Loading
   }
 }
 
-/** Address-only controls (From your home, Switch sides, Share) are hidden while the building is at a fixed site. */
-function setSiteMode(on){
+/** Address-only controls (From your home, Switch sides, Share) are hidden while the building is at a fixed site.
+    Exception: Share stays at the proposed site (keepShare), so there is something to share before any address. */
+function setSiteMode(on, keepShare = false){
   $("vHome").hidden = on; $("flip").hidden = on;
-  $("share").parentElement.hidden = on; if (on) $("sheet").hidden = true;
+  const hideShare = on && !keepShare;
+  $("share").parentElement.hidden = hideShare; if (hideShare) $("sheet").hidden = true;
+  if (on && keepShare) $("shareBox").hidden = false;
 }
 /** Place the building at a fixed site (the 14th Street yard link), with the same loading steps as an address. */
 async function placeSite(key){
@@ -852,14 +860,15 @@ async function placeSite(key){
     placement.label = site.title;
     await drawBuilding(placement);
     if (USE_GOOGLE) setToggleLabel();
-    setSiteMode(true);
+    setSiteMode(true, key === "canal");
     $("rAddr").textContent = site.title;
     placement.noteFor = flat => site.note + (flat ? FLAT_NOTE : "");
     $("rStreet").textContent = placement.noteFor(USE_GOOGLE && !has3D);
     $("result").hidden = false; $("noteP").hidden = false;
     show("busy", null);   // cleared before scrolling, or the page shifts up afterwards
-    if (matchMedia("(max-width:860px)").matches) $("result").scrollIntoView({ behavior: "smooth", block: "start" });   // phones: site name just under the dividing line
-    await finishPlacement(token, has3D, site.overlay, "vOrbit", "Loading the 3D city around the 14th Street yard…");
+    // phones: site name just under the dividing line (not for the opening view, which should stay at the top)
+    if (key !== "canal" && matchMedia("(max-width:860px)").matches) $("result").scrollIntoView({ behavior: "smooth", block: "start" });
+    await finishPlacement(token, has3D, site.overlay, "vOrbit", site.loading);
   } catch (e) {
     console.error(e);
     show("err", "Something went wrong placing the building. Try again in a moment.");
@@ -915,6 +924,7 @@ $("flip").addEventListener("click", async () => {
 /* ============================== sharing (mirrors the How Close tool) ============================== */
 const SHARE = {
   kids500: 1101,       // children within 500 ft of the proposed site: the neighborhood dashboard's figure, as on How Close
+  pop500: 6741,        // people within 500 ft: same figure (the dashboard's, as on How Close); used for the share before any address
   pageUrl: "https://bridgeportenviros.github.io/howclose/across/",
   learnMoreLabel: "www.bridgeportenviros.org/projects/amtrak-railyard",
   fillWidth: 0.92,     // the building spans this share of the rendering's width
@@ -922,7 +932,10 @@ const SHARE = {
 const FORMATS = { story: { W: 1080, H: 1920, s: 1, note: "1080×1920" }, post: { W: 1080, H: 1350, s: .72, note: "1080×1350" } };
 let cardFormat = "story", cards = {}, shot = null, canFiles = false;
 function resetShare(){ cards = {}; shot = null; if ($("sheet")) $("sheet").hidden = true; }
-const shareText = () => `${SHARE.kids500.toLocaleString("en-US")} children live within 500 feet of the 24/7 facility Amtrak wants to build at Canal Street Yard in Bridgeport. None live by its current site at 14th Street. I wouldn’t want it in my neighborhood either. See it across the street from you: ${SHARE.pageUrl}`;
+const atProposedSite = () => !!(placement && placement.siteKey === "canal");   // opening view: no address entered
+const shareText = () => atProposedSite()
+  ? `${SHARE.pop500.toLocaleString("en-US")} people live within 500 feet of the 24/7 facility Amtrak wants to build at Canal Street Yard in Bridgeport. It doesn’t belong in a residential area. See it across the street from you: ${SHARE.pageUrl}`
+  : `${SHARE.kids500.toLocaleString("en-US")} children live within 500 feet of the 24/7 facility Amtrak wants to build at Canal Street Yard in Bridgeport. None live by its current site at 14th Street. I wouldn’t want it in my neighborhood either. See it across the street from you: ${SHARE.pageUrl}`;
 const fileName = () => `railyard-across-the-street-${cardFormat}.png`;
 const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
 
@@ -950,7 +963,10 @@ async function captureRendering(){
   if (tileset) tileset.maximumScreenSpaceError = prevSSE * scale;
   viewer.scene.globe.maximumScreenSpaceError = prevGlobeSSE * scale;
   try {
-    const V = VIEWS.orbit, h = heading(p.n) + rad(V.startOffsetDeg), pitch = rad(V.pitchDeg);
+    // At the proposed site the camera sits west of the building (the Bridgeport side), looking east, turned the same
+    // 31.5 degrees off square as the address views, so the south end and west wall show with the neighborhood in front.
+    const V = VIEWS.orbit, pitch = rad(V.pitchDeg);
+    const h = p.siteKey === "canal" ? heading([-p.n[0], -p.n[1]]) - rad(V.startOffsetDeg) : heading(p.n) + rad(V.startOffsetDeg);
     // the building's box: footprint corners at the base and the penthouse top
     const corners = [];
     for (const [sx, wx] of [[0, 0], [B.len, 0], [0, B.width], [B.len, B.width]])
@@ -1020,8 +1036,9 @@ async function makeCard(key){
   c.fillStyle = WH; c.textBaseline = "middle"; c.font = `700 ${40 * s}px ${F}`;
   c.fillText("BRIDGEPORT ENVIRONMENTALISTS", M + LG + 22 * s, LT + LG / 2 + 2 * s); c.textBaseline = "alphabetic"; c.textAlign = "left";
   // top: the 500 ft children figure
-  const top = [{ p: [[SHARE.kids500.toLocaleString("en-US"), RD]], size: 270, big: true },
-    { p: [["CHILDREN LIVE WITHIN", WH]], size: 92, g: 1 }, { p: [["500 FEET OF THE", WH]], size: 92, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 92, g: 1 }];
+  const siteCard = atProposedSite();
+  const top = [{ p: [[(siteCard ? SHARE.pop500 : SHARE.kids500).toLocaleString("en-US"), RD]], size: 270, big: true },
+    { p: [[siteCard ? "PEOPLE LIVE WITHIN" : "CHILDREN LIVE WITHIN", WH]], size: 92, g: 1 }, { p: [["500 FEET OF THE", WH]], size: 92, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 92, g: 1 }];
   const tz = groupMin(top, top.map(l => fitSize(l, CW))), base = [];
   top.forEach((l, i) => base.push(i === 0 ? LT + LG + 56 * s + tz[0] * .72 : base[i - 1] + tz[i] * (l.big ? .88 : 1.0)));
   top.forEach((l, i) => drawLine(l, tz[i], base[i]));
@@ -1030,8 +1047,10 @@ async function makeCard(key){
   c.fillStyle = WH; const foot = "LEARN MORE  " + SHARE.learnMoreLabel.toUpperCase();
   let fz = 40 * s; do { c.font = `700 ${fz}px ${F}`; } while (c.measureText(foot).width > CW && (fz -= 2) > 10); c.fillText(foot, M, H - 80 * s);
   // bottom: current site and the kicker, bottom-up above the footer
-  const bottom = [{ p: [["NONE", RD], [" LIVE BY ITS CURRENT SITE", WH]], size: 88 },
-    { p: [["I WOULDN’T WANT IT IN MY", WH]], size: 70, g: 2 }, { p: [["NEIGHBORHOOD EITHER.", WH]], size: 70, g: 2 }];
+  const bottom = siteCard
+    ? [{ p: [["IT ", WH], ["DOESN’T BELONG", RD], [" IN", WH]], size: 96, g: 2 }, { p: [["A RESIDENTIAL AREA.", WH]], size: 96, g: 2 }]
+    : [{ p: [["NONE", RD], [" LIVE BY ITS CURRENT SITE", WH]], size: 88 },
+       { p: [["I WOULDN’T WANT IT IN MY", WH]], size: 70, g: 2 }, { p: [["NEIGHBORHOOD EITHER.", WH]], size: 70, g: 2 }];
   const bz = groupMin(bottom, bottom.map(l => fitSize(l, CW))), bb = new Array(bz.length);
   bb[bz.length - 1] = H - 160 * s;
   for (let i = bz.length - 2; i >= 0; i--) bb[i] = bb[i + 1] - bz[i + 1];
@@ -1147,7 +1166,11 @@ initViewer().then(() => {
   if (at) placeAt(at[0], at[1], qs.get("street"), qs.get("label"), qs.get("view"));
   else if (qs.get("address")) { $("addr").value = qs.get("address"); place(qs.get("address")); }
   else if (SITES[qs.get("site")] && qs.get("site") !== "canal") placeSite(qs.get("site"));
-  else showProposedSite();   // opening view: the building where Amtrak proposes it, on the flat map (no 3D session)
+  else {
+    // Test version: the opening view loads the 3D city (one billed 3D session per visit) at the proposed site,
+    // with Share available before any address is entered. The flat view shows first, while the 3D city loads.
+    showProposedSite().then(() => placeSite("canal"));
+  }
 });
 /** "lat,lon" -> [lat, lon], only for points in or near Illinois. */
 function parseAt(v){
