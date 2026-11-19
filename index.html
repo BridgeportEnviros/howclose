@@ -12,21 +12,19 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="1,101 children live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport. How close are you?"><meta property="og:title" content="How close do you live to the 24/7 Amtrak facility?"><meta property="og:description" content="1,101 children live within 500 feet of the railyard Amtrak wants to build at Canal Street Yard in Bridgeport. None live by its current site at 14th Street. Enter your address to see how close you are."><meta property="og:type" content="website"><meta property="og:url" content="https://bridgeportenviros.github.io/howclose/"><meta property="og:image" content="https://bridgeportenviros.github.io/howclose/share.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="1,101 children live within 500 feet of the proposed 24/7 Amtrak facility; none live by its current site. Map of Canal Street Yard in Bridgeport."><meta name="twitter:card" content="summary_large_image"><title>How Close Is the Railyard?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Barlow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&display=swap">
 <style>
 /* Layout: one narrow column — form, result card with map, then share sheet. Black/silver/white with a single signal red for the yard. */
 :root {
-  --bg: #f4f4f2; --surface: #ffffff; --fg: #111213; --muted: #5d6166; --line: #d5d7d9;
-  --silver: #a9adb1; --accent: #c8102e; --ink: #0d0e0f; --ink-fg: #f5f5f3;
-  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
-  --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+  /* Bridgeport Enviros design system, tokens v3 (light only), mapped onto this page's variable names */
+  --be-mint: #f3ffeb; --be-meadow: #ccf6a8; --be-forest: #274e13; --be-deep: #1b370d; --be-rule: #c9d3c3; --be-ink-2: #55634d;
+  --be-worse: #c8102e; --be-worse-soft: #fdeaed; --be-bad: #c8102e; --be-badlt: #ff6b7d;
+  --bg: #ffffff; --surface: #ffffff; --fg: #212121; --muted: #55634d; --line: #c9d3c3;
+  --silver: #ccf6a8; --accent: #e47200; --ink: #1b370d; --ink-fg: #ffffff;
+  --display: Montserrat, "Arial Black", Arial, sans-serif;
+  --body: Arial, "Helvetica Neue", Helvetica, sans-serif;
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0f1011; --surface: #17191b; --fg: #eeeeec; --muted: #9da1a6; --line: #2c2f33;
-  --silver: #7f8489; --accent: #e8344f; --ink: #050506; --ink-fg: #f5f5f3; color-scheme: dark } }
-:root[data-theme="dark"] {
-  --bg: #0f1011; --surface: #17191b; --fg: #eeeeec; --muted: #9da1a6; --line: #2c2f33;
-  --silver: #7f8489; --accent: #e8344f; --ink: #050506; --ink-fg: #f5f5f3; color-scheme: dark }
 * { box-sizing: border-box }
 [hidden] { display: none !important }
 #result, #msg, #sheet { scroll-margin-top: 12px; outline: none }   /* room above the answer when the page scrolls to it */
@@ -102,6 +100,66 @@ textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px; border-ra
 .notes { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px }
 .notes p { margin: 0 0 8px }
 @media (prefers-reduced-motion: no-preference) { .result { transition: opacity .2s } }
+
+/* ---- Bridgeport Enviros design system: component overrides (test copy) ---- */
+body { margin: 0; overflow-x: hidden; font-size: 16px; line-height: 24px }
+.wrap { padding-top: 0; gap: 32px }
+a { color: var(--be-forest) }
+.top { background: var(--be-mint); border-bottom: 1px solid var(--be-rule); margin-inline: calc(50% - 50vw); padding: 32px calc(50vw - 50%); gap: 16px }
+.brand { color: var(--be-ink-2) }
+.brand img { width: 64px; height: 64px; border-radius: 2px }
+.brand span { font-family: var(--body); font-weight: 700; font-size: 13px; line-height: 16px; letter-spacing: .08em }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(28px, 6vw, 40px); line-height: 1.1; text-transform: none; letter-spacing: 0; color: var(--be-forest) }
+.lede { color: var(--be-ink-2); font-size: 16px; line-height: 24px }
+.learn { color: var(--be-forest); font-weight: 700 }
+label { font-family: var(--body); font-weight: 700; font-size: 13px; line-height: 16px; letter-spacing: .08em; color: var(--be-ink-2) }
+input[type=text] { font-family: var(--body); font-size: 16px; border: 1px solid var(--be-ink-2); border-radius: 4px }
+input[type=text]:focus-visible { outline: 2px solid var(--be-deep); outline-offset: 2px }
+button { font-family: var(--body); font-weight: 400; font-size: 15px; line-height: 20px; letter-spacing: .02em; padding: 8px 16px; border-radius: 4px; border: 1px solid var(--be-deep); background: var(--be-deep); color: #fff }
+button:hover { filter: brightness(1.15) }
+button.ghost { background: #fff; color: var(--fg); border-color: var(--be-rule) }
+button.ghost:hover { border-color: var(--be-forest); filter: none }
+button:focus-visible { outline: 2px solid var(--be-deep); outline-offset: 2px }
+.hint button { font-family: var(--body); color: var(--be-forest); background: none; border: 0; padding: 0; text-transform: none; letter-spacing: 0; font-size: 14px }
+.hint button:hover { filter: none }
+.msg { border: 1px solid var(--be-bad); background: var(--be-worse-soft); color: var(--be-worse); border-radius: 4px }
+.msg::before { content: "\25B2  "; font-size: .8em }
+.result { border-radius: 8px; background: var(--be-deep); color: #fff }
+.result .txt { padding: 24px 24px 20px }
+.tag, .matched { font-family: var(--body); font-weight: 700; font-size: 13px; letter-spacing: .08em; color: var(--be-meadow) }
+.matched { font-weight: 400; letter-spacing: 0; font-size: 13px; color: #dfeed4 }
+.big { font-family: var(--display); font-weight: 800; text-transform: none; line-height: 1.05; font-size: clamp(24px, 5.4vw, 32px) }
+.big .n { font-size: clamp(64px, 18vw, 104px); line-height: 1; color: #fff }
+.big .n.kid { color: var(--be-badlt) }
+.kids { font-family: var(--display); font-weight: 800; text-transform: none; font-size: clamp(20px, 4.6vw, 26px); line-height: 1.15; border-top: 2px solid var(--be-meadow) }
+.kids .k { color: var(--be-badlt) }
+.kicker { font-family: var(--display); font-weight: 800; text-transform: none; font-size: clamp(22px, 5vw, 28px); line-height: 1.15 }
+.across { font-family: var(--body); font-weight: 700; letter-spacing: .02em; border: 1px solid var(--be-meadow); border-radius: 4px }
+.across small { font-family: var(--body); color: #dfeed4 }
+.across:hover, .across:focus-visible { background: #fff; color: var(--be-deep) }
+.across:hover small, .across:focus-visible small { color: var(--be-ink-2) }
+.actions button { background: #fff; color: var(--be-deep); border-color: #fff }
+.switch { font-family: var(--body); color: #fff }
+.switch .track { background: #55634d }
+.switch .track::after { background: #fff }
+.switch input:checked + .track { background: var(--be-meadow) }
+.switch input:checked + .track::after { background: var(--be-deep); transform: translateX(18px) }
+.switch input:focus-visible + .track { outline-color: #fff }
+.seg { border: 1px solid var(--be-ink-2); border-radius: 4px; background: var(--be-mint) }
+.seg label { font-family: var(--body); font-weight: 700; font-size: 14px; letter-spacing: 0; text-transform: none; color: var(--fg) }
+.seg label:has(input:checked) { background: var(--be-deep); color: #fff }
+.seg label:has(input:focus-visible) { outline-color: var(--be-deep) }
+.sheet { border: 1px solid var(--be-rule); border-radius: 8px; background: #fff; padding: 24px }
+.sheet h2 { font-family: var(--body); font-weight: 700; font-size: 22px; line-height: 28px; letter-spacing: .02em; color: var(--be-forest) }
+.sheet img { border-radius: 8px }
+.btns small { opacity: 1; color: inherit }
+.btns .ghost small { color: var(--be-ink-2) }
+.iconbtn { background: #fff; color: var(--be-forest); border: 1px solid var(--be-rule); border-radius: 4px }
+.iconbtn:hover { border-color: var(--be-forest); filter: none }
+textarea { font-family: var(--body); border: 1px solid var(--be-rule); border-radius: 4px; background: var(--be-mint); color: var(--fg) }
+.status { color: var(--be-ink-2) }
+.notes { background: var(--be-mint); border: 0; border-top: 1px solid var(--be-rule); margin-inline: calc(50% - 50vw); padding: 24px calc(50vw - 50%); font-size: 12px; line-height: 16px; color: var(--be-ink-2) }
+.notes strong { color: var(--fg) }
 </style>
 
 </head><body>
@@ -343,8 +401,8 @@ function mapMode(r) {
 }
 const YB = YARD.reduce((a, [x, y]) => [Math.min(a[0], x), Math.max(a[1], x), Math.min(a[2], y), Math.max(a[3], y)], [1e9, -1e9, 1e9, -1e9]);
 function drawMap(ctx, X, Y, W, H, r, opt = {}) {
-  const C = Object.assign({ bg: "#0d0e0f", minor: "#24272a", major: "#3a3e42", hwy: "#5a5f64", water: "#1d2a33", rail: "#4a4e52",
-    yard: "#c8102e", school: "#c8102e", care: "#c8102e", home: "#ffffff", line: "#ffffff", label: "#f5f5f3", font: '"Barlow Condensed", "Arial Narrow", sans-serif', scale: 1 }, opt);
+  const C = Object.assign({ bg: "#0f1d09", minor: "#1f3515", major: "#2c4a1b", hwy: "#4b6b38", water: "#17323a", rail: "#4b6b38",
+    yard: "#ff4757", school: "#ff4757", care: "#ff4757", home: "#ffffff", line: "#ffffff", label: "#f3ffeb", font: 'Montserrat, "Arial Black", Arial, sans-serif', scale: 1 }, opt);
   const mm = mapMode(r), yb = YB;
   let cx, cy, span;
   if (mm.site) { cx = (yb[0] + yb[1]) / 2 + 900; cy = (yb[2] + yb[3]) / 2 - 300; span = Math.max(9000, (yb[3] - yb[2] + 2200) * W / H); }
@@ -397,7 +455,7 @@ function drawMap(ctx, X, Y, W, H, r, opt = {}) {
       : mm.site && words.length > 1 ? [words.slice(0, -1).join(" "), words[words.length - 1]] : [lm.n];
     lines.forEach((s, i) => {
       const yy = ly + (i - (lines.length - 1) / 2) * fz * 1.05;
-      ctx.lineWidth = 4 * C.scale; ctx.strokeStyle = "rgba(13,14,15,.85)"; ctx.strokeText(s, lx, yy);
+      ctx.lineWidth = 4 * C.scale; ctx.strokeStyle = "rgba(15,29,9,.85)"; ctx.strokeText(s, lx, yy);
       ctx.fillStyle = lm.k === "park" ? "#9cc6a6" : "#d9dbdd"; ctx.fillText(s, lx, yy);
     });
   }
@@ -545,7 +603,7 @@ const FORMATS = {
 };
 let cardFormat = "story";
 function cardSpec(r) {
-  const WH = "#f5f5f3", RD = "#ff5a70";
+  const WH = "#ffffff", RD = "#ff6b7d";
   if (KID_LEAD) {
     const kids500Top = [{ p: [[fmt(KIDS500), RD]], size: 270, big: true },
       { p: [["CHILDREN LIVE WITHIN", WH]], size: 92, g: 1 }, { p: [["500 FEET OF THE", WH]], size: 92, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 92, g: 1 }];
@@ -585,20 +643,20 @@ function cardSpec(r) {
   return spec;
 }
 async function makeCard(r, key) {
-  try { await Promise.all(["800 100px 'Barlow Condensed'", "700 40px 'Barlow Condensed'", "500 30px 'Barlow'"].map(f => document.fonts.load(f))); } catch (e) {}
+  try { await Promise.all(["800 100px 'Montserrat'", "700 40px 'Montserrat'"].map(f => document.fonts.load(f))); } catch (e) {}
   const FM = FORMATS[key], W = FM.W, H = FM.H, s = FM.s, M = Math.round(80 * (s < 1 ? .85 : 1)), CW = W - 2 * M;
   const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
-  const c = cv.getContext("2d"), F = '"Barlow Condensed", "Arial Narrow", sans-serif';
+  const c = cv.getContext("2d"), F = 'Montserrat, "Arial Black", Arial, sans-serif';
   const txt = l => l.p.map(q => q[0]).join("");
   const fitSize = (l, maxW) => { let z = l.size * s; do { c.font = `800 ${z}px ${F}`; } while (c.measureText(txt(l)).width > maxW && (z -= 2) > 12); return z; };
   const groupMin = (lines, sizes) => { const g = {}; lines.forEach((l, i) => { if (l.g) g[l.g] = Math.min(g[l.g] ?? 1e9, sizes[i]); }); return sizes.map((z, i) => lines[i].g ? g[lines[i].g] : z); };
   const drawLine = (l, z, y) => { let x = M - (l.big ? 6 * s : 0); for (const [t, col] of l.p) { c.font = `800 ${z}px ${F}`; c.fillStyle = col; c.fillText(t, x, y); x += c.measureText(t).width; } };
-  c.fillStyle = "#0d0e0f"; c.fillRect(0, 0, W, H);
-  c.fillStyle = "#c8102e"; c.fillRect(0, 0, W, 14 * s);
+  c.fillStyle = "#1b370d"; c.fillRect(0, 0, W, H);
+  c.fillStyle = "#ccf6a8"; c.fillRect(0, 0, W, 14 * s);
   // header: logo with the group's name beside it
   const LG = 92 * s, LT = 50 * s;
   try { if (!logoImg.complete) await logoImg.decode(); c.imageSmoothingQuality = "high"; c.drawImage(logoImg, M, LT, LG, LG); } catch (e) {}
-  c.fillStyle = "#f5f5f3"; c.textBaseline = "middle"; c.font = `700 ${40 * s}px ${F}`;
+  c.fillStyle = "#ffffff"; c.textBaseline = "middle"; c.font = `700 ${40 * s}px ${F}`;
   c.fillText("BRIDGEPORT ENVIRONMENTALISTS", M + LG + 22 * s, LT + LG / 2 + 2 * s); c.textBaseline = "alphabetic";
   c.textBaseline = "alphabetic"; c.textAlign = "left";
   const spec = cardSpec(r);
@@ -608,13 +666,13 @@ async function makeCard(r, key) {
   let y = LT + LG + 56 * s, base = [];
   spec.top.forEach((l, i) => {
     let z = sizes[i];
-    const b = i === 0 ? y + z * .72 : base[i - 1] + z * (l.big ? .88 : 1.0);
-    sizes[i] = z; base.push(i === 0 ? y + z * .72 : base[i - 1] + z * (l.big ? .88 : 1.0));
+    const b = i === 0 ? y + z * .72 : base[i - 1] + z * (l.big ? .88 : 1.0) + (i === 1 ? sizes[0] * .16 : 0);
+    sizes[i] = z; base.push(i === 0 ? y + z * .72 : base[i - 1] + z * (l.big ? .88 : 1.0) + (i === 1 ? sizes[0] * .16 : 0));
   });
   spec.top.forEach((l, i) => drawLine(l, sizes[i], base[i]));
   const mapTop = base[base.length - 1] + 50 * s;
   // footer
-  c.fillStyle = "#f5f5f3"; const foot = "LEARN MORE  " + CONFIG.learnMoreLabel.toUpperCase();
+  c.fillStyle = "#ffffff"; const foot = "LEARN MORE  " + CONFIG.learnMoreLabel.toUpperCase();
   let fz = 40 * s; do { c.font = `700 ${fz}px ${F}`; } while (c.measureText(foot).width > CW && (fz -= 2) > 10); c.fillText(foot, M, H - 80 * s);
   // bottom block, bottom-up above the footer
   let mapBottom = H - 160 * s;   // caption line under the map removed Oct 27, 2026; blocks moved down to close the gap
@@ -623,12 +681,12 @@ async function makeCard(r, key) {
     const bb = new Array(bs.length); bb[bs.length - 1] = H - 160 * s;
     for (let i = bs.length - 2; i >= 0; i--) bb[i] = bb[i + 1] - bs[i + 1] * 1.0;
     const ruleY = bb[0] - bs[0] * .72 - 34 * s;
-    c.fillStyle = "#c8102e"; c.fillRect(M, ruleY, CW, 6 * s);
+    c.fillStyle = "#ccf6a8"; c.fillRect(M, ruleY, CW, 6 * s);
     spec.bottom.forEach((l, i) => drawLine(l, bs[i], bb[i]));
     mapBottom = ruleY - 40 * s;
   }
   drawMap(c, M, mapTop, CW, mapBottom - mapTop, r, { scale: 1.6 * (s < 1 ? .8 : 1) });
-  c.strokeStyle = "#3a3e42"; c.lineWidth = 2; c.strokeRect(M, mapTop, CW, mapBottom - mapTop);
+  c.strokeStyle = "#4b6b38"; c.lineWidth = 2; c.strokeRect(M, mapTop, CW, mapBottom - mapTop);
   return new Promise(res => cv.toBlob(b => res({ blob: b, url: URL.createObjectURL(b) }), "image/png"));
 }
 
@@ -737,26 +795,26 @@ $("b-card").addEventListener("click", () => canFiles ? nativeShare(false) : null
 $("b-save").addEventListener("click", saveImage);
 $("b-copy").addEventListener("click", copyText);
 window.__makeLinkCard = async () => {
-  try { await Promise.all(["800 100px 'Barlow Condensed'", "700 40px 'Barlow Condensed'", "500 30px 'Barlow'"].map(f => document.fonts.load(f))); } catch (e) {}
+  try { await Promise.all(["800 100px 'Montserrat'", "700 40px 'Montserrat'"].map(f => document.fonts.load(f))); } catch (e) {}
   const W = 1200, H = 630, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
-  const c = cv.getContext("2d"), F = '"Barlow Condensed", "Arial Narrow", sans-serif', M = 56, LW = 600;
+  const c = cv.getContext("2d"), F = 'Montserrat, "Arial Black", Arial, sans-serif', M = 56, LW = 600;
   const fit = (s, z, w = 800, max = LW) => { do { c.font = `${w} ${z}px ${F}`; } while (c.measureText(s).width > max && (z -= 2) > 10); return z; };
-  c.fillStyle = "#0d0e0f"; c.fillRect(0, 0, W, H); c.fillStyle = "#c8102e"; c.fillRect(0, 0, W, 10);
+  c.fillStyle = "#1b370d"; c.fillRect(0, 0, W, H); c.fillStyle = "#ccf6a8"; c.fillRect(0, 0, W, 10);
   try { if (!logoImg.complete) await logoImg.decode(); c.drawImage(logoImg, M, 34, 64, 64); } catch (e) {}
-  c.fillStyle = "#f5f5f3"; c.textBaseline = "middle"; c.font = `700 30px ${F}`; c.fillText("BRIDGEPORT ENVIRONMENTALISTS", M + 80, 68); c.textBaseline = "alphabetic";
+  c.fillStyle = "#ffffff"; c.textBaseline = "middle"; c.font = `700 22px ${F}`; c.fillText("BRIDGEPORT ENVIRONMENTALISTS", M + 80, 68); c.textBaseline = "alphabetic";
   const lead = KID_LEAD ? fmt(KIDS500) : fmt(POP500), leadLines = [KID_LEAD ? "CHILDREN LIVE WITHIN" : "PEOPLE LIVE WITHIN", "500 FEET OF THE", "24/7 AMTRAK FACILITY"];
-  const nz = fit(lead, 150, 800, LW); if (KID_LEAD) c.fillStyle = "#ff5a70"; c.fillText(lead, M - 4, 124 + nz * .74); c.fillStyle = "#f5f5f3";
+  const nz = fit(lead, 150, 800, LW); if (KID_LEAD) c.fillStyle = "#ff6b7d"; c.fillText(lead, M - 4, 124 + nz * .74); c.fillStyle = "#ffffff";
   let y = 124 + nz * .74 + 58; const lz = Math.min(...leadLines.map(s => fit(s, 54)));
   c.font = `800 ${lz}px ${F}`; leadLines.forEach((s, i) => c.fillText(s, M, y + i * lz));
-  y += 2 * lz + 28; c.fillStyle = "#c8102e"; c.fillRect(M, y, LW, 5);
+  y += 2 * lz + 28; c.fillStyle = "#ccf6a8"; c.fillRect(M, y, LW, 5);
   const [pre, num, post] = KID_LEAD ? ["", "NONE", " LIVE BY ITS CURRENT SITE"] : ["", fmt(KIDS500), " ARE CHILDREN"];
   const kz = fit(pre + num + post, 52); c.font = `800 ${kz}px ${F}`; const ky = y + 16 + kz * .74;
-  c.fillStyle = "#f5f5f3"; c.fillText(pre, M, ky); const pw = c.measureText(pre).width;
-  c.fillStyle = "#ff5a70"; c.fillText(num, M + pw, ky); const kw = c.measureText(num).width;
-  c.fillStyle = "#f5f5f3"; c.fillText(post, M + pw + kw, ky);
-  const foot = "LEARN MORE  " + CONFIG.learnMoreLabel.toUpperCase(); fit(foot, 26, 700); c.fillStyle = "#a9adb1"; c.fillText(foot, M, H - 40);
+  c.fillStyle = "#ffffff"; c.fillText(pre, M, ky); const pw = c.measureText(pre).width;
+  c.fillStyle = "#ff6b7d"; c.fillText(num, M + pw, ky); const kw = c.measureText(num).width;
+  c.fillStyle = "#ffffff"; c.fillText(post, M + pw + kw, ky);
+  const foot = "LEARN MORE  " + CONFIG.learnMoreLabel.toUpperCase(); fit(foot, 26, 700); c.fillStyle = "#ccf6a8"; c.fillText(foot, M, H - 40);
   drawMap(c, M + LW + 34, 34, W - (M + LW + 34) - 34, H - 68, { overview: true }, { scale: 1.1 });
-  c.strokeStyle = "#3a3e42"; c.lineWidth = 2; c.strokeRect(M + LW + 34, 34, W - (M + LW + 34) - 34, H - 68);
+  c.strokeStyle = "#4b6b38"; c.lineWidth = 2; c.strokeRect(M + LW + 34, 34, W - (M + LW + 34) - 34, H - 68);
   return cv.toDataURL("image/png");
 };
 window.__lookup = lookup;  // handy for testing from the console

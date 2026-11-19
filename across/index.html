@@ -16,7 +16,7 @@
 <meta name="description" content="Enter an Illinois address to see Amtrak's proposed 1,209-foot maintenance building placed directly across the street.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Barlow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cesium@1.121.0/Build/Cesium/Widgets/widgets.css">
 <script>window.CESIUM_BASE_URL = "https://cdn.jsdelivr.net/npm/cesium@1.121.0/Build/Cesium/";</script>
 <script src="https://cdn.jsdelivr.net/npm/cesium@1.121.0/Build/Cesium/Cesium.js"></script>
@@ -24,17 +24,15 @@
 /* Layout: one-screen app. Panel left (above the 3D view on phones), 3D view fills the rest.
    Palette and type match the How Close tool and the neighborhood dashboard: black, silver and white, one signal red. */
 :root{
-  --bg:#f4f4f2; --panel:#ffffff; --ink:#111213; --ink-2:#5d6166; --ink-3:#7c8085; --rule:#d5d7d9;
-  --silver:#a9adb1; --accent:#c8102e; --accent-soft:rgba(200,16,46,.08); --focus:#1c5cab; --stage:#dcdedf;
-  --f-display:"Barlow Condensed","Arial Narrow","Roboto Condensed",sans-serif;
-  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+  /* Bridgeport Enviros design system, tokens v3 (light only), mapped onto this page's variable names */
+  --be-mint:#f3ffeb; --be-meadow:#ccf6a8; --be-forest:#274e13; --be-deep:#1b370d; --be-rule:#c9d3c3; --be-ink-2:#55634d;
+  --be-worse:#c8102e; --be-worse-soft:#fdeaed; --be-bad:#c8102e;
+  --bg:#ffffff; --panel:#ffffff; --ink:#212121; --ink-2:#55634d; --ink-3:#66745e; --rule:#c9d3c3;
+  --silver:#6f7f66; --accent:#c8102e; --accent-soft:#fdeaed; --focus:#1b370d; --stage:#e3f3d6;
+  --f-display:Montserrat,"Arial Black",Arial,sans-serif;
+  --f-body:Arial,"Helvetica Neue",Helvetica,sans-serif;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0f1011; --panel:#17191b; --ink:#eeeeec; --ink-2:#9da1a6; --ink-3:#7f8489; --rule:#2c2f33;
-  --silver:#7f8489; --accent:#e8344f; --accent-soft:rgba(232,52,79,.14); --focus:#7fb0ff; --stage:#1b1d1f; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#0f1011; --panel:#17191b; --ink:#eeeeec; --ink-2:#9da1a6; --ink-3:#7f8489; --rule:#2c2f33;
-  --silver:#7f8489; --accent:#e8344f; --accent-soft:rgba(232,52,79,.14); --focus:#7fb0ff; --stage:#1b1d1f; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body)}
@@ -112,6 +110,60 @@ details ul{margin:10px 0 0;padding-left:18px;display:grid;gap:7px;color:var(--in
 .mode{font:600 12px var(--f-body);background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--rule);border-radius:4px;padding:3px 7px;color:var(--ink-3)}
 .cesium-viewer-bottom{left:8px!important;right:auto!important}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ---- Bridgeport Enviros design system: component overrides (test copy) ---- */
+body{font:16px/24px var(--f-body)}
+a{color:var(--be-forest)}
+.lede a,.hint a,details a,.tries a{color:var(--be-forest);font-weight:700}
+.panel{gap:24px;padding-top:0}
+header{background:var(--be-mint);border-bottom:1px solid var(--be-rule);margin:0 -18px;padding:32px 18px 24px}
+.brand{color:var(--be-ink-2)}
+.brand img{width:64px;height:64px;border-radius:2px}
+.brand span{font-family:var(--f-body);font-weight:700;font-size:13px;line-height:16px;letter-spacing:.08em}
+.eyebrow{font-family:var(--f-body);font-weight:700;font-size:13px;line-height:16px;letter-spacing:.08em;color:var(--be-ink-2)}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,3vw,36px);line-height:1.1;text-transform:none;letter-spacing:0;color:var(--be-forest)}
+.lede{color:var(--be-ink-2);font-size:16px;line-height:24px}
+label.lbl{font-family:var(--f-body);font-weight:700;font-size:13px;line-height:16px;letter-spacing:.08em;color:var(--be-ink-2)}
+input[type=text]{font-family:var(--f-body);border:1px solid var(--be-ink-2);border-radius:4px}
+button{font-family:var(--f-body);font-weight:400;font-size:15px;line-height:20px;letter-spacing:.02em;border-radius:4px;border:1px solid var(--be-rule);background:#fff;color:var(--ink);padding:8px 16px}
+button:hover{border-color:var(--be-forest)}
+button.primary{background:var(--be-deep);border-color:var(--be-deep);color:#fff}
+button.primary:hover{filter:brightness(1.15)}
+button:focus-visible,input:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--be-deep);outline-offset:2px}
+.hint,.note,.status{color:var(--be-ink-2)}
+.msg{border-radius:4px}
+.msg.err{background:var(--be-worse-soft);color:var(--be-worse);border:1px solid var(--be-bad)}
+.msg.err::before{content:"\25B2  ";font-size:.8em}
+.msg.busy{background:var(--be-mint);color:var(--ink);border:0;border-left:3px solid var(--be-forest)}
+.result{border-top:0;padding-top:0;gap:16px}
+.addr{font-family:var(--f-display);font-weight:800;font-size:22px;line-height:28px;text-transform:none;letter-spacing:0;color:var(--be-forest)}
+.fact{background:var(--be-mint);border-top:3px solid var(--be-forest);border-radius:4px}
+.fact b{font-family:var(--f-display);color:var(--be-forest)}
+.views{display:inline-flex;flex-wrap:wrap;gap:2px;padding:2px;background:var(--be-mint);border:1px solid var(--be-ink-2);border-radius:4px;width:max-content;max-width:100%}
+.views button{border:0;border-radius:3px;background:transparent;font-weight:700;font-size:14px;letter-spacing:0;padding:6px 12px}
+.views button[aria-pressed="true"]{background:var(--be-deep);color:#fff}
+.sheet{border:1px solid var(--be-rule);border-radius:8px;padding:24px}
+.sheet h2{font-family:var(--f-body);font-weight:700;font-size:22px;line-height:28px;letter-spacing:.02em;text-transform:uppercase;color:var(--be-forest)}
+.seg{border:1px solid var(--be-ink-2);border-radius:4px;background:var(--be-mint)}
+.seg label{font-family:var(--f-body);font-weight:700;font-size:14px;letter-spacing:0;text-transform:none}
+.seg label:has(input:checked){background:var(--be-deep);color:#fff}
+.seg label:has(input:focus-visible){outline-color:var(--be-deep)}
+.cardbtn img{border-radius:8px}
+.btns button:not(.primary):first-child{background:var(--be-deep);border-color:var(--be-deep);color:#fff}
+.btns small{opacity:1;color:inherit}
+.btns button:not(:first-child) small{color:var(--be-ink-2)}
+.iconbtn{color:var(--be-forest);border:1px solid var(--be-rule);border-radius:4px}
+.iconbtn:hover{border-color:var(--be-forest)}
+textarea{font-family:var(--f-body);border:1px solid var(--be-rule);border-radius:4px;background:var(--be-mint)}
+.textlink{color:var(--be-forest);font-weight:700}
+details{border-top:1px solid var(--be-rule)}
+summary{font-family:var(--f-body);font-weight:700;font-size:13px;letter-spacing:.08em;color:var(--be-forest)}
+details ul{color:var(--be-ink-2)}
+.stage .overlay{background:#fff;border:1px solid var(--be-rule);border-radius:4px;color:var(--be-ink-2)}
+.maptoggle{font-family:var(--f-body);background:#fff;color:var(--ink);border:1px solid var(--be-rule);border-radius:4px}
+.maptoggle:hover,.maptoggle:focus-visible{border-color:var(--be-forest)}
+.mode{background:#fff;border:1px solid var(--be-rule);border-radius:4px;color:var(--be-ink-2)}
+.belowmap{background:var(--be-mint);border-top:1px solid var(--be-rule)}
 </style>
 </head>
 <body>
@@ -1003,17 +1055,17 @@ async function captureRendering(){
 }
 
 async function makeCard(key){
-  try { await Promise.all(["800 100px 'Barlow Condensed'", "700 40px 'Barlow Condensed'"].map(f => document.fonts.load(f))); } catch (e) {}
+  try { await Promise.all(["800 100px 'Montserrat'", "700 40px 'Montserrat'"].map(f => document.fonts.load(f))); } catch (e) {}
   if (!shot) shot = await captureRendering();
   const FM = FORMATS[key], W = FM.W, H = FM.H, s = FM.s, M = Math.round(80 * (s < 1 ? .85 : 1)), CW = W - 2 * M;
   const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
-  const c = cv.getContext("2d"), F = '"Barlow Condensed", "Arial Narrow", sans-serif', WH = "#f5f5f3", RD = "#ff5a70";
+  const c = cv.getContext("2d"), F = 'Montserrat, "Arial Black", Arial, sans-serif', WH = "#ffffff", RD = "#ff6b7d";
   const txt = l => l.p.map(q => q[0]).join("");
   const fitSize = (l, maxW) => { let z = l.size * s; do { c.font = `800 ${z}px ${F}`; } while (c.measureText(txt(l)).width > maxW && (z -= 2) > 12); return z; };
   const groupMin = (lines, sizes) => { const g = {}; lines.forEach((l, i) => { if (l.g) g[l.g] = Math.min(g[l.g] ?? 1e9, sizes[i]); }); return sizes.map((z, i) => lines[i].g ? g[lines[i].g] : z); };
   const drawLine = (l, z, y) => { let x = M - (l.big ? 6 * s : 0); for (const [t, col] of l.p) { c.font = `800 ${z}px ${F}`; c.fillStyle = col; c.fillText(t, x, y); x += c.measureText(t).width; } };
-  c.fillStyle = "#0d0e0f"; c.fillRect(0, 0, W, H);
-  c.fillStyle = "#c8102e"; c.fillRect(0, 0, W, 14 * s);
+  c.fillStyle = "#1b370d"; c.fillRect(0, 0, W, H);
+  c.fillStyle = "#ccf6a8"; c.fillRect(0, 0, W, 14 * s);
   // header: logo and the group's name
   const LG = 92 * s, LT = 50 * s, logo = document.querySelector(".brand img");
   try { if (!logo.complete) await logo.decode(); c.imageSmoothingQuality = "high"; c.drawImage(logo, M, LT, LG, LG); } catch (e) {}
@@ -1023,7 +1075,7 @@ async function makeCard(key){
   const top = [{ p: [[SHARE.kids500.toLocaleString("en-US"), RD]], size: 270, big: true },
     { p: [["CHILDREN LIVE WITHIN", WH]], size: 92, g: 1 }, { p: [["500 FEET OF THE", WH]], size: 92, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 92, g: 1 }];
   const tz = groupMin(top, top.map(l => fitSize(l, CW))), base = [];
-  top.forEach((l, i) => base.push(i === 0 ? LT + LG + 56 * s + tz[0] * .72 : base[i - 1] + tz[i] * (l.big ? .88 : 1.0)));
+  top.forEach((l, i) => base.push(i === 0 ? LT + LG + 56 * s + tz[0] * .72 : base[i - 1] + tz[i] * (l.big ? .88 : 1.0) + (i === 1 ? tz[0] * .16 : 0)));
   top.forEach((l, i) => drawLine(l, tz[i], base[i]));
   const boxTop = base[base.length - 1] + 50 * s;
   // footer
@@ -1036,11 +1088,11 @@ async function makeCard(key){
   bb[bz.length - 1] = H - 160 * s;
   for (let i = bz.length - 2; i >= 0; i--) bb[i] = bb[i + 1] - bz[i + 1];
   const ruleY = bb[0] - bz[0] * .72 - 34 * s;
-  c.fillStyle = "#c8102e"; c.fillRect(M, ruleY, CW, 6 * s);
+  c.fillStyle = "#ccf6a8"; c.fillRect(M, ruleY, CW, 6 * s);
   bottom.forEach((l, i) => drawLine(l, bz[i], bb[i]));
   // the rendering, cropped around the building so it fills almost the full width
   const boxH = ruleY - 40 * s - boxTop;
-  c.fillStyle = "#1b1d1f"; c.fillRect(M, boxTop, CW, boxH);
+  c.fillStyle = "#0f1d09"; c.fillRect(M, boxTop, CW, boxH);
   if (shot) {
     let sw = shot.span / SHARE.fillWidth, sh = sw * boxH / CW;
     if (sh > shot.img.height) { sh = shot.img.height; sw = sh * CW / boxH; }
@@ -1049,11 +1101,11 @@ async function makeCard(key){
     c.imageSmoothingQuality = "high";
     c.drawImage(shot.img, sx, sy, sw, sh, M, boxTop, CW, boxH);
     // map attribution, required with the map imagery
-    c.font = `500 ${22 * s}px "Barlow", system-ui, sans-serif`; const cwid = c.measureText(shot.credit).width;
-    c.fillStyle = "rgba(13,14,15,.65)"; c.fillRect(M + CW - cwid - 20 * s, boxTop + boxH - 34 * s, cwid + 20 * s, 34 * s);
+    c.font = `400 ${22 * s}px Arial, sans-serif`; const cwid = c.measureText(shot.credit).width;
+    c.fillStyle = "rgba(27,55,13,.8)"; c.fillRect(M + CW - cwid - 20 * s, boxTop + boxH - 34 * s, cwid + 20 * s, 34 * s);
     c.fillStyle = WH; c.fillText(shot.credit, M + CW - cwid - 10 * s, boxTop + boxH - 10 * s);
   }
-  c.strokeStyle = "#3a3e42"; c.lineWidth = 2; c.strokeRect(M, boxTop, CW, boxH);
+  c.strokeStyle = "#4b6b38"; c.lineWidth = 2; c.strokeRect(M, boxTop, CW, boxH);
   return new Promise(res => cv.toBlob(b => res({ blob: b, url: URL.createObjectURL(b) }), "image/png"));
 }
 async function getCard(){ if (!cards[cardFormat]) cards[cardFormat] = await makeCard(cardFormat); return cards[cardFormat]; }
