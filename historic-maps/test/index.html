@@ -916,12 +916,13 @@ body.collapsed #body{display:none}
   // ---- UI ----
   const $ = s => document.querySelector(s);
   const periodsEl = $('#periods');
-  C.periods.forEach((p, i) => {
+  for (let i = C.periods.length - 1; i >= 0; i--) {
+    const p = C.periods[i];
     const b = document.createElement('button'); b.className = 'period' + (p.lowres ? ' low' : ''); b.dataset.i = i;
     b.innerHTML = `<span class="yr">${p.year}</span><span class="nm">${p.short}</span>`;
     b.onclick = () => { stop(); show(i); };
     periodsEl.appendChild(b);
-  });
+  }
   const ovEl = $('#overlays');
   for (const key of Object.keys(OV)) {
     const s = OV[key]; const l = document.createElement('label');
@@ -958,11 +959,12 @@ body.collapsed #body{display:none}
   $('#play').onclick = () => {
     if (timer) return stop();
     $('#play').textContent = '❚❚ Pause'; $('#play').classList.add('on');
-    show((cur + 1) % C.periods.length);
-    timer = setInterval(() => show((cur + 1) % C.periods.length), C.playMs || 4000);
+    show((cur - 1 + C.periods.length) % C.periods.length);
+    timer = setInterval(() => show((cur - 1 + C.periods.length) % C.periods.length), C.playMs || 4000);
   };
-  $('#prev').onclick = () => { stop(); show((cur - 1 + C.periods.length) % C.periods.length); };
-  $('#next').onclick = () => { stop(); show((cur + 1) % C.periods.length); };
+  // the ribbon runs newest to oldest, left to right, so next steps back in time
+  $('#prev').onclick = () => { stop(); show((cur + 1) % C.periods.length); };
+  $('#next').onclick = () => { stop(); show((cur - 1 + C.periods.length) % C.periods.length); };
 
   // pin
   const pinIcon = L.divIcon({ className: 'pin', html: '<div></div>', iconSize: [22, 22], iconAnchor: [11, 22] });
