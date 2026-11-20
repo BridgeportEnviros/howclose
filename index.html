@@ -514,7 +514,7 @@ function render(r, isExample) {
     const feetWord = feet === 1 ? "foot" : "feet";
     const nd = nearDistance(r.dist);
     if (nd) {
-      $("big").innerHTML = nd.feet ? `I live <span class="n">${nd.num}</span> ${nd.unit} from the 24/7 Amtrak facility`
+      $("big").innerHTML = nd.feet ? `I live <span class="n kid words">${nd.num} ${nd.unit}</span> from the 24/7 Amtrak facility`
         : `I live less than <span class="n words">${nd.big}</span> from the 24/7 Amtrak facility`;
       if (r.kids) { k.hidden = false; k.innerHTML = `<span class="k">${fmt(r.kids.n)}</span> ${r.kids.text}`; } else k.hidden = true;
     } else if (KID_LEAD && r.kids) {
@@ -569,8 +569,8 @@ function cardSpec(r) {
   const nd = nearDistance(r.dist);
   if (nd) {
     const top = nd.feet
-      ? [{ p: [["I LIVE", WH]], size: 120 }, { p: [[nd.num, WH]], size: 330, big: true },
-         { p: [[nd.unit.toUpperCase() + " FROM THE", WH]], size: 112, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 112, g: 1 }]
+      ? [{ p: [["I LIVE", WH]], size: 120 }, { p: [[nd.num + " " + nd.unit.toUpperCase(), RD]], size: 330, big: true },
+         { p: [["FROM THE", WH]], size: 112, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 112, g: 1 }]
       : [{ p: [["I LIVE LESS THAN", WH]], size: 120 }, { p: [[nd.big, WH]], size: 330, big: true },
          { p: [["FROM THE", WH]], size: 112, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 112, g: 1 }];
     let bottom = [];
