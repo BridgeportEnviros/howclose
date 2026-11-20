@@ -1,4 +1,4 @@
-<title>How Close Is the Railyard?</title>
+<title data-i18n="title">How Close Is the Railyard?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=Barlow:wght@400;500;600&display=swap">
@@ -7,8 +7,8 @@
 :root {
   --bg: #f4f4f2; --surface: #ffffff; --fg: #111213; --muted: #5d6166; --line: #d5d7d9;
   --silver: #a9adb1; --accent: #c8102e; --ink: #0d0e0f; --ink-fg: #f5f5f3;
-  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
-  --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #0f1011; --surface: #17191b; --fg: #eeeeec; --muted: #9da1a6; --line: #2c2f33;
@@ -91,24 +91,47 @@ textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px; border-ra
 .notes { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px }
 .notes p { margin: 0 0 8px }
 @media (prefers-reduced-motion: no-preference) { .result { transition: opacity .2s } }
+.toprow { display: flex; align-items: center; justify-content: space-between; gap: 12px }
+.toprow .brand { min-width: 0 }
+.langbtn { flex: none; font-size: 15px; padding: 6px 12px; background: transparent; color: var(--fg) }
+.cmt h3 { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 17px; margin: 6px 0 0 }
+.cmt-open { display: grid; gap: 14px }
+.cmt-lede, .cmt-closed { margin: 0 }
+.cmt-fs { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; min-width: 0 }
+.cmt-fs legend { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: 14px; padding: 0; margin-bottom: 8px }
+.chks { display: grid; gap: 6px }
+.chk { display: flex; gap: 10px; align-items: flex-start; font-family: var(--body); font-weight: 500; font-size: 15px; text-transform: none; letter-spacing: 0; cursor: pointer }
+.chk input { width: 18px; height: 18px; margin: 2px 0 0; flex: none; accent-color: var(--accent) }
+.cmt-text { min-height: 280px; font-size: 15px; line-height: 1.5; background: var(--surface) }
+.cmt-actions { display: flex; gap: 8px; flex-wrap: wrap }
+.btnlink { display: inline-block; font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 17px; padding: 12px 18px; border-radius: 6px; border: 1.5px solid var(--fg); color: var(--fg); text-decoration: none }
+.btnlink:hover, .btnlink:focus-visible { background: var(--fg); color: var(--bg) }
+.cmt-steps { margin: 0; padding-left: 22px; display: grid; gap: 4px }
+.cmt .hint { margin: 0 }
+.cmt .hint a { color: var(--fg); font-weight: 600 }
+:root:lang(zh) h1, :root:lang(zh) .big, :root:lang(zh) .kicker, :root:lang(zh) .kids { letter-spacing: 0; line-height: 1.15 }
+
 </style>
 
 <div class="wrap">
   <header class="top">
+    <div class="toprow">
     <a class="brand" href="https://www.bridgeportenviros.org/projects/amtrak-railyard" target="_blank" rel="noopener"><img src="__LOGO__" alt="" width="52" height="52"><span>Bridgeport Environmentalists</span></a>
+    <button type="button" class="ghost langbtn" id="langbtn" lang="zh-Hans">中文</button>
+    </div>
     <div>
-    <h1>How far do you live from the 24/7 Amtrak facility?</h1>
-    <p class="lede">Enter your address to see how close you live to the 24/7 facility Amtrak has proposed in a residential area, then share it. <a class="learn" href="https://www.bridgeportenviros.org/projects/amtrak-railyard" target="_blank" rel="noopener">Learn more about the proposed facility</a></p>
+    <h1 data-i18n="h1">How far do you live from the 24/7 Amtrak facility?</h1>
+    <p class="lede" data-i18n="lede">Enter your address to see how close you live to the 24/7 facility Amtrak has proposed in a residential area, then share it. <a class="learn" href="https://www.bridgeportenviros.org/projects/amtrak-railyard" target="_blank" rel="noopener">Learn more about the proposed facility</a></p>
     </div>
   </header>
 
   <form id="f" autocomplete="off">
-    <label for="addr">Your street address</label>
+    <label for="addr" data-i18n="addrLabel">Your street address</label>
     <div class="row">
       <input type="text" id="addr" placeholder="e.g. 3100 S Princeton Ave" aria-describedby="addr-hint">
-      <button type="submit" id="go">Find my distance</button>
+      <button type="submit" id="go" data-i18n="go">Find my distance</button>
     </div>
-    <div class="hint" id="addr-hint">Chicago addresses within 2 miles of the site. Try <button type="button" data-ex="3500 S Halsted St">3500 S Halsted St</button></div>
+    <div class="hint" id="addr-hint"><span data-i18n="hint">Chicago addresses within 2 miles of the site. Try</span> <button type="button" data-ex="3500 S Halsted St">3500 S Halsted St</button></div>
   </form>
 
   <div id="msg" class="msg" tabindex="-1" hidden></div>
@@ -120,31 +143,31 @@ textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px; border-ra
       <div class="kids" id="kids" hidden></div>
       <div class="kicker" id="kicker" hidden></div>
       <div class="matched" id="matched"></div>
-      <a class="across" id="across" href="across/" hidden>See what it would look like near you →<small>Puts Amtrak's proposed maintenance building across the street from your address, in 3D</small></a>
+      <a class="across" id="across" href="across/" hidden><span data-i18n="acrossMain">See what it would look like near you →</span><small data-i18n="acrossSmall">Puts Amtrak's proposed maintenance building across the street from your address, in 3D</small></a>
     </div>
     <canvas id="map" width="1200" height="900" aria-label="Map of your address and the proposed railyard"></canvas>
     <div class="actions">
-      <button type="button" id="share">Share</button>
-      <label class="switch" id="homewrap" hidden><input type="checkbox" id="showhome" checked><span class="track" aria-hidden="true"></span>Show my location on the map</label>
+      <button type="button" id="share" data-i18n="share">Share</button>
+      <label class="switch" id="homewrap" hidden><input type="checkbox" id="showhome" checked><span class="track" aria-hidden="true"></span><span data-i18n="showHome">Show my location on the map</span></label>
     </div>
   </section>
 
   <section class="sheet" id="sheet" tabindex="-1" hidden aria-labelledby="sheet-h">
     <h2 id="sheet-h">Share your distance</h2>
     <div class="seg" role="radiogroup" aria-label="Image shape">
-      <label><input type="radio" name="fmt" id="fmt-story" value="story" checked>Story</label>
-      <label><input type="radio" name="fmt" id="fmt-post" value="post">Post</label>
+      <label><input type="radio" name="fmt" id="fmt-story" value="story" checked><span data-i18n="story">Story</span></label>
+      <label><input type="radio" name="fmt" id="fmt-post" value="post"><span data-i18n="post">Post</span></label>
     </div>
     <div class="sheet-grid">
       <div class="cardcol">
         <button type="button" class="cardbtn" id="b-card" aria-label="Share this image"><img id="card" alt=""></button>
       </div>
       <div class="btns">
-        <button type="button" id="b-ig">Instagram <small id="ig-note">Saves the image to post</small></button>
-        <button type="button" class="ghost" id="b-fb">Facebook <small id="fb-note">Shares the page link</small></button>
-        <button type="button" class="ghost" id="b-mail">Email <small id="mail-note">Opens your mail app</small></button>
-        <button type="button" class="ghost" id="b-sms">Text <small id="sms-note">Opens Messages</small></button>
-        <button type="button" class="ghost" id="b-save">Save image <small id="save-note">PNG, 1080×1920</small></button>
+        <button type="button" id="b-ig"><span data-i18n="ig">Instagram</span> <small id="ig-note">Saves the image to post</small></button>
+        <button type="button" class="ghost" id="b-fb"><span data-i18n="fb">Facebook</span> <small id="fb-note">Shares the page link</small></button>
+        <button type="button" class="ghost" id="b-mail"><span data-i18n="mail">Email</span> <small id="mail-note">Opens your mail app</small></button>
+        <button type="button" class="ghost" id="b-sms"><span data-i18n="sms">Text</span> <small id="sms-note">Opens Messages</small></button>
+        <button type="button" class="ghost" id="b-save"><span data-i18n="save">Save image</span> <small id="save-note">PNG, 1080×1920</small></button>
       </div>
     </div>
     <div class="msgbox">
@@ -156,10 +179,41 @@ textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px; border-ra
     <div class="status" id="status" role="status"></div>
   </section>
 
-  <div class="notes">
+  <section class="sheet cmt" id="cmt" tabindex="-1" hidden aria-labelledby="cmt-h">
+    <h2 id="cmt-h" data-i18n="cmtH">Comment on Amtrak's plan</h2>
+    <p class="cmt-closed" id="cmt-closed" hidden></p>
+    <div class="cmt-open" id="cmt-open">
+      <p class="cmt-lede" id="cmt-lede"></p>
+      <fieldset class="cmt-fs">
+        <legend data-i18n="cmtPointsH">What to include</legend>
+        <div class="chks" id="cmt-points"></div>
+      </fieldset>
+      <fieldset class="cmt-fs">
+        <legend data-i18n="cmtLangH">Write my comment in</legend>
+        <div class="seg" role="radiogroup">
+          <label><input type="radio" name="cmtlang" value="en">English</label>
+          <label><input type="radio" name="cmtlang" value="zh">中文</label>
+        </div>
+      </fieldset>
+      <textarea id="cmt-text" class="cmt-text" rows="14" aria-labelledby="cmt-h" spellcheck="true"></textarea>
+      <div class="cmt-actions">
+        <button type="button" id="cmt-copy" data-i18n="cmtCopy">Copy comment</button>
+        <a class="btnlink" id="cmt-go" href="https://www.regulations.gov/docket/FRA-2026-2938" target="_blank" rel="noopener" data-i18n="cmtGo">Open Regulations.gov</a>
+      </div>
+      <div class="status" id="cmt-status" role="status"></div>
+      <h3 data-i18n="cmtStepsH">How to submit</h3>
+      <ol class="cmt-steps" data-i18n="cmtSteps"></ol>
+      <p class="hint" data-i18n="cmtPublic"></p>
+      <p class="hint" data-i18n="cmtForums"></p>
+      <p class="hint" data-i18n="cmtCredit"></p>
+    </div>
+  </section>
+
+  <div class="notes" id="notes">
     <p><strong>How this is measured.</strong> Straight-line distance from your address point to the nearest edge of the proposed yard (the Union Pacific Canal Street Yard outline in OpenStreetMap, the same outline the neighborhood dashboard uses). Addresses come from Cook County's Address Points file.</p>
     <p><strong>Schools and day cares on the map.</strong> The same lists as the neighborhood dashboard: every district, charter, private and parochial school, and every licensed day-care center (City of Chicago Children's Services Facility licenses) within a mile of the proposed yard. After-school-only centers and home day cares are not shown.</p>
     <p><strong>People and children.</strong> The same figures as the neighborhood dashboard: each census tract's residents and children under 18 (ACS 2020–2024), counted by the share of the tract's 2020 Census block population living within a given distance of the yard. Within 500 feet we show the children and everyone that close; out to a mile we show the children who live closer than you.</p>
+    <p><strong>The comment draft.</strong> Census tract figures in the draft: adult asthma from CDC PLACES (2025 release); “disadvantaged” status and the diesel particulate percentile from the federal Climate and Economic Justice Screening Tool (CEJST), version 2.0, for the 28 tracts in the Environmental Assessment's own study area only.</p>
     <p><strong>Your location.</strong> Turn off “Show my location on the map” to leave the dotted line and the ME marker off the map and your share images. The map then shows the whole site instead of your block.</p>
     <p><strong>Farther away?</strong> If an address isn't within 2 miles of the site, we show who lives within 500 feet of it instead, with a link to The Railyard Across the Street, which shows Amtrak's proposed building across the street from your address in 3D. That page looks your address up with an online map service, so the address leaves your device only if you follow the link.</p>
   </div>
@@ -173,6 +227,54 @@ textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px; border-ra
 const BOOK = "M3.5 5h6c1.4 0 2.5 1.1 2.5 2.5c0-1.4 1.1-2.5 2.5-2.5h6v12.5h-6c-1.4 0-2.5 1.1-2.5 2.5c0-1.4-1.1-2.5-2.5-2.5h-6z";
 const BOOK_SPINE = "M12 7.5V20";
 const BLOCKS = "M3.5 12.5h8v8h-8z M12.5 12.5h8v8h-8z M8 4.5h8v8h-8z";
+/* ---------- language: English or Simplified Chinese ----------
+   ?lang=zh or ?lang=en in the address wins; then the visitor's last choice; then the browser's language.
+   Chinese text is a first translation and should be reviewed by a native speaker. */
+const LANGS = ["en", "zh"];
+let LANG = (() => {
+  try { const q = new URLSearchParams(location.search).get("lang"); if (LANGS.includes(q)) return q; } catch (e) {}
+  try { const s = localStorage.getItem("howclose-lang"); if (LANGS.includes(s)) return s; } catch (e) {}
+  return (navigator.languages || [navigator.language || ""]).some(l => /^zh\b/i.test(l)) ? "zh" : "en";
+})();
+const T = (en, zh) => LANG === "zh" ? zh : en;
+const track = (name, params) => { try { if (typeof gtag === "function") gtag("event", name, Object.assign({ lang: LANG }, params || {})); } catch (e) {} };
+// Text on the page that doesn't change with the result. Keys match data-i18n attributes in the markup.
+const STATIC = {
+  title: ["How Close Is the Railyard?", "车场离你家有多近？"],
+  h1: ["How far do you live from the 24/7 Amtrak facility?", "你家离24小时运营的美铁维修厂有多远？"],
+  lede: ["Enter your address to see how close you live to the 24/7 facility Amtrak has proposed in a residential area, then share it. <a class=\"learn\" href=\"https://www.bridgeportenviros.org/projects/amtrak-railyard\" target=\"_blank\" rel=\"noopener\">Learn more about the proposed facility</a>",
+         "输入你的地址，看看美铁（Amtrak）提议建在住宅区、24小时运营的维修厂离你家有多近，然后分享出去。<a class=\"learn\" href=\"https://www.bridgeportenviros.org/projects/amtrak-railyard\" target=\"_blank\" rel=\"noopener\">了解这个拟建设施（英文）</a>"],
+  addrLabel: ["Your street address", "你的街道地址（请用英文输入）"],
+  go: ["Find my distance", "查距离"],
+  hint: ["Chicago addresses within 2 miles of the site. Try", "限距离场址2英里内的芝加哥地址。试试"],
+  acrossMain: ["See what it would look like near you →", "看看它建在你家附近会是什么样 →"],
+  acrossSmall: ["Puts Amtrak's proposed maintenance building across the street from your address, in 3D", "用3D画面把美铁拟建的维修厂房放到你家街对面（英文页面）"],
+  share: ["Share", "分享"],
+  showHome: ["Show my location on the map", "在地图上显示我的位置"],
+  story: ["Story", "快拍"],
+  post: ["Post", "帖子"],
+  ig: ["Instagram", "Instagram"],
+  fb: ["Facebook", "Facebook"],
+  mail: ["Email", "电子邮件"],
+  sms: ["Text", "短信"],
+  save: ["Save image", "保存图片"],
+  cmtH: ["Comment on Amtrak's plan", "就美铁的计划提交意见"],
+  cmtPointsH: ["What to include", "要写进去的内容"],
+  cmtLangH: ["Write my comment in", "意见书语言"],
+  cmtCopy: ["Copy comment", "复制意见"],
+  cmtGo: ["Open Regulations.gov", "打开 Regulations.gov"],
+  cmtStepsH: ["How to submit", "如何提交"],
+  cmtSteps: ["<li>Copy your comment.</li><li>Open the Environmental Assessment's docket on Regulations.gov, <strong>FRA-2026-2938</strong>, and choose <strong>Comment</strong>.</li><li>Paste your comment, fill in the form and submit it.</li>",
+             "<li>复制你的意见。</li><li>在 Regulations.gov 打开这份环境评估的案卷 <strong>FRA-2026-2938</strong>，点击 <strong>Comment</strong>（评论）。</li><li>粘贴你的意见，填好表格后提交。网站是英文的，可以用中文提交。</li>"],
+  cmtPublic: ["Comments on Regulations.gov are public. The draft names your census tract but not your address; leave out anything you don't want posted. Agencies may treat identical letters as one comment, so a sentence about you and what you've seen counts for more than the suggested wording.",
+              "Regulations.gov 上的意见会公开。这份草稿只提到你所在的人口普查区，不含你的地址；不想公开的内容请不要写。政府机构可能把内容相同的信件当作一份意见处理，所以写一两句你自己的情况和亲身经历，比照抄建议文字更有分量。"],
+  cmtForums: ["Prefer to speak? Amtrak and FRA hold public forums on Dec. 2 (in person, 5–8 pm, Illinois Institute of Technology, Hermann Hall) and Dec. 3 (online, 1–3 pm and 6–8 pm). Amtrak says Mandarin and Spanish interpretation will be available. <a href=\"https://railroads.dot.gov/rail-network-development/environment/environmental-reviews/midwest-maintenance-facility\" target=\"_blank\" rel=\"noopener\">Details and sign-up on FRA's project page</a>",
+              "想当面发言？美铁和联邦铁路管理局将于12月2日（现场，下午5–8点，伊利诺伊理工学院 Hermann Hall）和12月3日（网上，下午1–3点及6–8点）举行公众论坛。美铁表示会提供普通话和西班牙语传译。<a href=\"https://railroads.dot.gov/rail-network-development/environment/environmental-reviews/midwest-maintenance-facility\" target=\"_blank\" rel=\"noopener\">详情及报名见联邦铁路管理局项目网页（英文）</a>"],
+  cmtCredit: ["Suggested text by Bridgeport Environmentalists, from the Environmental Assessment and public data. Check that it says what you mean before you submit.",
+              "建议文字由 Bridgeport Environmentalists 根据环境评估报告和公开数据撰写。提交前请确认内容符合你的意思。"],
+  notes: [null, null],   // filled below
+};
+STATIC.notes[1] = "<p><strong>距离怎么算。</strong>从你的地址点到拟建车场最近边缘的直线距离（使用 OpenStreetMap 中联合太平洋铁路 Canal Street Yard 的轮廓，与社区数据面板相同）。地址来自库克县的地址点（Address Points）文件。</p>\n    <p><strong>地图上的学校和托儿所。</strong>与社区数据面板使用相同的名单：拟建车场1英里内所有公立、特许、私立和教会学校，以及所有持牌托儿中心（芝加哥市儿童服务设施执照）。只提供课后服务的中心和家庭托儿所未列出。</p>\n    <p><strong>居民和儿童人数。</strong>与社区数据面板的数字相同：根据每个人口普查区中有多少比例的人口（按2020年人口普查街区计算）住在某一距离内，换算该普查区的居民和18岁以下儿童人数（ACS 2020–2024）。在500英尺内，我们显示住得这么近的儿童和全部居民；1英里以内，我们显示比你住得更近的儿童。这些是估计数，不是逐户统计。</p>\n    <p><strong>意见书草稿。</strong>草稿中的普查区数据：成人哮喘率来自美国疾控中心 PLACES 2025年版；“弱势社区”认定和柴油颗粒物百分位来自联邦“气候与经济正义筛查工具”（CEJST）2.0版，只适用于环境评估报告本身研究范围内的28个普查区。</p>\n    <p><strong>你的位置。</strong>关闭“在地图上显示我的位置”后，地图和分享图片将不显示虚线和“我”的标记，地图会显示整个场址，而不是你家所在的街区。</p>\n    <p><strong>住得更远？</strong>如果地址不在场址2英里范围内，我们会改为显示住在场址500英尺内的人数，并附上“街对面的车场”（The Railyard Across the Street，英文页面）链接，用3D画面把美铁拟建的厂房放到你家街对面。该页面会通过网上地图服务查找你的地址，所以只有点击链接时地址才会离开你的设备。</p>\n";
 const LOGO_SRC = "__LOGO__";
 const logoImg = new Image(); logoImg.src = LOGO_SRC;
 const CONFIG = {
@@ -183,12 +285,13 @@ const CONFIG = {
   // Which number leads, above the map on the page and in share images: "children" (for now, Oct 2026) or "people".
   // "people" restores the original layout: people or your distance first, children below.
   lead: "children",
-  acrossUrl: "across/",   // The Railyard Across the Street, offered to addresses outside the 2-mile area
+  acrossUrl: "across/",
+  commentDeadline: "2026-12-08T04:59:00Z",   // 11:59 pm Eastern, Dec. 7, 2026: end of the EA comment period (FRA). After it, the comment box says the period closed.   // The Railyard Across the Street, offered to addresses outside the 2-mile area
 };
 const KID_LEAD = CONFIG.lead === "children";
 // Below the map when the standard 1,101 figure leads (opening view, outside the area). Matt's wording, Oct 27, 2026;
 // the dashboard's own estimate is about 29 people (~2 children) within 500 ft of the 14th Street yard.
-const CURRENT_SITE_HTML = `<span class="k">None</span> live by its current site`;
+const CURRENT_SITE_HTML = () => T(`<span class="k">None</span> live by its current site`, `其现址附近<span class="k">没有</span>儿童居住`);
 const L = window.LOOKUP;
 const YARD = L.yard;
 const $ = id => document.getElementById(id);
@@ -266,7 +369,7 @@ function lev(a, b) {
 }
 function lookup(raw) {
   const p = parse(raw);
-  if (!p || !p.name) return { error: "Enter a house number and street, like “3100 S Princeton Ave”." };
+  if (!p || !p.name) return { error: T("Enter a house number and street, like “3100 S Princeton Ave”.", "请输入门牌号和街道名，例如“3100 S Princeton Ave”。") };
   const far = { far: true, input: raw.trim() };
   let cands = KEYS.filter(s => s.name === p.name);
   if (!cands.length) {
@@ -330,7 +433,7 @@ function mapMode(r) {
 const YB = YARD.reduce((a, [x, y]) => [Math.min(a[0], x), Math.max(a[1], x), Math.min(a[2], y), Math.max(a[3], y)], [1e9, -1e9, 1e9, -1e9]);
 function drawMap(ctx, X, Y, W, H, r, opt = {}) {
   const C = Object.assign({ bg: "#0d0e0f", minor: "#24272a", major: "#3a3e42", hwy: "#5a5f64", water: "#1d2a33", rail: "#4a4e52",
-    yard: "#c8102e", school: "#c8102e", care: "#c8102e", home: "#ffffff", line: "#ffffff", label: "#f5f5f3", font: '"Barlow Condensed", "Arial Narrow", sans-serif', scale: 1 }, opt);
+    yard: "#c8102e", school: "#c8102e", care: "#c8102e", home: "#ffffff", line: "#ffffff", label: "#f5f5f3", font: '"Barlow Condensed", "Arial Narrow", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif', scale: 1 }, opt);
   const mm = mapMode(r), yb = YB;
   let cx, cy, span;
   if (mm.site) { cx = (yb[0] + yb[1]) / 2 + 900; cy = (yb[2] + yb[3]) / 2 - 300; span = Math.max(9000, (yb[3] - yb[2] + 2200) * W / H); }
@@ -389,7 +492,7 @@ function drawMap(ctx, X, Y, W, H, r, opt = {}) {
   }
   ctx.font = `700 ${22 * C.scale}px ${C.font}`; ctx.textBaseline = "middle"; ctx.textAlign = "left";
   if (mm.site) {
-    const lx0 = px(yb[1]) + 500 * ft2px + 14 * C.scale, l1 = "PROPOSED", l2 = "AMTRAK YARD", ly0 = py(yb[2] + (yb[3] - yb[2]) * 0.7);   // north half: clear of Armour Square Park and Rate Field labels
+    const lx0 = px(yb[1]) + 500 * ft2px + 14 * C.scale, l1 = T("PROPOSED", "拟建"), l2 = T("AMTRAK YARD", "美铁车场"), ly0 = py(yb[2] + (yb[3] - yb[2]) * 0.7);   // north half: clear of Armour Square Park and Rate Field labels
     const bw = Math.max(ctx.measureText(l1).width, ctx.measureText(l2).width) + 16 * C.scale;
     ctx.fillStyle = C.bg; ctx.globalAlpha = .85; ctx.fillRect(lx0 - 8 * C.scale, ly0 - 32 * C.scale, bw, 64 * C.scale); ctx.globalAlpha = 1;
     ctx.fillStyle = C.label; ctx.fillText(l1, lx0, ly0 - 14 * C.scale); ctx.fillText(l2, lx0, ly0 + 14 * C.scale);
@@ -407,8 +510,8 @@ function drawMap(ctx, X, Y, W, H, r, opt = {}) {
     ctx.fillStyle = "rgba(255,255,255,.2)"; ctx.fill(); ctx.lineWidth = 3 * C.scale; ctx.strokeStyle = C.home; ctx.stroke();
     const yardRight = r.jnx >= r.jx;
     ctx.fillStyle = C.label; ctx.textAlign = yardRight ? "right" : "left";
-    ctx.fillText("ME", hx + (yardRight ? -1 : 1) * (rp + 10 * C.scale), hy);
-    const lab = "PROPOSED AMTRAK YARD", lw = ctx.measureText(lab).width, pad = 14 * C.scale;
+    ctx.fillText(T("ME", "我"), hx + (yardRight ? -1 : 1) * (rp + 10 * C.scale), hy);
+    const lab = T("PROPOSED AMTRAK YARD", "拟建美铁车场"), lw = ctx.measureText(lab).width, pad = 14 * C.scale;
     let lx = px(r.jnx) + (yardRight ? 22 : -22) * C.scale - (yardRight ? 0 : lw);
     lx = Math.max(X + pad, Math.min(X + W - pad - lw, lx));
     let ly = py(r.jny) - 46 * C.scale; if (ly < Y + 30 * C.scale) ly = py(r.jny) + 46 * C.scale;
@@ -419,15 +522,15 @@ function drawMap(ctx, X, Y, W, H, r, opt = {}) {
   // scale bar (500 ft)
   const sb = 500 * ft2px, sx = X + 24 * C.scale; let sy = Y + H - 26 * C.scale;
   ctx.strokeStyle = C.label; ctx.lineWidth = 3 * C.scale; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + sb, sy); ctx.stroke();
-  ctx.font = `600 ${16 * C.scale}px ${C.font}`; ctx.textAlign = "left"; ctx.fillStyle = C.label; ctx.fillText("500 FT", sx + sb + 8 * C.scale, sy);
+  ctx.font = `600 ${16 * C.scale}px ${C.font}`; ctx.textAlign = "left"; ctx.fillStyle = C.label; ctx.fillText(T("500 FT", "500英尺"), sx + sb + 8 * C.scale, sy);
   // legend (bottom right)
-  const items = [["DAY CARE", [BLOCKS], C.care], ["SCHOOL", [BOOK, BOOK_SPINE], C.school]];
-  if (mm.zone) items.unshift(["WITHIN 500 FT", null, C.yard]);
+  const items = [[T("DAY CARE", "托儿所"), [BLOCKS], C.care], [T("SCHOOL", "学校"), [BOOK, BOOK_SPINE], C.school]];
+  if (mm.zone) items.unshift([T("WITHIN 500 FT", "500英尺内"), null, C.yard]);
   const gw = 30 * C.scale, gap = 10 * C.scale, sp = 22 * C.scale;
   const widths = items.map(([txt]) => ctx.measureText(txt).width);
   const boxW = widths.reduce((a, w) => a + gw + gap + w, 0) + sp * (items.length - 1) + 24 * C.scale;
   const bx = X + W - boxW - 10 * C.scale, bh = 40 * C.scale;
-  const scaleEnd = sx + sb + 8 * C.scale + ctx.measureText("500 FT").width + 10 * C.scale;
+  const scaleEnd = sx + sb + 8 * C.scale + ctx.measureText(T("500 FT", "500英尺")).width + 10 * C.scale;
   if (bx < scaleEnd) sy -= bh + 4 * C.scale;   // narrow map: key goes above the scale bar
   ctx.fillStyle = C.bg; ctx.fillRect(bx, sy - bh / 2, boxW, bh);
   let lx2 = bx + 12 * C.scale;
@@ -441,7 +544,7 @@ function drawMap(ctx, X, Y, W, H, r, opt = {}) {
 }
 
 /* ---------- result + share text ---------- */
-let current = null;
+let current = null, lastRun = null;
 function kidsLine(d) {
   if (d <= 500) return { n: KIDS500, text: "children live as close as me" };
   if (d <= 5280) { const n = roundKids(kidsWithin(d)); return n > 0 ? { n, text: "children live closer than me" } : null; }
@@ -461,52 +564,55 @@ function render(r, isExample) {
   if (r.far) ac.href = CONFIG.acrossUrl + (r.input ? "?address=" + encodeURIComponent(r.input) : "");
   const kidN = n => `<span class="n kid">${fmt(n)}</span>`;
   if (r.overview) {
-    $("tag").textContent = "Within 500 feet of the proposed yard";
+    $("tag").textContent = T("Within 500 feet of the proposed yard", "拟建车场500英尺范围内");
     if (KID_LEAD) {
-      $("big").innerHTML = `${kidN(KIDS500)} children live within 500 feet of the 24/7 Amtrak facility`;
-      k.hidden = false; k.innerHTML = CURRENT_SITE_HTML;
+      $("big").innerHTML = T(`${kidN(KIDS500)} children live within 500 feet of the 24/7 Amtrak facility`, `${kidN(KIDS500)} 名儿童住在24小时运营的美铁维修厂500英尺范围内`);
+      k.hidden = false; k.innerHTML = CURRENT_SITE_HTML();
     } else {
-      $("big").innerHTML = `<span class="n">${fmt(POP500)}</span> people live within 500 feet of the 24/7 Amtrak facility`;
-      k.hidden = false; k.innerHTML = `<span class="k">${fmt(KIDS500)}</span> are children`;
+      $("big").innerHTML = T(`<span class="n">${fmt(POP500)}</span> people live within 500 feet of the 24/7 Amtrak facility`, `<span class="n">${fmt(POP500)}</span> 人住在24小时运营的美铁维修厂500英尺范围内`);
+      k.hidden = false; k.innerHTML = T(`<span class="k">${fmt(KIDS500)}</span> are children`, `其中 <span class="k">${fmt(KIDS500)}</span> 名是儿童`);
     }
     kk.hidden = true;
-    $("matched").textContent = "Enter your address above to see how far you live from it.";
+    $("matched").textContent = T("Enter your address above to see how far you live from it.", "在上方输入地址，看看你家离它有多远。");
   } else if (r.far) {
-    $("tag").textContent = isExample ? "Example: outside the 2-mile area" : "Outside the 2-mile area";
+    $("tag").textContent = isExample ? T("Example: outside the 2-mile area", "示例：2英里范围以外") : T("Outside the 2-mile area", "2英里范围以外");
     if (KID_LEAD) {
-      $("big").innerHTML = `${kidN(KIDS500)} children live within 500 feet of the 24/7 Amtrak facility`;
-      k.hidden = false; k.innerHTML = CURRENT_SITE_HTML;
+      $("big").innerHTML = T(`${kidN(KIDS500)} children live within 500 feet of the 24/7 Amtrak facility`, `${kidN(KIDS500)} 名儿童住在24小时运营的美铁维修厂500英尺范围内`);
+      k.hidden = false; k.innerHTML = CURRENT_SITE_HTML();
     } else {
-      $("big").innerHTML = `<span class="n">${fmt(POP500)}</span> people live within 500 feet of the 24/7 Amtrak facility`;
-      k.hidden = false; k.innerHTML = `Including <span class="k">${fmt(KIDS500)}</span> children`;
+      $("big").innerHTML = T(`<span class="n">${fmt(POP500)}</span> people live within 500 feet of the 24/7 Amtrak facility`, `<span class="n">${fmt(POP500)}</span> 人住在24小时运营的美铁维修厂500英尺范围内`);
+      k.hidden = false; k.innerHTML = T(`Including <span class="k">${fmt(KIDS500)}</span> children`, `其中包括 <span class="k">${fmt(KIDS500)}</span> 名儿童`);
     }
-    kk.hidden = false; kk.textContent = "I wouldn’t want it in my neighborhood either.";
-    $("matched").textContent = `“${r.input}” isn’t within 2 miles of the site, so here’s who lives closest. If you do live nearby, check the spelling and try again.`;
+    kk.hidden = false; kk.textContent = T("I wouldn’t want it in my neighborhood either.", "我也不希望它建在我家附近。");
+    $("matched").textContent = T(`“${r.input}” isn’t within 2 miles of the site, so here’s who lives closest. If you do live nearby, check the spelling and try again.`, `“${r.input}”不在场址2英里范围内，所以这里显示住得最近的人。如果你确实住在附近，请检查拼写后再试。`);
   } else {
     const feet = roundFeet(r.dist);
     r.feet = feet; r.kids = kidsLine(r.dist); placeMe(r);
-    $("tag").textContent = isExample ? "Example address" : "Your distance";
+    $("tag").textContent = isExample ? T("Example address", "示例地址") : T("Your distance", "你家的距离");
     kk.hidden = true;
     const feetWord = feet === 1 ? "foot" : "feet";
     if (KID_LEAD && r.kids) {
       // "N children live closer to the 24/7 Amtrak facility than me" / "… as close to the 24/7 Amtrak facility as me"
       const tail = r.kids.text.replace(" live closer than me", " live closer to the 24/7 Amtrak facility than me").replace(" live as close as me", " live as close to the 24/7 Amtrak facility as me");
-      $("big").innerHTML = `${kidN(r.kids.n)} ${tail}`;
-      k.hidden = false; k.innerHTML = r.dist <= 500 ? `I live <span class="k">${fmt(feet)}</span> ${feetWord} away`
-        : `<span class="k">${fmt(KIDS500)}</span> live within 500 ft`;
+      const closer = r.kids.text.includes("closer");
+      $("big").innerHTML = T(`${kidN(r.kids.n)} ${tail}`, closer ? `${kidN(r.kids.n)} 名儿童比我住得离24小时运营的美铁维修厂更近` : `${kidN(r.kids.n)} 名儿童和我一样，住在离24小时运营的美铁维修厂这么近的地方`);
+      k.hidden = false; k.innerHTML = r.dist <= 500 ? T(`I live <span class="k">${fmt(feet)}</span> ${feetWord} away`, `我家距离它 <span class="k">${fmt(feet)}</span> 英尺`)
+        : T(`<span class="k">${fmt(KIDS500)}</span> live within 500 ft`, `<span class="k">${fmt(KIDS500)}</span> 名儿童住在500英尺范围内`);
     } else {
-      $("big").innerHTML = `I live <span class="n">${fmt(feet)}</span> ${feetWord} from the 24/7 Amtrak facility`;
-      if (KID_LEAD) { k.hidden = false; k.innerHTML = `<span class="k">${fmt(KIDS500)}</span> children live within 500 feet of it`; }   // beyond a mile: no closer-than count
-      else if (r.kids) { k.hidden = false; k.innerHTML = `<span class="k">${fmt(r.kids.n)}</span> ${r.kids.text}`; } else k.hidden = true;
+      $("big").innerHTML = T(`I live <span class="n">${fmt(feet)}</span> ${feetWord} from the 24/7 Amtrak facility`, `我家距离24小时运营的美铁维修厂 <span class="n">${fmt(feet)}</span> 英尺`);
+      if (KID_LEAD) { k.hidden = false; k.innerHTML = T(`<span class="k">${fmt(KIDS500)}</span> children live within 500 feet of it`, `<span class="k">${fmt(KIDS500)}</span> 名儿童住在它500英尺范围内`); }   // beyond a mile: no closer-than count
+      else if (r.kids) { k.hidden = false; k.innerHTML = T(`<span class="k">${fmt(r.kids.n)}</span> ${r.kids.text}`, `<span class="k">${fmt(r.kids.n)}</span> ` + (r.kids.text.includes("closer") ? "名儿童比我住得更近" : "名儿童和我住得一样近")); } else k.hidden = true;
     }
-    $("matched").textContent = `Matched ${r.label}` + (r.how === "between" ? " (placed between neighboring addresses)" : r.how === "near" ? ` (nearest listed address: ${r.nn})` : "") +
-      (feet >= 5280 ? ` · ${(r.dist / 5280).toFixed(1)} miles` : "");
+    $("matched").textContent = T(`Matched ${r.label}`, `已匹配 ${r.label}`) + (r.how === "between" ? T(" (placed between neighboring addresses)", "（位于相邻门牌之间）") : r.how === "near" ? T(` (nearest listed address: ${r.nn})`, `（最近的门牌号：${r.nn}）`) : "") +
+      (feet >= 5280 ? T(` · ${(r.dist / 5280).toFixed(1)} miles`, ` · ${(r.dist / 5280).toFixed(1)} 英里`) : "");
   }
-  $("sheet-h").textContent = isAddr ? "Share your distance" : "Share these numbers";
+  $("sheet-h").textContent = isAddr ? T("Share your distance", "分享你家的距离") : T("Share these numbers", "分享这些数字");
   drawPageMap();
   $("sheet").hidden = true;
+  lastRun = { r, isExample };
 }
 function shareText(r) {
+  if (LANG === "zh") return shareTextZh(r);
   const tail = ` How close do you live? ${CONFIG.shareUrl}`;   // the tool's own page, which links to Learn more
   const site = "the railyard Amtrak wants to build at Canal Street Yard in Bridgeport";
   if (KID_LEAD) {
@@ -524,6 +630,23 @@ function shareText(r) {
   return t + tail;
 }
 
+function shareTextZh(r) {
+  const tail = ` 你家离它有多近？${CONFIG.shareUrl}?lang=zh`;
+  const site = "美铁计划在桥港运河街车场（Canal Street Yard）兴建的维修厂";
+  if (KID_LEAD) {
+    const kids500 = `有${fmt(KIDS500)}名儿童住在${site}500英尺范围内，而它在14街的现址附近没有儿童居住。`;
+    if (r.overview) return kids500 + tail;
+    if (r.far) return kids500 + "我也不希望它建在我家附近。" + tail;
+    if (r.kids) return (r.kids.text.includes("closer") ? `有${fmt(r.kids.n)}名儿童比我住得离${site}更近。` : `有${fmt(r.kids.n)}名儿童和我一样，住在${site}500英尺范围内。`) +
+      (r.dist <= 500 ? `我家距离它${fmt(r.feet)}英尺。` : `有${fmt(KIDS500)}名儿童住在它500英尺范围内。`) + tail;
+    return `我家距离${site}${fmt(r.feet)}英尺。有${fmt(KIDS500)}名儿童住在它500英尺范围内。` + tail;
+  }
+  if (r.overview) return `有${fmt(POP500)}人住在${site}500英尺范围内，其中${fmt(KIDS500)}名是儿童。` + tail;
+  if (r.far) return `有${fmt(POP500)}人住在${site}500英尺范围内，其中包括${fmt(KIDS500)}名儿童。我也不希望它建在我家附近。` + tail;
+  let t = `我家距离${site}${fmt(r.feet)}英尺。`;
+  if (r.kids) t += r.kids.text.includes("closer") ? `有${fmt(r.kids.n)}名儿童比我住得更近。` : `有${fmt(r.kids.n)}名儿童和我住得一样近。`;
+  return t + tail;
+}
 /* ---------- share images: Story 1080x1920 and Post 1080x1350 ---------- */
 const FORMATS = {
   story: { W: 1080, H: 1920, s: 1, logo: 150, note: "1080×1920" },
@@ -532,6 +655,7 @@ const FORMATS = {
 let cardFormat = "story";
 function cardSpec(r) {
   const WH = "#f5f5f3", RD = "#ff5a70";
+  if (LANG === "zh") return cardSpecZh(r, WH, RD);
   if (KID_LEAD) {
     const kids500Top = [{ p: [[fmt(KIDS500), RD]], size: 270, big: true },
       { p: [["CHILDREN LIVE WITHIN", WH]], size: 92, g: 1 }, { p: [["500 FEET OF THE", WH]], size: 92, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 92, g: 1 }];
@@ -570,11 +694,41 @@ function cardSpec(r) {
   }
   return spec;
 }
+function cardSpecZh(r, WH, RD) {
+  const FAC = "美铁全天候维修厂";
+  const feetLine = () => ({ p: [["我家距离它 ", WH], [fmt(r.feet), RD], [" 英尺", WH]], size: 96 });
+  const kids500Bottom = { p: [[fmt(KIDS500), RD], [" 名儿童住在500英尺内", WH]], size: 96 };
+  const neither = [{ p: [["我也不希望它建在", WH]], size: 70, g: 2 }, { p: [["我家附近。", WH]], size: 70, g: 2 }];
+  if (KID_LEAD) {
+    const top500 = [{ p: [[fmt(KIDS500), RD]], size: 270, big: true },
+      { p: [["名儿童住在", WH]], size: 92, g: 1 }, { p: [[FAC, WH]], size: 92, g: 1 }, { p: [["500英尺范围内", WH]], size: 92, g: 1 }];
+    const cur = { p: [["其现址附近", WH], ["没有", RD], ["儿童居住", WH]], size: 88 };
+    if (r.overview) return { top: top500, bottom: [cur] };
+    if (r.far) return { top: top500, bottom: [cur, ...neither] };
+    if (r.kids) {
+      const closer = r.kids.text.includes("closer");
+      return { top: [{ p: [[fmt(r.kids.n), RD]], size: 330, big: true },
+        ...(closer ? [["名儿童比我住得"], ["离" + FAC], ["更近"]] : [["名儿童和我一样"], ["住在" + FAC], ["附近"]]).map(([t]) => ({ p: [[t, WH]], size: 92, g: 1 }))],
+        bottom: [r.dist <= 500 ? feetLine() : kids500Bottom] };
+    }
+    return { top: [{ p: [["我家距离" + FAC, WH]], size: 112, g: 1 }, { p: [[fmt(r.feet), WH]], size: 330, big: true }, { p: [["英尺", WH]], size: 112, g: 1 }],
+      bottom: [kids500Bottom] };
+  }
+  if (r.overview || r.far) return {
+    top: [{ p: [[fmt(POP500), WH]], size: 270, big: true },
+      { p: [["人住在", WH]], size: 92, g: 1 }, { p: [[FAC, WH]], size: 92, g: 1 }, { p: [["500英尺范围内", WH]], size: 92, g: 1 }],
+    bottom: r.far ? [{ p: [["其中包括 ", WH], [fmt(KIDS500), RD], [" 名儿童", WH]], size: 88 }, ...neither]
+      : [{ p: [["其中 ", WH], [fmt(KIDS500), RD], [" 名是儿童", WH]], size: 96 }],
+  };
+  const spec = { top: [{ p: [["我家距离" + FAC, WH]], size: 112, g: 1 }, { p: [[fmt(r.feet), WH]], size: 330, big: true }, { p: [["英尺", WH]], size: 112, g: 1 }], bottom: [] };
+  if (r.kids) spec.bottom = [{ p: [[fmt(r.kids.n), RD], [r.kids.text.includes("closer") ? " 名儿童比我住得更近" : " 名儿童和我住得一样近", WH]], size: 96 }];
+  return spec;
+}
 async function makeCard(r, key) {
   try { await Promise.all(["800 100px 'Barlow Condensed'", "700 40px 'Barlow Condensed'", "500 30px 'Barlow'"].map(f => document.fonts.load(f))); } catch (e) {}
   const FM = FORMATS[key], W = FM.W, H = FM.H, s = FM.s, M = Math.round(80 * (s < 1 ? .85 : 1)), CW = W - 2 * M;
   const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
-  const c = cv.getContext("2d"), F = '"Barlow Condensed", "Arial Narrow", sans-serif';
+  const c = cv.getContext("2d"), F = '"Barlow Condensed", "Arial Narrow", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif';
   const txt = l => l.p.map(q => q[0]).join("");
   const fitSize = (l, maxW) => { let z = l.size * s; do { c.font = `800 ${z}px ${F}`; } while (c.measureText(txt(l)).width > maxW && (z -= 2) > 12); return z; };
   const groupMin = (lines, sizes) => { const g = {}; lines.forEach((l, i) => { if (l.g) g[l.g] = Math.min(g[l.g] ?? 1e9, sizes[i]); }); return sizes.map((z, i) => lines[i].g ? g[lines[i].g] : z); };
@@ -600,7 +754,7 @@ async function makeCard(r, key) {
   spec.top.forEach((l, i) => drawLine(l, sizes[i], base[i]));
   const mapTop = base[base.length - 1] + 50 * s;
   // footer
-  c.fillStyle = "#f5f5f3"; const foot = "LEARN MORE  " + CONFIG.learnMoreLabel.toUpperCase();
+  c.fillStyle = "#f5f5f3"; const foot = T("LEARN MORE  ", "了解更多  ") + CONFIG.learnMoreLabel.toUpperCase();
   let fz = 40 * s; do { c.font = `700 ${fz}px ${F}`; } while (c.measureText(foot).width > CW && (fz -= 2) > 10); c.fillText(foot, M, H - 80 * s);
   // bottom block, bottom-up above the footer
   let mapBottom = H - 160 * s;   // caption line under the map removed Oct 27, 2026; blocks moved down to close the gap
@@ -620,17 +774,17 @@ async function makeCard(r, key) {
 
 let card = {};
 let canFiles = false;   // true where the browser can hand an image to the phone's share sheet   // format -> {blob, url}, reset whenever the result or the location toggle changes
-const fileName = () => `railyard-${current.overview || current.far ? "500ft" : "distance"}-${cardFormat}.png`;
+const fileName = () => `railyard-${current.overview || current.far ? "500ft" : "distance"}-${cardFormat}${LANG === "zh" ? "-zh" : ""}.png`;
 async function getCard() {
   if (!card[cardFormat]) card[cardFormat] = await makeCard(current, cardFormat);
   return card[cardFormat];
 }
 async function refreshSheet() {
-  $("status").textContent = "Making your image…";
+  $("status").textContent = T("Making your image…", "正在生成图片…");
   const cd = await getCard();
   $("card").src = cd.url;
   $("card").alt = shareText(current).replace(/ Learn more:.*$/, "");
-  $("save-note").textContent = canFiles ? "Then tap Save Image" : `PNG, ${FORMATS[cardFormat].note}`;
+  $("save-note").textContent = canFiles ? T("Then tap Save Image", "然后点“存储图像”") : `PNG, ${FORMATS[cardFormat].note}`;
   $("status").textContent = "";
   return cd;
 }
@@ -642,11 +796,11 @@ async function openSheet() {
   const cd = await refreshSheet();
   const file = new File([cd.blob], fileName(), { type: "image/png" });
   canFiles = !!(navigator.canShare && navigator.canShare({ files: [file] }));
-  $("ig-note").textContent = canFiles ? "Then choose Story or Post" : "Saves the image to post";
-  $("fb-note").textContent = canFiles ? "Then choose Facebook" : "Shares the page link";
-  $("sms-note").textContent = canFiles ? "Image and message · then choose Messages" : "Opens Messages";
-  $("mail-note").textContent = canFiles ? "Image and message · then choose Mail" : "Opens your mail app";
-  $("save-note").textContent = canFiles ? "Then tap Save Image" : `PNG, ${FORMATS[cardFormat].note}`;
+  $("ig-note").textContent = canFiles ? T("Then choose Story or Post", "然后选择快拍或帖子") : T("Saves the image to post", "保存图片以便发布");
+  $("fb-note").textContent = canFiles ? T("Then choose Facebook", "然后选择 Facebook") : T("Shares the page link", "分享网页链接");
+  $("sms-note").textContent = canFiles ? T("Image and message · then choose Messages", "图片和文字 · 然后选择信息") : T("Opens Messages", "打开短信");
+  $("mail-note").textContent = canFiles ? T("Image and message · then choose Mail", "图片和文字 · 然后选择邮件") : T("Opens your mail app", "打开邮件应用");
+  $("save-note").textContent = canFiles ? T("Then tap Save Image", "然后点“存储图像”") : `PNG, ${FORMATS[cardFormat].note}`;
 }
 // withText=false (Instagram, Facebook, Save, tapping the image): image only, because on iPhone adding text
 // to an image share can drop Instagram from the share sheet or make Instagram ignore the image.
@@ -655,30 +809,142 @@ async function nativeShare(withText) {
   const cd = await getCard();   // already made when the panel opened, so the tap still counts as the user's
   const file = new File([cd.blob], fileName(), { type: "image/png" });
   const data = { files: [file] };
-  if (withText) { data.text = shareText(current); data.title = "How close do you live to the 24/7 Amtrak facility?"; }
+  if (withText) { data.text = shareText(current); data.title = T("How close do you live to the 24/7 Amtrak facility?", "你家离24小时运营的美铁维修厂有多近？"); }
   try { await navigator.share(data); }
-  catch (e) { if (e && e.name !== "AbortError") $("status").textContent = "Sharing isn’t available here. Save the image instead."; }
+  catch (e) { if (e && e.name !== "AbortError") $("status").textContent = T("Sharing isn’t available here. Save the image instead.", "此处无法分享，请改为保存图片。"); }
 }
 function openLink(href, what) {
   const a = document.createElement("a"); a.href = href; a.target = "_top"; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove();
-  $("status").textContent = `If ${what} didn’t open, copy the message below and paste it in.`;
+  $("status").textContent = T(`If ${what} didn’t open, copy the message below and paste it in.`, `如果${what}没有打开，请复制下方文字后粘贴。`);
 }
 async function saveImage() {
   if (canFiles) return nativeShare(false);   // phones: the share sheet's "Save Image" puts it in Photos
   const cd = await getCard();
   const dl = await (window.claude?.use ? window.claude.use("downloads").catch(() => null) : null);
   if (dl) {
-    try { await dl.save({ filename: fileName(), data: cd.blob }); $("status").textContent = "Image saved."; }
-    catch (e) { $("status").textContent = e && e.code === "declined" ? "" : "Couldn’t save here. Right-click the image to save it."; }
+    try { await dl.save({ filename: fileName(), data: cd.blob }); $("status").textContent = T("Image saved.", "图片已保存。"); }
+    catch (e) { $("status").textContent = e && e.code === "declined" ? "" : T("Couldn’t save here. Right-click the image to save it.", "无法在此保存。请右键点击图片保存。"); }
     return;
   }
   const a = document.createElement("a"); a.href = cd.url; a.download = fileName(); document.body.appendChild(a); a.click(); a.remove();
-  $("status").textContent = "If nothing downloaded, press and hold (or right-click) the image to save it.";
+  $("status").textContent = T("If nothing downloaded, press and hold (or right-click) the image to save it.", "如果没有下载，请长按（或右键点击）图片保存。");
 }
 async function copyText() {
   const t = $("sharetext");
-  try { await navigator.clipboard.writeText(t.value); $("status").textContent = "Message copied."; }
-  catch (e) { t.focus(); t.select(); $("status").textContent = "Select the message and copy it."; }
+  try { await navigator.clipboard.writeText(t.value); $("status").textContent = T("Message copied.", "文字已复制。"); }
+  catch (e) { t.focus(); t.select(); $("status").textContent = T("Select the message and copy it.", "请选中文字并复制。"); }
+}
+
+/* ---------- public comment helper ----------
+   After an address search: a draft comment on the FRA Environmental Assessment (docket FRA-2026-2938),
+   built from the visitor's distance, census tract and the points they tick. Nothing is sent anywhere:
+   the visitor copies the text and submits it on Regulations.gov themselves. */
+const TR = L.tracts || { meta: {}, tracts: [] };
+function tractAt(x, y) {
+  for (const t of TR.tracts) for (const c of t.r) {
+    let inside = false;
+    for (let i = 0, j = c.length - 2; i < c.length; j = i, i += 2) {
+      const xi = c[i], yi = c[i + 1], xj = c[j], yj = c[j + 1];
+      if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+    }
+    if (inside) return t;
+  }
+  return null;
+}
+// schools and licensed day cares within half a mile of the yard (the same lists the map draws)
+const NEAR_SITES = (() => { const S = L.sites || { schools: [], care: [] }, n = a => a.filter(s => nearestOnYard(s[1], s[2]).d <= 2640).length; return { schools: n(S.schools), care: n(S.care) }; })();
+const CMT_DEADLINE = new Date(CONFIG.commentDeadline);
+const CMT_POINTS = [
+  { id: "kids", label: ["Who lives near the yard", "住在车场附近的人"] },
+  { id: "air", label: ["Diesel particulate (PM2.5) left out", "空气评估漏掉柴油颗粒物（PM2.5）"] },
+  { id: "ej", label: ["No environmental justice review", "没有环境正义评估"] },
+  { id: "soil", label: ["Contaminated soil and groundwater", "土壤和地下水污染"] },
+  { id: "noise", label: ["Noise, with no required mitigation", "噪音问题，却不要求缓解措施"] },
+  { id: "lang", label: ["Ask for Chinese and Spanish materials", "要求提供中文和西班牙文资料"], zhDefault: true },
+];
+let cmtOn = null;          // point id -> ticked
+let cmtLang = LANG;        // language of the draft (can differ from the page)
+let cmtDirty = false;      // the visitor has edited the draft
+function cmtContext(r) {
+  const c = { addr: !!(r && !r.overview && !r.far) };
+  if (c.addr) {
+    c.feet = roundFeet(r.dist);
+    if (r.dist > 500 && r.dist <= 5280) { const n = roundKids(kidsWithin(r.dist)); if (n > 0) c.closer = n; }
+    c.tract = tractAt(r.x, r.y);
+  }
+  return c;
+}
+function cmtText(c, lang) {
+  const zh = lang === "zh", P = [], on = id => cmtOn[id];
+  const ex = TR.meta.pop500_existing, city = TR.meta.city_asthma, t = c.tract;
+  P.push(zh ? "关于：中西部维修设施（Midwest Maintenance Facility）环境评估，案卷编号 FRA-2026-2938"
+            : "Re: Midwest Maintenance Facility Environmental Assessment, Docket FRA-2026-2938");
+  const ask = zh ? "我要求联邦铁路管理局（FRA）不要作出“无重大影响”的结论（FONSI），而是编写一份完整的环境影响报告书（EIS）。"
+                 : "I ask FRA not to issue a Finding of No Significant Impact and to prepare a full Environmental Impact Statement instead.";
+  if (c.addr) P.push(zh ? (c.feet < 50 ? "我就住在运河街车场（Canal Street Yard）旁边。" : `我住在运河街车场（Canal Street Yard）附近，距离约${fmt(c.feet)}英尺。`) + "美铁计划在这里兴建中西部维修设施。" + ask
+                        : (c.feet < 50 ? "I live right next to the Canal Street Yard" : `I live about ${fmt(c.feet)} feet from the Canal Street Yard`) + ", where Amtrak proposes to build its Midwest Maintenance Facility. " + ask);
+  else P.push(zh ? "我就美铁拟在芝加哥运河街车场（Canal Street Yard）兴建中西部维修设施一事提出意见。" + ask
+                 : "I am writing about Amtrak's proposed Midwest Maintenance Facility at the Canal Street Yard in Chicago. " + ask);
+  if (on("kids")) {
+    const sites = NEAR_SITES.schools || NEAR_SITES.care;
+    P.push(zh
+      ? `据估计，拟建车场500英尺范围内住着${fmt(POP500)}人，其中${fmt(KIDS500)}名是儿童；而美铁现有的14街车场500英尺范围内只住着约${fmt(ex)}人（Bridgeport Environmentalists 根据2020–2024年人口普查数据估算）。` +
+        (c.closer ? `约有${fmt(c.closer)}名儿童住得比我还近。` : "") +
+        (sites ? `车场半英里内有${NEAR_SITES.schools}所学校和${NEAR_SITES.care}家持牌托儿中心。` : "")
+      : `An estimated ${fmt(POP500)} people, ${fmt(KIDS500)} of them children, live within 500 feet of the proposed yard, compared with about ${fmt(ex)} people within 500 feet of Amtrak's existing yard at 14th Street (Bridgeport Environmentalists' estimate from 2020–2024 Census data).` +
+        (c.closer ? ` About ${fmt(c.closer)} children live even closer to the site than I do.` : "") +
+        (sites ? ` ${NEAR_SITES.schools} schools and ${NEAR_SITES.care} licensed day-care centers are within half a mile of the yard.` : ""));
+  }
+  if (on("air")) P.push(zh
+    ? "环境评估的空气质量分析只涵盖氮氧化物和挥发性有机化合物，没有分析柴油颗粒物（PM2.5）。可是附近空气监测站测得的数值已经达到或超过每立方米9.0微克的国家年度标准，伊利诺伊州环保局也已建议把库克县列为未达标地区。在住宅旁边昼夜运作的柴油机车只会让情况更糟。"
+    : "The EA's air quality analysis covers only nitrogen oxides and volatile organic compounds. It does not analyze diesel particulate matter (PM2.5), even though nearby air monitors already measure at or above the national annual standard of 9.0 micrograms per cubic meter, and Illinois EPA has recommended that Cook County be designated as not meeting it. Diesel locomotives working next to homes around the clock would add to that burden.");
+  if (on("ej")) {
+    let s = zh
+      ? `环境评估报告完全没有做环境正义分析，而它引用作为先例的几份美铁环境评估都做过。在环境评估报告自己划定的研究范围内的${TR.meta.ea_tracts}个人口普查区中，有${TR.meta.ea_disadvantaged}个被联邦“气候与经济正义筛查工具”（CEJST 2.0版）认定为弱势社区，全部${TR.meta.ea_tracts}个普查区的柴油颗粒物暴露程度都排在全国第97至99百分位。`
+      : `The EA contains no environmental justice analysis, although the earlier Amtrak assessments it cites as precedents each included one. Of the ${TR.meta.ea_tracts} census tracts in the EA's own study area, ${TR.meta.ea_disadvantaged} were identified as disadvantaged by the federal Climate and Economic Justice Screening Tool (version 2.0), and all ${TR.meta.ea_tracts} rank in the 97th to 99th percentile nationally for diesel particulate exposure.`;
+    if (t && t.ea) s += zh
+      ? `我所在的第${t.n}号普查区就在这个研究范围内，柴油颗粒物暴露排在全国第${t.dpm}百分位${t.dis ? "，并被该工具认定为弱势社区" : ""}。`
+      : ` My census tract, ${t.n}, is in that study area and ranks in the ${t.dpm}th percentile${t.dis ? ", and the tool identified it as disadvantaged" : ""}.`;
+    if (t && t.a && city && t.a > city) s += zh
+      ? `据估计，我所在普查区有${t.a}%的成年人患有哮喘，全芝加哥则为${city}%（美国疾控中心 PLACES 数据）。`
+      : ` An estimated ${t.a}% of adults in my tract have asthma, compared with ${city}% across Chicago (CDC PLACES).`;
+    P.push(s);
+  }
+  if (on("soil")) P.push(zh
+    ? "美铁自己的检测发现，场址土壤中的铅、镉、多环芳烃和石油类物质超过伊利诺伊州的清理标准，浅层地下水中的全氟和多氟烷基物质（PFAS，俗称“永久化学品”）也超过州指导值。施工将在紧邻民居的地方大面积开挖。联邦铁路管理局应要求制定详细并公开的计划，控制和监测扬尘及受污染的土壤。"
+    : "Amtrak's own testing found lead, cadmium, polycyclic aromatic hydrocarbons and petroleum in the site's soil above Illinois cleanup levels, and PFAS (\"forever chemicals\") in shallow groundwater above the state guideline. Construction would dig up much of this site right next to homes. FRA should require a detailed, public plan for controlling and monitoring dust and contaminated soil.");
+  if (on("noise")) P.push(zh
+    ? "环境评估报告认为有四组住宅会受到中度噪音影响，但由于未达到联邦铁路管理局的“严重影响”门槛，报告并不要求采取隔音墙等缓解措施。一个紧邻住宅、每天三班运作的设施，应当被要求承诺采取降噪措施，而不只是考虑而已。"
+    : "The EA finds moderate noise impacts at four groups of homes, but because they fall below FRA's threshold for severe impact, it does not require mitigation such as a noise wall. A facility that runs three shifts a day next to homes should be required to commit to noise mitigation, not just consider it.");
+  if (on("lang")) P.push(zh
+    ? "华埠、Armour Square 和桥港（Bridgeport）有许多居民英语能力有限。请发布中文和西班牙文的环境评估摘要，并延长意见征集期，让他们也能参与。"
+    : "Many neighbors in Chinatown, Armour Square and Bridgeport have limited English. Please publish a summary of the EA in Chinese and Spanish and extend the comment period so they can take part.");
+  P.push(zh ? "请编写一份完整的环境影响报告书，研究上述影响，并认真考虑不在住宅旁边的其他选址。感谢你们考虑我的意见。"
+            : "Please prepare a full Environmental Impact Statement that studies these impacts and seriously considers sites that are not next to homes. Thank you for considering my comment.");
+  return P.join("\n\n");
+}
+function cmtRender(force) {
+  const box = $("cmt");
+  if (!current || current.overview) { box.hidden = true; return; }
+  box.hidden = false;
+  const open = Date.now() <= CMT_DEADLINE.getTime();
+  $("cmt-open").hidden = !open; $("cmt-closed").hidden = open;
+  $("cmt-closed").textContent = T("The public comment period on the Environmental Assessment closed on December 7, 2026.", "环境评估的公众意见征集期已于2026年12月7日结束。");
+  if (!open) return;
+  $("cmt-lede").innerHTML = current.far
+    ? T("The Federal Railroad Administration is taking public comments on its Environmental Assessment of Amtrak's plan until <strong>December 7, 2026</strong>. Here's a starting draft. Make it yours, then submit it on Regulations.gov.",
+        "联邦铁路管理局（FRA）正就美铁计划的环境评估报告征集公众意见，截止日期为<strong>2026年12月7日</strong>。下面是一份意见书草稿，改成你自己的话后，到 Regulations.gov 提交。")
+    : T("The Federal Railroad Administration is taking public comments on its Environmental Assessment of Amtrak's plan until <strong>December 7, 2026</strong>. Here's a starting draft based on your address. Make it yours, then submit it on Regulations.gov.",
+        "联邦铁路管理局（FRA）正就美铁计划的环境评估报告征集公众意见，截止日期为<strong>2026年12月7日</strong>。下面是根据你的地址写好的意见书草稿，改成你自己的话后，到 Regulations.gov 提交。");
+  if (!cmtOn) { cmtOn = {}; CMT_POINTS.forEach(p => cmtOn[p.id] = p.zhDefault ? LANG === "zh" : true); }
+  $("cmt-points").innerHTML = CMT_POINTS.map(p =>
+    `<label class="chk"><input type="checkbox" data-pt="${p.id}"${cmtOn[p.id] ? " checked" : ""}><span>${T(p.label[0], p.label[1])}</span></label>`).join("");
+  document.querySelectorAll('input[name="cmtlang"]').forEach(el => el.checked = el.value === cmtLang);
+  if (force || !cmtDirty) { $("cmt-text").value = cmtText(cmtContext(current), cmtLang); cmtDirty = false; }
+}
+function cmtRebuild() {
+  if (cmtDirty && !confirm(T("Replace your edits with the updated suggested text?", "要用更新后的建议文字替换你的修改吗？"))) return false;
+  $("cmt-text").value = cmtText(cmtContext(current), cmtLang); cmtDirty = false; return true;
 }
 
 /* ---------- wiring ---------- */
@@ -686,7 +952,8 @@ function run(addr, isExample) {
   const r = lookup(addr);
   const m = $("msg");
   if (r.error) { m.textContent = r.error; m.hidden = false; return m; }
-  m.hidden = true; render(r, isExample);
+  m.hidden = true; render(r, isExample); cmtRender(true);
+  if (!r.overview) track("lookup", { result: r.far ? "outside" : "address" });
   return $("result");
 }
 // Scroll-into-view after a search: bring the answer (or the error message) to the top of the screen.
@@ -713,19 +980,19 @@ $("b-ig").addEventListener("click", () => (canFiles ? nativeShare(false) : saveI
 // (Facebook builds that post from the page's own preview, not this image).
 $("b-fb").addEventListener("click", () => {
   if (canFiles) return nativeShare(false);
-  const a = document.createElement("a"); a.href = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(CONFIG.shareUrl);
+  const a = document.createElement("a"); a.href = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(CONFIG.shareUrl + (LANG === "zh" ? "?lang=zh" : ""));
   a.target = "_blank"; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove();
-  $("status").textContent = "Facebook opens in a new tab. To post the image instead, save it and add it to your post.";
+  $("status").textContent = T("Facebook opens in a new tab. To post the image instead, save it and add it to your post.", "Facebook 会在新标签页打开。如要发布图片，请先保存图片，再添加到帖子中。");
 });
-$("b-sms").addEventListener("click", () => canFiles ? nativeShare(true) : openLink("sms:?&body=" + encodeURIComponent(shareText(current)), "Messages"));
-$("b-mail").addEventListener("click", () => canFiles ? nativeShare(true) : openLink("mailto:?subject=" + encodeURIComponent("How close do you live to the 24/7 Amtrak facility?") + "&body=" + encodeURIComponent(shareText(current)), "your mail app"));
+$("b-sms").addEventListener("click", () => canFiles ? nativeShare(true) : openLink("sms:?&body=" + encodeURIComponent(shareText(current)), T("Messages", "短信")));
+$("b-mail").addEventListener("click", () => canFiles ? nativeShare(true) : openLink("mailto:?subject=" + encodeURIComponent(T("How close do you live to the 24/7 Amtrak facility?", "你家离24小时运营的美铁维修厂有多近？")) + "&body=" + encodeURIComponent(shareText(current)), T("your mail app", "邮件应用")));
 $("b-card").addEventListener("click", () => canFiles ? nativeShare(false) : null);
 $("b-save").addEventListener("click", saveImage);
 $("b-copy").addEventListener("click", copyText);
 window.__makeLinkCard = async () => {
   try { await Promise.all(["800 100px 'Barlow Condensed'", "700 40px 'Barlow Condensed'", "500 30px 'Barlow'"].map(f => document.fonts.load(f))); } catch (e) {}
   const W = 1200, H = 630, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
-  const c = cv.getContext("2d"), F = '"Barlow Condensed", "Arial Narrow", sans-serif', M = 56, LW = 600;
+  const c = cv.getContext("2d"), F = '"Barlow Condensed", "Arial Narrow", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif', M = 56, LW = 600;
   const fit = (s, z, w = 800, max = LW) => { do { c.font = `${w} ${z}px ${F}`; } while (c.measureText(s).width > max && (z -= 2) > 10); return z; };
   c.fillStyle = "#0d0e0f"; c.fillRect(0, 0, W, H); c.fillStyle = "#c8102e"; c.fillRect(0, 0, W, 10);
   try { if (!logoImg.complete) await logoImg.decode(); c.drawImage(logoImg, M, 34, 64, 64); } catch (e) {}
@@ -745,7 +1012,55 @@ window.__makeLinkCard = async () => {
   c.strokeStyle = "#3a3e42"; c.lineWidth = 2; c.strokeRect(M + LW + 34, 34, W - (M + LW + 34) - 34, H - 68);
   return cv.toDataURL("image/png");
 };
+// comment helper
+$("cmt-points").addEventListener("change", e => {
+  const el = e.target.closest("input[data-pt]"); if (!el) return;
+  const was = cmtOn[el.dataset.pt]; cmtOn[el.dataset.pt] = el.checked;
+  if (!cmtRebuild()) { cmtOn[el.dataset.pt] = was; el.checked = was; }
+});
+document.querySelectorAll('input[name="cmtlang"]').forEach(el => el.addEventListener("change", () => {
+  const was = cmtLang; cmtLang = el.value;
+  if (!cmtRebuild()) { cmtLang = was; document.querySelectorAll('input[name="cmtlang"]').forEach(x => x.checked = x.value === was); }
+}));
+$("cmt-text").addEventListener("input", () => { cmtDirty = true; });
+$("cmt-copy").addEventListener("click", async () => {
+  const t = $("cmt-text");
+  try { await navigator.clipboard.writeText(t.value); $("cmt-status").textContent = T("Comment copied. Paste it on Regulations.gov.", "意见已复制，请到 Regulations.gov 粘贴。"); }
+  catch (e) { t.focus(); t.select(); $("cmt-status").textContent = T("Select the comment and copy it.", "请选中意见文字并复制。"); }
+  track("comment_copy", { comment_lang: cmtLang, edited: cmtDirty });
+});
+$("cmt-go").addEventListener("click", () => track("comment_open_regulations", { comment_lang: cmtLang }));
+// language switch: static text, the current result, the share sheet and (unless edited) the comment draft
+const EN_HTML = {};
+function applyLang() {
+  document.documentElement.lang = LANG === "zh" ? "zh-Hans" : "en";
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const k = el.dataset.i18n, v = STATIC[k]; if (!v) return;
+    if (!(k in EN_HTML)) EN_HTML[k] = el.innerHTML;
+    el.innerHTML = LANG === "zh" ? v[1] : (v[0] ?? EN_HTML[k]);
+  });
+  const nt = $("notes"); if (!("notes" in EN_HTML)) EN_HTML.notes = nt.innerHTML; nt.innerHTML = LANG === "zh" ? STATIC.notes[1] : EN_HTML.notes;
+  document.title = STATIC.title[LANG === "zh" ? 1 : 0];
+  $("addr").placeholder = T("e.g. 3100 S Princeton Ave", "例如 3100 S Princeton Ave");
+  $("sharetext").setAttribute("aria-label", T("Message to share", "要分享的文字"));
+  $("b-copy").setAttribute("aria-label", T("Copy message", "复制文字")); $("b-copy").title = T("Copy message", "复制文字");
+  $("b-card").setAttribute("aria-label", T("Share this image", "分享这张图片"));
+  $("map").setAttribute("aria-label", T("Map of your address and the proposed railyard", "你的地址与拟建车场的地图"));
+  const lb = $("langbtn"); lb.textContent = LANG === "zh" ? "English" : "中文"; lb.lang = LANG === "zh" ? "en" : "zh-Hans";
+  lb.setAttribute("aria-label", LANG === "zh" ? "Switch to English" : "切换到中文");
+}
+$("langbtn").addEventListener("click", () => {
+  LANG = LANG === "zh" ? "en" : "zh";
+  try { localStorage.setItem("howclose-lang", LANG); } catch (e) {}
+  try { const u = new URL(location.href); u.searchParams.set("lang", LANG); history.replaceState(null, "", u); } catch (e) {}
+  track("language_switch");
+  applyLang();
+  if (lastRun) render(lastRun.r, lastRun.isExample);
+  if (!cmtDirty) cmtLang = LANG;
+  cmtRender(false);
+});
 window.__lookup = lookup;  // handy for testing from the console
+applyLang();
 render({ overview: true }, false);
 if (document.fonts) document.fonts.ready.then(drawPageMap);
 })();

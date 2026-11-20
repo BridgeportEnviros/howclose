@@ -3,7 +3,8 @@
 t = open('template.html').read()
 logo = open('logo_datauri.txt').read()
 data = (open('lookup_data.js').read() + "\nwindow.LOOKUP.sites=" + open('sites.json').read() + ";"
-        + "\nwindow.LOOKUP.landmarks=" + open('landmarks.json').read() + ";")   # Rate Field and the two parks, from the dashboard's OSM basemap
+        + "\nwindow.LOOKUP.landmarks=" + open('landmarks.json').read() + ";"
+        + "\nwindow.LOOKUP.tracts=" + open('tracts.json').read() + ";")   # census tracts for the comment draft (build_tracts.py)   # Rate Field and the two parks, from the dashboard's OSM basemap
 page = t.replace('__LOGO__', logo).replace('/*__DATA__*/', data)
 import sys
 OUT = sys.argv[1] if len(sys.argv) > 1 else '../index.html'   # writes the published page at the repo root
