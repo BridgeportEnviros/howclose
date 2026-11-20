@@ -18,10 +18,10 @@
 :root {
   color-scheme: light;
   /* Bridgeport Enviros design system, tokens v3 (light only), mapped onto this page's variable names */
-  --be-mint: #f3ffeb; --be-meadow: #ccf6a8; --be-forest: #274e13; --be-deep: #1b370d; --be-rule: #c9d3c3; --be-ink-2: #55634d;
+  --be-mint: #f5f4f2; --be-meadow: #d5d3ce; --be-forest: #212121; --be-deep: #2a2b2d; --be-rule: #d5d3ce; --be-ink-2: #5a5a56;
   --be-worse: #c8102e; --be-worse-soft: #fdeaed; --be-bad: #c8102e; --be-badlt: #ff6b7d;
-  --bg: #ffffff; --surface: #ffffff; --fg: #212121; --muted: #55634d; --line: #c9d3c3;
-  --silver: #ccf6a8; --accent: #e47200; --ink: #1b370d; --ink-fg: #ffffff;
+  --bg: #ffffff; --surface: #ffffff; --fg: #212121; --muted: #5a5a56; --line: #d5d3ce;
+  --silver: #d5d3ce; --accent: #e47200; --ink: #2a2b2d; --ink-fg: #ffffff;
   --display: Montserrat, "Arial Black", Arial, sans-serif;
   --body: Arial, "Helvetica Neue", Helvetica, sans-serif;
 }
@@ -127,7 +127,7 @@ button:focus-visible { outline: 2px solid var(--be-deep); outline-offset: 2px }
 .result { border-radius: 8px; background: var(--be-deep); color: #fff }
 .result .txt { padding: 24px 24px 20px }
 .tag, .matched { font-family: var(--body); font-weight: 700; font-size: 13px; letter-spacing: .08em; color: var(--be-meadow) }
-.matched { font-weight: 400; letter-spacing: 0; font-size: 13px; color: #dfeed4 }
+.matched { font-weight: 400; letter-spacing: 0; font-size: 13px; color: #d5d3ce }
 .big { font-family: var(--display); font-weight: 800; text-transform: none; line-height: 1.05; font-size: clamp(24px, 5.4vw, 32px) }
 .big .n { font-size: clamp(64px, 18vw, 104px); line-height: 1; color: #fff }
 .big .n.kid { color: var(--be-badlt) }
@@ -135,12 +135,12 @@ button:focus-visible { outline: 2px solid var(--be-deep); outline-offset: 2px }
 .kids .k { color: var(--be-badlt) }
 .kicker { font-family: var(--display); font-weight: 800; text-transform: none; font-size: clamp(22px, 5vw, 28px); line-height: 1.15 }
 .across { font-family: var(--body); font-weight: 700; letter-spacing: .02em; border: 1px solid var(--be-meadow); border-radius: 4px }
-.across small { font-family: var(--body); color: #dfeed4 }
+.across small { font-family: var(--body); color: #d5d3ce }
 .across:hover, .across:focus-visible { background: #fff; color: var(--be-deep) }
 .across:hover small, .across:focus-visible small { color: var(--be-ink-2) }
 .actions button { background: #fff; color: var(--be-deep); border-color: #fff }
 .switch { font-family: var(--body); color: #fff }
-.switch .track { background: #55634d }
+.switch .track { background: #6b6d70 }
 .switch .track::after { background: #fff }
 .switch input:checked + .track { background: var(--be-meadow) }
 .switch input:checked + .track::after { background: var(--be-deep); transform: translateX(18px) }
@@ -401,8 +401,8 @@ function mapMode(r) {
 }
 const YB = YARD.reduce((a, [x, y]) => [Math.min(a[0], x), Math.max(a[1], x), Math.min(a[2], y), Math.max(a[3], y)], [1e9, -1e9, 1e9, -1e9]);
 function drawMap(ctx, X, Y, W, H, r, opt = {}) {
-  const C = Object.assign({ bg: "#0f1d09", minor: "#1f3515", major: "#2c4a1b", hwy: "#4b6b38", water: "#17323a", rail: "#4b6b38",
-    yard: "#ff4757", school: "#ff4757", care: "#ff4757", home: "#ffffff", line: "#ffffff", label: "#f3ffeb", font: 'Montserrat, "Arial Black", Arial, sans-serif', scale: 1 }, opt);
+  const C = Object.assign({ bg: "#1f2022", minor: "#2e3032", major: "#3d3f42", hwy: "#5a5d61", water: "#2a3238", rail: "#55585c",
+    yard: "#ff4757", school: "#ff4757", care: "#ff4757", home: "#ffffff", line: "#ffffff", label: "#f5f4f2", font: 'Montserrat, "Arial Black", Arial, sans-serif', scale: 1 }, opt);
   const mm = mapMode(r), yb = YB;
   let cx, cy, span;
   if (mm.site) { cx = (yb[0] + yb[1]) / 2 + 900; cy = (yb[2] + yb[3]) / 2 - 300; span = Math.max(9000, (yb[3] - yb[2] + 2200) * W / H); }
@@ -424,8 +424,8 @@ function drawMap(ctx, X, Y, W, H, r, opt = {}) {
   for (const lm of (L.landmarks || [])) {
     path(lm.c); ctx.closePath();
     const park = lm.k === "park";
-    ctx.fillStyle = park ? "rgba(112,160,122,.16)" : "rgba(245,245,243,.07)"; ctx.fill();
-    ctx.strokeStyle = park ? "rgba(112,160,122,.7)" : "rgba(245,245,243,.6)"; ctx.lineWidth = 2 * C.scale; ctx.stroke();
+    ctx.fillStyle = park ? "rgba(160,160,160,.16)" : "rgba(245,245,243,.07)"; ctx.fill();
+    ctx.strokeStyle = park ? "rgba(160,160,160,.6)" : "rgba(245,245,243,.6)"; ctx.lineWidth = 2 * C.scale; ctx.stroke();
   }
   // yard (500 ft zone drawn as a wide round-joined stroke around the outline)
   ctx.beginPath(); YARD.forEach(([x, y], i) => i ? ctx.lineTo(px(x), py(y)) : ctx.moveTo(px(x), py(y))); ctx.closePath();
@@ -455,8 +455,8 @@ function drawMap(ctx, X, Y, W, H, r, opt = {}) {
       : mm.site && words.length > 1 ? [words.slice(0, -1).join(" "), words[words.length - 1]] : [lm.n];
     lines.forEach((s, i) => {
       const yy = ly + (i - (lines.length - 1) / 2) * fz * 1.05;
-      ctx.lineWidth = 4 * C.scale; ctx.strokeStyle = "rgba(15,29,9,.85)"; ctx.strokeText(s, lx, yy);
-      ctx.fillStyle = lm.k === "park" ? "#9cc6a6" : "#d9dbdd"; ctx.fillText(s, lx, yy);
+      ctx.lineWidth = 4 * C.scale; ctx.strokeStyle = "rgba(31,32,34,.85)"; ctx.strokeText(s, lx, yy);
+      ctx.fillStyle = lm.k === "park" ? "#c4c2bd" : "#d9dbdd"; ctx.fillText(s, lx, yy);
     });
   }
   ctx.font = `700 ${22 * C.scale}px ${C.font}`; ctx.textBaseline = "middle"; ctx.textAlign = "left";
@@ -651,8 +651,8 @@ async function makeCard(r, key) {
   const fitSize = (l, maxW) => { let z = l.size * s; do { c.font = `800 ${z}px ${F}`; } while (c.measureText(txt(l)).width > maxW && (z -= 2) > 12); return z; };
   const groupMin = (lines, sizes) => { const g = {}; lines.forEach((l, i) => { if (l.g) g[l.g] = Math.min(g[l.g] ?? 1e9, sizes[i]); }); return sizes.map((z, i) => lines[i].g ? g[lines[i].g] : z); };
   const drawLine = (l, z, y) => { let x = M - (l.big ? 6 * s : 0); for (const [t, col] of l.p) { c.font = `800 ${z}px ${F}`; c.fillStyle = col; c.fillText(t, x, y); x += c.measureText(t).width; } };
-  c.fillStyle = "#1b370d"; c.fillRect(0, 0, W, H);
-  c.fillStyle = "#ccf6a8"; c.fillRect(0, 0, W, 14 * s);
+  c.fillStyle = "#2a2b2d"; c.fillRect(0, 0, W, H);
+  c.fillStyle = "#d5d3ce"; c.fillRect(0, 0, W, 14 * s);
   // header: logo with the group's name beside it
   const LG = 92 * s, LT = 50 * s;
   try { if (!logoImg.complete) await logoImg.decode(); c.imageSmoothingQuality = "high"; c.drawImage(logoImg, M, LT, LG, LG); } catch (e) {}
@@ -681,12 +681,12 @@ async function makeCard(r, key) {
     const bb = new Array(bs.length); bb[bs.length - 1] = H - 160 * s;
     for (let i = bs.length - 2; i >= 0; i--) bb[i] = bb[i + 1] - bs[i + 1] * 1.0;
     const ruleY = bb[0] - bs[0] * .72 - 34 * s;
-    c.fillStyle = "#ccf6a8"; c.fillRect(M, ruleY, CW, 6 * s);
+    c.fillStyle = "#d5d3ce"; c.fillRect(M, ruleY, CW, 6 * s);
     spec.bottom.forEach((l, i) => drawLine(l, bs[i], bb[i]));
     mapBottom = ruleY - 40 * s;
   }
   drawMap(c, M, mapTop, CW, mapBottom - mapTop, r, { scale: 1.6 * (s < 1 ? .8 : 1) });
-  c.strokeStyle = "#4b6b38"; c.lineWidth = 2; c.strokeRect(M, mapTop, CW, mapBottom - mapTop);
+  c.strokeStyle = "#5a5d61"; c.lineWidth = 2; c.strokeRect(M, mapTop, CW, mapBottom - mapTop);
   return new Promise(res => cv.toBlob(b => res({ blob: b, url: URL.createObjectURL(b) }), "image/png"));
 }
 
@@ -799,22 +799,22 @@ window.__makeLinkCard = async () => {
   const W = 1200, H = 630, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
   const c = cv.getContext("2d"), F = 'Montserrat, "Arial Black", Arial, sans-serif', M = 56, LW = 600;
   const fit = (s, z, w = 800, max = LW) => { do { c.font = `${w} ${z}px ${F}`; } while (c.measureText(s).width > max && (z -= 2) > 10); return z; };
-  c.fillStyle = "#1b370d"; c.fillRect(0, 0, W, H); c.fillStyle = "#ccf6a8"; c.fillRect(0, 0, W, 10);
+  c.fillStyle = "#2a2b2d"; c.fillRect(0, 0, W, H); c.fillStyle = "#d5d3ce"; c.fillRect(0, 0, W, 10);
   try { if (!logoImg.complete) await logoImg.decode(); c.drawImage(logoImg, M, 34, 64, 64); } catch (e) {}
   c.fillStyle = "#ffffff"; c.textBaseline = "middle"; c.font = `700 22px ${F}`; c.fillText("BRIDGEPORT ENVIRONMENTALISTS", M + 80, 68); c.textBaseline = "alphabetic";
   const lead = KID_LEAD ? fmt(KIDS500) : fmt(POP500), leadLines = [KID_LEAD ? "CHILDREN LIVE WITHIN" : "PEOPLE LIVE WITHIN", "500 FEET OF THE", "24/7 AMTRAK FACILITY"];
   const nz = fit(lead, 150, 800, LW); if (KID_LEAD) c.fillStyle = "#ff6b7d"; c.fillText(lead, M - 4, 124 + nz * .74); c.fillStyle = "#ffffff";
   let y = 124 + nz * .74 + 58; const lz = Math.min(...leadLines.map(s => fit(s, 54)));
   c.font = `800 ${lz}px ${F}`; leadLines.forEach((s, i) => c.fillText(s, M, y + i * lz));
-  y += 2 * lz + 28; c.fillStyle = "#ccf6a8"; c.fillRect(M, y, LW, 5);
+  y += 2 * lz + 28; c.fillStyle = "#d5d3ce"; c.fillRect(M, y, LW, 5);
   const [pre, num, post] = KID_LEAD ? ["", "NONE", " LIVE BY ITS CURRENT SITE"] : ["", fmt(KIDS500), " ARE CHILDREN"];
   const kz = fit(pre + num + post, 52); c.font = `800 ${kz}px ${F}`; const ky = y + 16 + kz * .74;
   c.fillStyle = "#ffffff"; c.fillText(pre, M, ky); const pw = c.measureText(pre).width;
   c.fillStyle = "#ff6b7d"; c.fillText(num, M + pw, ky); const kw = c.measureText(num).width;
   c.fillStyle = "#ffffff"; c.fillText(post, M + pw + kw, ky);
-  const foot = "LEARN MORE  " + CONFIG.learnMoreLabel.toUpperCase(); fit(foot, 26, 700); c.fillStyle = "#ccf6a8"; c.fillText(foot, M, H - 40);
+  const foot = "LEARN MORE  " + CONFIG.learnMoreLabel.toUpperCase(); fit(foot, 26, 700); c.fillStyle = "#d5d3ce"; c.fillText(foot, M, H - 40);
   drawMap(c, M + LW + 34, 34, W - (M + LW + 34) - 34, H - 68, { overview: true }, { scale: 1.1 });
-  c.strokeStyle = "#4b6b38"; c.lineWidth = 2; c.strokeRect(M + LW + 34, 34, W - (M + LW + 34) - 34, H - 68);
+  c.strokeStyle = "#5a5d61"; c.lineWidth = 2; c.strokeRect(M + LW + 34, 34, W - (M + LW + 34) - 34, H - 68);
   return cv.toDataURL("image/png");
 };
 window.__lookup = lookup;  // handy for testing from the console
