@@ -33,6 +33,14 @@ form { display: grid; gap: 10px }
 label { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: 14px }
 .row { display: flex; gap: 8px; flex-wrap: wrap }
 input[type=text] { flex: 1 1 260px; min-width: 0; font: inherit; font-size: 17px; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--fg) }
+.field { position: relative; flex: 1 1 260px; min-width: 0; display: flex }
+.field input[type=text] { flex: 1 1 auto; padding-right: 54px }
+.field .locbtn { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--fg); display: grid; place-items: center; letter-spacing: 0 }
+.field .locbtn:hover { background: var(--line) }
+.field .locbtn svg { width: 22px; height: 22px; display: block }
+.field .locbtn[aria-busy="true"] svg { animation: locspin 1s linear infinite; opacity: .6 }
+@keyframes locspin { to { transform: rotate(360deg) } }
+@media (prefers-reduced-motion: reduce) { .field .locbtn[aria-busy="true"] svg { animation: none } }
 input[type=text]:focus-visible { outline: 2px solid var(--fg); outline-offset: 1px }
 button { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 17px; padding: 12px 18px; border-radius: 6px; border: 1.5px solid var(--fg); background: var(--fg); color: var(--bg); cursor: pointer }
 button.ghost { background: transparent; color: var(--fg) }
@@ -106,10 +114,15 @@ textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px; border-ra
   <form id="f" autocomplete="off">
     <label for="addr">Your street address</label>
     <div class="row">
-      <input type="text" id="addr" placeholder="e.g. 3100 S Princeton Ave" aria-describedby="addr-hint">
+      <div class="field">
+        <input type="text" id="addr" placeholder="e.g. 3100 S Princeton Ave" aria-describedby="addr-hint">
+        <button type="button" class="locbtn" id="loc" aria-label="Use my current location" title="Use my current location">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none"/><path d="M12 2v3.5M12 18.5V22M2 12h3.5M18.5 12H22"/></svg>
+        </button>
+      </div>
       <button type="submit" id="go">Find my distance</button>
     </div>
-    <div class="hint" id="addr-hint">Chicago addresses within 2 miles of the site. Try <button type="button" data-ex="3500 S Halsted St">3500 S Halsted St</button></div>
+    <div class="hint" id="addr-hint">Chicago addresses within 2 miles of the site. Try <button type="button" data-ex="3500 S Halsted St">3500 S Halsted St</button>, or tap the target icon to use your location. It stays on your device.</div>
   </form>
 
   <div id="msg" class="msg" tabindex="-1" hidden></div>
@@ -491,7 +504,8 @@ function render(r, isExample) {
       k.hidden = false; k.innerHTML = `Including <span class="k">${fmt(KIDS500)}</span> children`;
     }
     kk.hidden = false; kk.textContent = "I wouldn’t want it in my neighborhood either.";
-    $("matched").textContent = `“${r.input}” isn’t within 2 miles of the site, so here’s who lives closest. If you do live nearby, check the spelling and try again.`;
+    $("matched").textContent = r.gps ? "Your location isn’t within 2 miles of the site, so here’s who lives closest. If you live nearby, type your address instead."
+      : `“${r.input}” isn’t within 2 miles of the site, so here’s who lives closest. If you do live nearby, check the spelling and try again.`;
   } else {
     const feet = roundFeet(r.dist);
     r.feet = feet; r.kids = kidsLine(r.dist); placeMe(r);
@@ -514,7 +528,8 @@ function render(r, isExample) {
       if (KID_LEAD) { k.hidden = false; k.innerHTML = `<span class="k">${fmt(KIDS500)}</span> children live within 500 feet of it`; }   // beyond a mile: no closer-than count
       else if (r.kids) { k.hidden = false; k.innerHTML = `<span class="k">${fmt(r.kids.n)}</span> ${r.kids.text}`; } else k.hidden = true;
     }
-    $("matched").textContent = `Matched ${r.label}` + (r.how === "between" ? " (placed between neighboring addresses)" : r.how === "near" ? ` (nearest listed address: ${r.nn})` : "") +
+    $("matched").textContent = `Matched ${r.label}` + (r.how === "between" ? " (placed between neighboring addresses)" : r.how === "near" ? ` (nearest listed address: ${r.nn})` : r.how === "gps" ? " (nearest listed address to your location)" : "") +
+      (r.how === "gps" && r.acc > 330 ? ` · Your device reported ±${fmt(Math.round(r.acc))} ft, so check that this is your address.` : "") +
       (feet >= 5280 ? ` · ${(r.dist / 5280).toFixed(1)} miles` : "");
   }
   $("sheet-h").textContent = isAddr ? "Share your distance" : "Share these numbers";
@@ -732,6 +747,37 @@ function showOutput(el) {
 }
 $("f").addEventListener("submit", e => { e.preventDefault(); showOutput(run($("addr").value, false)); });
 document.querySelectorAll("[data-ex]").forEach(b => b.addEventListener("click", () => { $("addr").value = b.dataset.ex; showOutput(run(b.dataset.ex, true)); }));
+/* ---------- "use my location" (Nov 2026): the browser's GPS fix is matched to the nearest listed address on this device; nothing is sent anywhere ---------- */
+function ll2xy(lat, lon) { const P = L.proj; return { x: (lon - P.lon0) * P.ft_per_deg_lon, y: (lat - P.lat0) * P.ft_per_deg_lat }; }
+function nearestAddress(x, y) {
+  let best = null, bd = Infinity;
+  for (const k in L.streets) {
+    const a = L.streets[k];
+    for (let i = 0; i < a.length; i += 4) { const dx = a[i + 1] - x, dy = a[i + 2] - y, d = dx * dx + dy * dy; if (d < bd) { bd = d; best = { k, n: a[i], x: a[i + 1], y: a[i + 2] }; } }
+  }
+  return best && { ...best, d: Math.sqrt(bd) };
+}
+function runLocation(pos) {
+  const { latitude, longitude, accuracy } = pos.coords, m = $("msg"), { x, y } = ll2xy(latitude, longitude);
+  if (nearestOnYard(x, y).d > 10560) { m.hidden = true; render({ far: true, gps: true, input: "" }, false); return $("result"); }   // beyond 2 miles
+  const b = nearestAddress(x, y);
+  if (!b || b.d > 1000) { m.textContent = "We couldn’t match your location to a listed address. Type your address instead."; m.hidden = false; return m; }
+  const [dir, name, type] = b.k.split("|"), label = `${b.n} ${dir} ${name} ${type}`.replace(/\s+/g, " ").trim(), near = nearestOnYard(b.x, b.y);
+  $("addr").value = label; m.hidden = true;
+  render({ x: b.x, y: b.y, how: "gps", label, gps: true, acc: accuracy * 3.28084, dist: near.d, nx: near.x, ny: near.y }, false);
+  return $("result");
+}
+$("loc").addEventListener("click", () => {
+  const btn = $("loc"), m = $("msg");
+  const fail = text => { btn.removeAttribute("aria-busy"); btn.disabled = false; m.textContent = text; m.hidden = false; showOutput(m); };
+  if (!navigator.geolocation) return fail("This browser can’t share your location. Type your address instead.");
+  btn.setAttribute("aria-busy", "true"); btn.disabled = true; m.hidden = true;
+  navigator.geolocation.getCurrentPosition(pos => { btn.removeAttribute("aria-busy"); btn.disabled = false; showOutput(runLocation(pos)); }, err => {
+    fail(err && err.code === 1 ? "Location is blocked for this page. Allow it in your browser’s site settings, or type your address."
+      : err && err.code === 3 ? "Finding your location took too long. Try again, or type your address."
+      : "Couldn’t get your location. Type your address instead.");
+  }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+});
 $("share").addEventListener("click", openSheet);
 $("showhome").addEventListener("change", e => {
   showHome = e.target.checked; card = {};
