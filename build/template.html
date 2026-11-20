@@ -49,6 +49,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
 .kids .k { color: #ff5a70 }
 .kicker { font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: clamp(24px, 6vw, 32px); line-height: 1.02; color: var(--ink-fg) }
 .big .n.kid { color: #ff5a70 }
+.big .n.words { font-size: clamp(56px, 17vw, 100px); line-height: .92 }
 .matched { font-size: 13px; color: var(--silver) }
 .across { display: block; margin-top: 8px; padding: 14px 16px; border: 1.5px solid var(--ink-fg); border-radius: 6px; color: var(--ink-fg); text-decoration: none; font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; font-size: 20px; line-height: 1.1 }
 .across small { display: block; margin-top: 4px; font-family: var(--body); font-weight: 500; text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--silver) }
@@ -227,6 +228,15 @@ const roundKids = n => Math.round(n);   // unrounded, to match the dashboard
 const within = (arr, ft) => { const b = L.meta.bin_ft, i = Math.round(ft / b) - 1; return arr[Math.max(0, Math.min(i, arr.length - 1))]; };
 const POP500 = Math.round(within(L.pop, 500)), KIDS500 = Math.round(within(L.kids, 500));
 const fmt = n => n.toLocaleString("en-US");
+// Distance headline for addresses within half a mile (Nov 20, 2026, Matt): exact feet under 1,000 ft,
+// then "less than 1/4 mile" (to 1,320 ft) and "less than 1/2 mile" (to 2,640 ft). Farther addresses keep the original wording.
+const NEAR_MAX = 2640;
+function nearDistance(d) {
+  if (!(d <= NEAR_MAX)) return null;
+  if (d < 1000) { const n = Math.round(d); return { feet: true, num: fmt(n), unit: n === 1 ? "foot" : "feet", text: `${fmt(n)} ${n === 1 ? "foot" : "feet"}` }; }
+  const w = d <= 1320 ? "1/4 mile" : "1/2 mile";
+  return { feet: false, words: "less than " + w, big: w.toUpperCase(), text: "less than " + w };
+}
 const roundFeet = d => d < 100 ? Math.round(d / 5) * 5 : Math.round(d / 10) * 10;
 
 /* ---------- address parsing + matching ---------- */
@@ -488,7 +498,12 @@ function render(r, isExample) {
     $("tag").textContent = isExample ? "Example address" : "Your distance";
     kk.hidden = true;
     const feetWord = feet === 1 ? "foot" : "feet";
-    if (KID_LEAD && r.kids) {
+    const nd = nearDistance(r.dist);
+    if (nd) {
+      $("big").innerHTML = nd.feet ? `I live <span class="n">${nd.num}</span> ${nd.unit} from the 24/7 Amtrak facility`
+        : `I live less than <span class="n words">${nd.big}</span> from the 24/7 Amtrak facility`;
+      if (r.kids) { k.hidden = false; k.innerHTML = `<span class="k">${fmt(r.kids.n)}</span> ${r.kids.text}`; } else k.hidden = true;
+    } else if (KID_LEAD && r.kids) {
       // "N children live closer to the 24/7 Amtrak facility than me" / "… as close to the 24/7 Amtrak facility as me"
       const tail = r.kids.text.replace(" live closer than me", " live closer to the 24/7 Amtrak facility than me").replace(" live as close as me", " live as close to the 24/7 Amtrak facility as me");
       $("big").innerHTML = `${kidN(r.kids.n)} ${tail}`;
@@ -509,6 +524,11 @@ function render(r, isExample) {
 function shareText(r) {
   const tail = ` How close do you live? ${CONFIG.shareUrl}`;   // the tool's own page, which links to Learn more
   const site = "the railyard Amtrak wants to build at Canal Street Yard in Bridgeport";
+  const nd = nearDistance(r.dist);
+  if (nd) {
+    const kt = r.kids ? ` ${fmt(r.kids.n)} children live ${r.kids.text.includes("closer") ? "closer to it than I do" : "as close to it as I do"}.` : "";
+    return `I live ${nd.text} from ${site}.${kt}` + tail;
+  }
   if (KID_LEAD) {
     const kids500 = `${fmt(KIDS500)} children live within 500 feet of ${site}. None live by its current site at 14th Street.`;
     if (r.overview) return kids500 + tail;
@@ -532,6 +552,17 @@ const FORMATS = {
 let cardFormat = "story";
 function cardSpec(r) {
   const WH = "#f5f5f3", RD = "#ff5a70";
+  const nd = nearDistance(r.dist);
+  if (nd) {
+    const top = nd.feet
+      ? [{ p: [["I LIVE", WH]], size: 120 }, { p: [[nd.num, WH]], size: 330, big: true },
+         { p: [[nd.unit.toUpperCase() + " FROM THE", WH]], size: 112, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 112, g: 1 }]
+      : [{ p: [["I LIVE LESS THAN", WH]], size: 120 }, { p: [[nd.big, WH]], size: 330, big: true },
+         { p: [["FROM THE", WH]], size: 112, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 112, g: 1 }];
+    let bottom = [];
+    if (r.kids) { const [a, b] = r.kids.text.toUpperCase().split(" LIVE "); bottom = [{ p: [[fmt(r.kids.n), RD], [" " + a + " LIVE", WH]], size: 96 }, { p: [[b, WH]], size: 72 }]; }
+    return { top, bottom };
+  }
   if (KID_LEAD) {
     const kids500Top = [{ p: [[fmt(KIDS500), RD]], size: 270, big: true },
       { p: [["CHILDREN LIVE WITHIN", WH]], size: 92, g: 1 }, { p: [["500 FEET OF THE", WH]], size: 92, g: 1 }, { p: [["24/7 AMTRAK FACILITY", WH]], size: 92, g: 1 }];
