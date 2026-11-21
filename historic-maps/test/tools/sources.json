@@ -1,0 +1,924 @@
+{
+ "note": "Source images behind tiles/. gcps are [u, v, lon, lat] with (0,0) at the image top-left corner; the pixel -> Web Mercator transform is a least-squares affine on them, as in index.html. Source files themselves are not stored here (too large); URLs are given.",
+ "periods": {
+  "1849": {
+   "tiles": "tiles/1849/",
+   "maxzoom": 15,
+   "tile_m_per_px": 1.78,
+   "webp_quality": 80,
+   "sources": [
+    {
+     "w": 1522,
+     "h": 1967,
+     "gcps": [
+      [
+       0,
+       0,
+       -87.6572152,
+       41.8560465
+      ],
+      [
+       1522,
+       0,
+       -87.6201526,
+       41.8570973
+      ],
+      [
+       1522,
+       1967,
+       -87.6183478,
+       41.821174
+      ],
+      [
+       0,
+       1967,
+       -87.6554105,
+       41.8201232
+      ]
+     ],
+     "mask": [
+      [
+       0,
+       0
+      ],
+      [
+       1522,
+       0
+      ],
+      [
+       1522,
+       1967
+      ],
+      [
+       0,
+       1967
+      ]
+     ],
+     "source": "Rees & Rucker 1849, cut from the Wikimedia Commons full-size scan (repo file orig/wm_1849.jpg, removed in this change; in git history)"
+    }
+   ]
+  },
+  "1861": {
+   "tiles": "tiles/1861/",
+   "maxzoom": 15,
+   "tile_m_per_px": 1.78,
+   "webp_quality": 80,
+   "sources": [
+    {
+     "w": 932,
+     "h": 1072,
+     "gcps": [
+      [
+       0,
+       0,
+       -87.6548093,
+       41.8545101
+      ],
+      [
+       932,
+       0,
+       -87.618443,
+       41.8545101
+      ],
+      [
+       932,
+       1072,
+       -87.618443,
+       41.8232944
+      ],
+      [
+       0,
+       1072,
+       -87.6548093,
+       41.8232944
+      ]
+     ],
+     "mask": [
+      [
+       302,
+       0
+      ],
+      [
+       932,
+       0
+      ],
+      [
+       932,
+       1072
+      ],
+      [
+       0,
+       1072
+      ],
+      [
+       0,
+       102
+      ],
+      [
+       302,
+       102
+      ]
+     ],
+     "source": "Flower 1861, crop of Amtrak's figure D-4 (was embedded in index.html; in git history). No better scan found: Newberry's copy (2KXJ8ZSM6VNTH) is coarser at the site."
+    }
+   ]
+  },
+  "1870": {
+   "tiles": "tiles/1870/",
+   "maxzoom": 14,
+   "tile_m_per_px": 3.559,
+   "webp_quality": 80,
+   "sources": [
+    {
+     "w": 1164,
+     "h": 1089,
+     "gcps": [
+      [
+       0,
+       0,
+       -87.6695333,
+       41.8655035
+      ],
+      [
+       1164,
+       0,
+       -87.6075859,
+       41.8665111
+      ],
+      [
+       1164,
+       1089,
+       -87.6063228,
+       41.8232829
+      ],
+      [
+       0,
+       1089,
+       -87.6682703,
+       41.8222753
+      ]
+     ],
+     "mask": [
+      [
+       23.6,
+       0.1
+      ],
+      [
+       1163.7,
+       24.9
+      ],
+      [
+       1140.5,
+       1088.2
+      ],
+      [
+       0.4,
+       1063.3
+      ]
+     ],
+     "source": "Van Vechten 1870, two pieces cut from the Library of Congress scan, item 2013593087 (orig/vv1870_a.jpg, orig/vv1870_b.jpg in git history)"
+    },
+    {
+     "w": 1155,
+     "h": 417,
+     "gcps": [
+      [
+       0,
+       0,
+       -87.6687548,
+       41.823296
+      ],
+      [
+       1155,
+       0,
+       -87.6075844,
+       41.8242997
+      ],
+      [
+       1155,
+       417,
+       -87.6071034,
+       41.807772
+      ],
+      [
+       0,
+       417,
+       -87.6682738,
+       41.8067683
+      ]
+     ],
+     "mask": [
+      [
+       9,
+       0.2
+      ],
+      [
+       1154.7,
+       25.3
+      ],
+      [
+       1146.2,
+       416
+      ],
+      [
+       0.5,
+       390.9
+      ]
+     ],
+     "source": "Van Vechten 1870, two pieces cut from the Library of Congress scan, item 2013593087 (orig/vv1870_a.jpg, orig/vv1870_b.jpg in git history)"
+    }
+   ]
+  },
+  "1875": {
+   "tiles": "tiles/1875/",
+   "maxzoom": 14,
+   "tile_m_per_px": 3.559,
+   "webp_quality": 80,
+   "sources": [
+    {
+     "w": 588,
+     "h": 682,
+     "gcps": [
+      [
+       0,
+       0,
+       -87.6549832,
+       41.8544675
+      ],
+      [
+       588,
+       0,
+       -87.6184222,
+       41.8546112
+      ],
+      [
+       588,
+       682,
+       -87.6182945,
+       41.8232557
+      ],
+      [
+       0,
+       682,
+       -87.6548555,
+       41.823112
+      ]
+     ],
+     "mask": [
+      [
+       0,
+       0
+      ],
+      [
+       588,
+       0
+      ],
+      [
+       588,
+       682
+      ],
+      [
+       0,
+       682
+      ]
+     ],
+     "source": "Warner & Beers 1875, cut from the University of Illinois scan (orig/uiuc_1875.jpg in git history)"
+    }
+   ]
+  },
+  "1879": {
+   "tiles": "tiles/1879/",
+   "maxzoom": 15,
+   "tile_m_per_px": 1.78,
+   "webp_quality": 80,
+   "sources": [
+    {
+     "w": 932,
+     "h": 1072,
+     "gcps": [
+      [
+       0,
+       0,
+       -87.6548093,
+       41.8545101
+      ],
+      [
+       932,
+       0,
+       -87.618443,
+       41.8545101
+      ],
+      [
+       932,
+       1072,
+       -87.618443,
+       41.8232944
+      ],
+      [
+       0,
+       1072,
+       -87.6548093,
+       41.8232944
+      ]
+     ],
+     "mask": [
+      [
+       405,
+       0
+      ],
+      [
+       932,
+       0
+      ],
+      [
+       932,
+       1072
+      ],
+      [
+       0,
+       1072
+      ],
+      [
+       0,
+       102
+      ],
+      [
+       405,
+       102
+      ]
+     ],
+     "source": "Dobson & Waite 1879, crop of Amtrak's figure D-6 (was embedded in index.html; in git history)"
+    }
+   ]
+  },
+  "1889": {
+   "tiles": "tiles/1889/",
+   "maxzoom": 15,
+   "tile_m_per_px": 1.78,
+   "webp_quality": 80,
+   "sources": [
+    {
+     "w": 1717,
+     "h": 1970,
+     "gcps": [
+      [
+       0,
+       0,
+       -87.6610509,
+       41.8602957
+      ],
+      [
+       1717,
+       0,
+       -87.6135813,
+       41.8603013
+      ],
+      [
+       1717,
+       1970,
+       -87.6135728,
+       41.8195635
+      ],
+      [
+       0,
+       1970,
+       -87.6610424,
+       41.819558
+      ]
+     ],
+     "mask": [
+      [
+       0.61,
+       0.19
+      ],
+      [
+       1716.61,
+       0.45
+      ],
+      [
+       1716.3,
+       1969.72
+      ],
+      [
+       0.31,
+       1969.45
+      ]
+     ],
+     "source_url": "https://prd-tnm.s3.amazonaws.com/StagedProducts/Maps/HistoricalTopo/PDF/IL/62500/IL_Chicago_309341_1889_62500_geo.pdf",
+     "usgs_record": 309341,
+     "m_per_px": 2.298,
+     "placement": "registered to the previous image of this period (affine, RMS 1.33 m), so it keeps that placement",
+     "processing": "uncropped window of the raster embedded in the GeoPDF (no resampling)"
+    }
+   ]
+  },
+  "1900": {
+   "tiles": "tiles/1900/",
+   "maxzoom": 15,
+   "tile_m_per_px": 1.78,
+   "webp_quality": 80,
+   "sources": [
+    {
+     "w": 1712,
+     "h": 1964,
+     "gcps": [
+      [
+       0,
+       0,
+       -87.6610502,
+       41.8602938
+      ],
+      [
+       1712,
+       0,
+       -87.6135679,
+       41.860299
+      ],
+      [
+       1712,
+       1964,
+       -87.6135601,
+       41.8195556
+      ],
+      [
+       0,
+       1964,
+       -87.6610425,
+       41.8195504
+      ]
+     ],
+     "mask": [
+      [
+       0.59,
+       0.09
+      ],
+      [
+       1711.13,
+       0.34
+      ],
+      [
+       1710.85,
+       1963.34
+      ],
+      [
+       0.31,
+       1963.09
+      ]
+     ],
+     "source_url": "https://prd-tnm.s3.amazonaws.com/StagedProducts/Maps/HistoricalTopo/PDF/IL/62500/IL_Chicago_309343_1900_62500_geo.pdf",
+     "usgs_record": 309343,
+     "m_per_px": 2.305,
+     "placement": "registered to the previous image of this period (affine, RMS 1.44 m), so it keeps that placement",
+     "processing": "uncropped window of the raster embedded in the GeoPDF (no resampling)"
+    }
+   ]
+  },
+  "1929": {
+   "tiles": "tiles/1929/",
+   "maxzoom": 16,
+   "tile_m_per_px": 0.89,
+   "webp_quality": 80,
+   "sources": [
+    {
+     "w": 4442,
+     "h": 5098,
+     "gcps": [
+      [
+       0,
+       0,
+       -87.6610386,
+       41.8603171
+      ],
+      [
+       4442,
+       0,
+       -87.6135549,
+       41.8602979
+      ],
+      [
+       4442,
+       5098,
+       -87.6135842,
+       41.8195438
+      ],
+      [
+       0,
+       5098,
+       -87.6610679,
+       41.819563
+      ]
+     ],
+     "mask": [
+      [
+       0.44,
+       3.15
+      ],
+      [
+       4438.52,
+       0.75
+      ],
+      [
+       4441.26,
+       5094.81
+      ],
+      [
+       3.18,
+       5097.21
+      ]
+     ],
+     "source_url": "https://prd-tnm.s3.amazonaws.com/StagedProducts/Maps/HistoricalTopo/PDF/IL/24000/IL_Englewood_307533_1929_24000_geo.pdf",
+     "usgs_record": 307533,
+     "m_per_px": 0.888,
+     "placement": "registered to the previous image of this period (affine, RMS 0.45 m), so it keeps that placement",
+     "processing": "uncropped window of the raster embedded in the GeoPDF (no resampling)"
+    }
+   ]
+  },
+  "1953": {
+   "tiles": "tiles/1953/",
+   "maxzoom": 16,
+   "tile_m_per_px": 0.89,
+   "webp_quality": 80,
+   "sources": [
+    {
+     "w": 4451,
+     "h": 5108,
+     "gcps": [
+      [
+       0,
+       0,
+       -87.6610411,
+       41.8603119
+      ],
+      [
+       4451,
+       0,
+       -87.613563,
+       41.8602933
+      ],
+      [
+       4451,
+       5108,
+       -87.6135915,
+       41.8195427
+      ],
+      [
+       0,
+       5108,
+       -87.6610696,
+       41.8195614
+      ]
+     ],
+     "mask": [
+      [
+       0.67,
+       2.51
+      ],
+      [
+       4448.28,
+       0.17
+      ],
+      [
+       4450.95,
+       5104.67
+      ],
+      [
+       3.34,
+       5107.01
+      ]
+     ],
+     "source_url": "https://prd-tnm.s3.amazonaws.com/StagedProducts/Maps/HistoricalTopo/PDF/IL/24000/IL_Englewood_307535_1953_24000_geo.pdf",
+     "usgs_record": 307535,
+     "m_per_px": 0.886,
+     "placement": "registered to the previous image of this period (affine, RMS 0.51 m), so it keeps that placement",
+     "processing": "uncropped window of the raster embedded in the GeoPDF (no resampling)"
+    }
+   ]
+  },
+  "1963": {
+   "tiles": "tiles/1963/",
+   "maxzoom": 16,
+   "tile_m_per_px": 0.89,
+   "webp_quality": 80,
+   "sources": [
+    {
+     "w": 4452,
+     "h": 5109,
+     "gcps": [
+      [
+       0,
+       0,
+       -87.6610374,
+       41.8603157
+      ],
+      [
+       4452,
+       0,
+       -87.6135563,
+       41.8602968
+      ],
+      [
+       4452,
+       5109,
+       -87.6135848,
+       41.8195459
+      ],
+      [
+       0,
+       5109,
+       -87.6610659,
+       41.8195648
+      ]
+     ],
+     "mask": [
+      [
+       0.33,
+       2.99
+      ],
+      [
+       4448.64,
+       0.62
+      ],
+      [
+       4451.31,
+       5106.07
+      ],
+      [
+       3.0,
+       5108.43
+      ]
+     ],
+     "source_url": "https://prd-tnm.s3.amazonaws.com/StagedProducts/Maps/HistoricalTopo/PDF/IL/24000/IL_Englewood_307536_1963_24000_geo.pdf",
+     "usgs_record": 307536,
+     "m_per_px": 0.886,
+     "placement": "registered to the previous image of this period (affine, RMS 0.55 m), so it keeps that placement",
+     "processing": "uncropped window of the raster embedded in the GeoPDF (no resampling)"
+    }
+   ]
+  },
+  "1970": {
+   "tiles": "tiles/1970/",
+   "maxzoom": 17,
+   "tile_m_per_px": 0.445,
+   "webp_quality": 75,
+   "sources": [
+    {
+     "w": 4393,
+     "h": 8973,
+     "gcps": [
+      [
+       0,
+       0,
+       -87.6484152,
+       41.8543939
+      ],
+      [
+       4393,
+       0,
+       -87.6268615,
+       41.8546104
+      ],
+      [
+       4393,
+       8973,
+       -87.6263836,
+       41.8218688
+      ],
+      [
+       0,
+       8973,
+       -87.6479373,
+       41.8216522
+      ]
+     ],
+     "mask": [
+      [
+       0.9,
+       0.93
+      ],
+      [
+       4392.05,
+       0.93
+      ],
+      [
+       4392.05,
+       8972.95
+      ],
+      [
+       0.9,
+       8972.94
+      ]
+     ],
+     "source_url": "https://starcgis01.blob.core.windows.net/cmap-aerials-blob/1970/Images/3914/1970_3914_08.zip",
+     "m_per_px": 0.407,
+     "placement": "registered to the previous image of this period (affine, RMS 0.07 m), so it keeps that placement",
+     "window_in_scan_px": [
+      759,
+      653,
+      5152,
+      9626
+     ],
+     "processing": "uncropped native pixels, tone matched to the previous crop, print screen removed with tools/descreen.py"
+    }
+   ]
+  },
+  "1980": {
+   "tiles": "tiles/1980/",
+   "maxzoom": 17,
+   "tile_m_per_px": 0.445,
+   "webp_quality": 75,
+   "sources": [
+    {
+     "w": 3774,
+     "h": 7462,
+     "gcps": [
+      [
+       0,
+       0,
+       -87.6487289,
+       41.854787
+      ],
+      [
+       3774,
+       0,
+       -87.6267593,
+       41.8550624
+      ],
+      [
+       3774,
+       7462,
+       -87.6259144,
+       41.8224746
+      ],
+      [
+       0,
+       7462,
+       -87.6478839,
+       41.822199
+      ]
+     ],
+     "mask": [
+      [
+       0.06,
+       0.97
+      ],
+      [
+       3773.0,
+       0.96
+      ],
+      [
+       3773.01,
+       7461.04
+      ],
+      [
+       0.07,
+       7461.04
+      ]
+     ],
+     "source_url": "https://starcgis01.blob.core.windows.net/cmap-aerials-blob/1980/Images/3914/1980_3914_08.zip",
+     "m_per_px": 0.485,
+     "placement": "registered to the previous image of this period (affine, RMS 0.09 m), so it keeps that placement",
+     "window_in_scan_px": [
+      440,
+      557,
+      4214,
+      8019
+     ],
+     "processing": "uncropped native pixels, tone matched to the previous crop, print screen removed with tools/descreen.py"
+    }
+   ]
+  },
+  "1990": {
+   "tiles": "tiles/1990/",
+   "maxzoom": 17,
+   "tile_m_per_px": 0.445,
+   "webp_quality": 75,
+   "sources": [
+    {
+     "w": 4514,
+     "h": 8990,
+     "gcps": [
+      [
+       0,
+       0,
+       -87.6486187,
+       41.8539913
+      ],
+      [
+       4514,
+       0,
+       -87.6264527,
+       41.8543763
+      ],
+      [
+       4514,
+       8990,
+       -87.6254222,
+       41.8215045
+      ],
+      [
+       0,
+       8990,
+       -87.6475881,
+       41.8211193
+      ]
+     ],
+     "mask": [
+      [
+       0.04,
+       0.97
+      ],
+      [
+       4513.04,
+       0.98
+      ],
+      [
+       4513.04,
+       8989.06
+      ],
+      [
+       0.05,
+       8989.05
+      ]
+     ],
+     "source_url": "https://starcgis01.blob.core.windows.net/cmap-aerials-blob/1990/Images/3914/1990_3914_08.zip",
+     "m_per_px": 0.407,
+     "placement": "registered to the previous image of this period (affine, RMS 0.08 m), so it keeps that placement",
+     "window_in_scan_px": [
+      443,
+      885,
+      4957,
+      9875
+     ],
+     "processing": "uncropped native pixels, tone matched to the previous crop, print screen removed with tools/descreen.py"
+    }
+   ]
+  },
+  "1995": {
+   "tiles": "tiles/1995/",
+   "maxzoom": 17,
+   "tile_m_per_px": 0.445,
+   "webp_quality": 75,
+   "sources": [
+    {
+     "w": 3682,
+     "h": 7478,
+     "gcps": [
+      [
+       0,
+       0,
+       -87.6482435,
+       41.853989
+      ],
+      [
+       3682,
+       0,
+       -87.62644,
+       41.854451
+      ],
+      [
+       3682,
+       7478,
+       -87.6251864,
+       41.8213865
+      ],
+      [
+       0,
+       7478,
+       -87.6469899,
+       41.8209243
+      ]
+     ],
+     "mask": [
+      [
+       0.94,
+       0.93
+      ],
+      [
+       3681.03,
+       0.93
+      ],
+      [
+       3681.03,
+       7477.05
+      ],
+      [
+       0.94,
+       7477.05
+      ]
+     ],
+     "source_url": "https://starcgis01.blob.core.windows.net/cmap-aerials-blob/1995/Images/3914/1995_3914_08.zip",
+     "m_per_px": 0.492,
+     "placement": "registered to the previous image of this period (affine, RMS 0.07 m), so it keeps that placement",
+     "window_in_scan_px": [
+      397,
+      541,
+      4079,
+      8019
+     ],
+     "processing": "uncropped native pixels, tone matched to the previous crop, print screen removed with tools/descreen.py"
+    }
+   ]
+  }
+ }
+}
